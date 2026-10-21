@@ -714,6 +714,31 @@ const senales = construirSenales(await leerPulso(), t.pulso, locale, L)
     }
   }
 
+  // ── Animaciones CSS solo donde se ven ──
+  // Los bucles CSS de la portada (la cinta, los puntos que laten, el cursor del
+  // pipeline...) siguen corriendo aunque su sección esté a tres pantallas.
+  // Cada uno, aunque lo mueva la GPU, obliga a Chrome a rehacer en cada
+  // fotograma la actualización de capas de TODA la página; en un celular eso
+  // eran unos 15 puntos de hilo principal en reposo. Pausados fuera de vista
+  // no cambia nada de lo que se ve: retoman donde iban al volver.
+  // Por id y no `main > section`: el pipeline fijado queda dentro del
+  // `.pin-spacer` que le pone ScrollTrigger.
+  if ('IntersectionObserver' in window) {
+    const io = new IntersectionObserver(
+      (entradas) => {
+        for (const e of entradas) {
+          const s = e.target as HTMLElement
+          if (e.isIntersecting) delete s.dataset.enPausa
+          else s.dataset.enPausa = ''
+        }
+      },
+      { rootMargin: '200px 0px' }
+    )
+    document.querySelectorAll<HTMLElement>('main section[id]').forEach((s) => {
+      if (!s.parentElement?.closest('section')) io.observe(s)
+    })
+  }
+
   // ── Cotizador del hero (RF-037) ──
   // Primera vuelta del asesor de la burbuja, con su mismo endpoint: límite por
   // IP, tope diario y guardia de cifras ya están puestos allá. Aquí solo se

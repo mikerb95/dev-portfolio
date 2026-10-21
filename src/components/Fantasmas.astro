@@ -513,12 +513,21 @@ const SILUETA_B = CABEZA + COLA_B
     document.documentElement.addEventListener('pointerleave', () => (puntero.activo = false))
     document.addEventListener('visibilitychange', () => (document.hidden ? undefined : arrancar()))
 
+    // El ondulado del borde es SMIL: no lo ve animation-play-state ni lo frena
+    // salir de pantalla, y redibuja las siluetas en el hilo principal en cada
+    // fotograma. Fuera de vista se congela a mano.
+    const defs = capa.querySelector<SVGSVGElement>('.fantasmas-defs')
+
     new IntersectionObserver(([entrada]) => {
       visible = entrada.isIntersecting
       if (visible) {
+        defs?.unpauseAnimations()
         arrancar()
         programarTimido()
-      } else esconderTimido()
+      } else {
+        defs?.pauseAnimations()
+        esconderTimido()
+      }
     }).observe(capa)
 
     arrancar()

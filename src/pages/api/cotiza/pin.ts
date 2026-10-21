@@ -6,18 +6,21 @@ import { recordSecurityEvent } from '../../../lib/security/events'
 import {
   COTIZA_COOKIE,
   COTIZA_TTL_SEG,
+  FALLOS_GLOBALES,
   cierraLaPuerta,
   decidirIntento,
+  decidirReserva,
   firmarAccesoCotiza,
   pinBienFormado,
+  type Reserva,
 } from '../../../lib/cotiza/acceso'
 import {
   cerrarPuerta,
+  devolverIntento,
   leerFrenos,
   leerPin,
-  limpiarFallosIp,
   pinCorrecto,
-  registrarFallo,
+  reservarIntento,
 } from '../../../lib/cotiza/pin-db'
 
 /**
@@ -52,6 +55,23 @@ function registrar(request: Request, ip: string | null, ok: boolean): Promise<vo
   })
 }
 
+/** Cierra la puerta del PIN y, si `avisar`, manda el aviso. Nunca lanza. */
+async function cerrar(avisar: boolean): Promise<void> {
+  try {
+    await cerrarPuerta()
+    if (avisar) {
+      await sendPush(
+        'Cotiza: acceso con PIN suspendido',
+        'Hubo 10 intentos fallidos de PIN en la última hora. La entrada con PIN queda apagada una hora; GitHub sigue funcionando. Si no eras tú, cambia el PIN en Ajustes.',
+        { priority: 4, tags: 'lock' }
+      )
+    }
+  } catch {
+    // Si no se pudo cerrar, la reserva sigue frenando: cada intento posterior
+    // de la hora suma por encima del límite y se rechaza sin llegar a scrypt.
+  }
+}
+
 export const POST: APIRoute = async ({ request, cookies }) => {
   const secreto = serverEnv('AUTH_SECRET')
   if (!secreto) return json(503, { error: NO_DISPONIBLE })
@@ -78,6 +98,8 @@ export const POST: APIRoute = async ({ request, cookies }) => {
   }
   if (!guardado) return json(503, { error: 'El acceso con PIN no está configurado. Entra con GitHub.' })
 
+  // Lectura previa: con la puerta ya cerrada o la IP ya frenada se responde sin
+  // tocar contadores. Es solo un atajo; lo que decide es la reserva de abajo.
   const decision = decidirIntento(frenos)
   if (decision.tipo === 'puerta_cerrada') {
     return json(
@@ -90,30 +112,40 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     return json(429, { error: 'Demasiados intentos. Espera 15 minutos.' }, { 'Retry-After': '900' })
   }
 
-  if (!(await pinCorrecto(pin, guardado))) {
-    let globales = 0
-    try {
-      globales = await registrarFallo(claveIp)
-      if (cierraLaPuerta(globales)) {
-        await cerrarPuerta()
-        await sendPush(
-          'Cotiza: acceso con PIN suspendido',
-          'Hubo 10 intentos fallidos de PIN en la última hora. La entrada con PIN queda apagada una hora; GitHub sigue funcionando. Si no eras tú, cambia el PIN en Ajustes.',
-          { priority: 4, tags: 'lock' }
+  // El intento se cuenta ANTES de verificar (ver `decidirReserva`). Sin poder
+  // contarlo no se verifica: falla cerrada, como la lectura del PIN.
+  let reserva: Reserva
+  try {
+    reserva = await reservarIntento(claveIp)
+  } catch {
+    return json(503, { error: NO_DISPONIBLE })
+  }
+  const turno = decidirReserva(reserva)
+  if (turno.tipo !== 'permitido') {
+    // Pasarse del total es lo que hace una ráfaga en paralelo: cierra la puerta
+    // aunque el décimo intento aún no haya terminado de fallar.
+    if (turno.tipo === 'puerta_cerrada') await cerrar(reserva.globales === FALLOS_GLOBALES + 1)
+    await registrar(request, ip, false)
+    return turno.tipo === 'puerta_cerrada'
+      ? json(
+          429,
+          { error: 'El acceso con PIN está suspendido por demasiados intentos. Entra con GitHub o espera.' },
+          { 'Retry-After': String(turno.reintentarEnSeg) }
         )
-      }
-    } catch {
-      // Si no se pudo contar el fallo, el intento igual se rechaza. Lo que se
-      // pierde es el freno de este fallo, no la seguridad de este intento.
-    }
+      : json(429, { error: 'Demasiados intentos. Espera 15 minutos.' }, { 'Retry-After': '900' })
+  }
+
+  if (!(await pinCorrecto(pin, guardado))) {
+    if (cierraLaPuerta(reserva.globales)) await cerrar(true)
     await registrar(request, ip, false)
     return json(403, { error: 'PIN incorrecto.' })
   }
 
   try {
-    await limpiarFallosIp(claveIp)
+    await devolverIntento(claveIp)
   } catch {
-    // Accesorio: los fallos viejos de esta IP vencen solos en 15 minutos.
+    // Accesorio: si no se pudo devolver, el intento acertado queda contado
+    // como fallo hasta que venza su ventana. Más estricto, no más débil.
   }
 
   cookies.set(COTIZA_COOKIE, firmarAccesoCotiza(secreto, guardado.version), {

@@ -159,6 +159,25 @@ export function decidirIntento(estado: EstadoFrenos, ahoraMs = Date.now()): Deci
   return { tipo: 'permitido' }
 }
 
+/** Contadores tras sumar ESTE intento (`reservarIntento` en pin-db.ts). */
+export type Reserva = { fallosIp: number; globales: number }
+
+/**
+ * ¿Se deja verificar un intento ya reservado?
+ *
+ * La reserva existe porque `decidirIntento` sola tenía una carrera: los frenos
+ * se leían antes de verificar el PIN y el fallo se sumaba después, así que una
+ * ráfaga en paralelo (desde varias IP) pasaba entera la revisión antes de que
+ * se contara un solo fallo, y los dos frenos dejaban de existir. Sumar antes
+ * de verificar convierte cada intento en un número de turno atómico: con
+ * cualquier concurrencia, solo los primeros FALLOS_GLOBALES llegan a scrypt.
+ */
+export function decidirReserva(r: Reserva): DecisionIntento {
+  if (r.globales > FALLOS_GLOBALES) return { tipo: 'puerta_cerrada', reintentarEnSeg: Math.ceil(CIERRE_MS / 1000) }
+  if (r.fallosIp > FALLOS_POR_IP) return { tipo: 'ip_frenada' }
+  return { tipo: 'permitido' }
+}
+
 /**
  * ¿Este fallo es el que cierra la puerta? Exactamente el que alcanza el
  * límite, para que el cierre (y el aviso a ntfy) ocurra una vez y no en cada

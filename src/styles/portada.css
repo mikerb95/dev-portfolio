@@ -271,3 +271,11 @@
   .cotizador-ejemplo::after { animation: none; }
   .hud-panel { transition: none; }
 }
+
+/* Secciones fuera de vista: sus bucles CSS se pausan (el porqué está junto al
+   IntersectionObserver que pone el atributo, en index.astro). */
+section[data-en-pausa] *,
+section[data-en-pausa] *::before,
+section[data-en-pausa] *::after {
+  animation-play-state: paused !important;
+}

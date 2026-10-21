@@ -22,6 +22,7 @@ import {
   verificarAccesoCotiza,
   versionDePin,
   type EstadoFrenos,
+  type Reserva,
 } from './acceso'
 
 export type PinGuardado = { hash: string; version: string; actualizado: Date | null }
@@ -131,6 +132,29 @@ async function sumar(key: string, ventanaMs: number, ahoraMs: number): Promise<n
 export async function registrarFallo(ip: string, ahoraMs = Date.now()): Promise<number> {
   await sumar(claveIp(ip), VENTANA_IP_MS, ahoraMs)
   return sumar(CLAVE_GLOBAL, VENTANA_GLOBAL_MS, ahoraMs)
+}
+
+/**
+ * Cuenta el intento como fallo ANTES de verificar el PIN y devuelve los dos
+ * contadores ya sumados (ver `decidirReserva`). Si el PIN resulta correcto,
+ * `devolverIntento` deshace la suma.
+ */
+export async function reservarIntento(ip: string, ahoraMs = Date.now()): Promise<Reserva> {
+  const fallosIp = await sumar(claveIp(ip), VENTANA_IP_MS, ahoraMs)
+  const globales = await sumar(CLAVE_GLOBAL, VENTANA_GLOBAL_MS, ahoraMs)
+  return { fallosIp, globales }
+}
+
+/**
+ * El intento reservado acertó: limpia la IP (como `limpiarFallosIp`) y resta
+ * el intento del total, que solo debe contar fallos. Nunca baja de cero.
+ */
+export async function devolverIntento(ip: string): Promise<void> {
+  await limpiarFallosIp(ip)
+  await db
+    .update(rateLimitBuckets)
+    .set({ count: sql`max(${rateLimitBuckets.count} - 1, 0)` })
+    .where(eq(rateLimitBuckets.key, CLAVE_GLOBAL))
 }
 
 export async function cerrarPuerta(ahoraMs = Date.now()): Promise<void> {
