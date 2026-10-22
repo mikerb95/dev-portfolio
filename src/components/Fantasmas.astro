@@ -259,6 +259,13 @@ const SILUETA_B = CABEZA + COLA_B
     .fantasma:nth-child(n + 4) { display: none; }
     .timido { display: none; }
   }
+
+  /* La capa no vive dentro de ninguna sección de la portada, así que la pausa
+     por sección de index.astro no la alcanza: su propio observador pone el
+     atributo al salir de pantalla. */
+  .fantasmas[data-en-pausa] *,
+  .fantasmas[data-en-pausa] *::before,
+  .fantasmas[data-en-pausa] *::after { animation-play-state: paused !important; }
 </style>
 
 <script>
@@ -521,10 +528,12 @@ const SILUETA_B = CABEZA + COLA_B
     new IntersectionObserver(([entrada]) => {
       visible = entrada.isIntersecting
       if (visible) {
+        delete capa.dataset.enPausa
         defs?.unpauseAnimations()
         arrancar()
         programarTimido()
       } else {
+        capa.dataset.enPausa = ''
         defs?.pauseAnimations()
         esconderTimido()
       }
