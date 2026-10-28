@@ -3,11 +3,9 @@ import AdminLayout from '../../../layouts/AdminLayout.astro'
 import { db } from '../../../db'
 import { clients, projects } from '../../../db/schema'
 import { allCuentasCobro, cuentaCountByStatus, loadEmisorYConfig, topeIvaDelAnio } from '../../../lib/cuentas-cobro-db'
-import { CONCEPTOS_DEFAULT, formatFechaCorta, rateOf, TOPE_NO_RESPONSABLE_UVT } from '../../../lib/cuentas-cobro'
-// formatFechaCorta y no formatDate: este último usa la zona del servidor, que en
-// Vercel es UTC, y fecharía en el día siguiente todo lo emitido tras las 19:00
-// hora de Colombia. Ver lib/cuentas-cobro.ts.
+import { CONCEPTOS_DEFAULT, rateOf, TOPE_NO_RESPONSABLE_UVT } from '../../../lib/cuentas-cobro'
 import { formatMoney } from '../../../lib/portal/format'
+import CuentasCobroTabla from '../../../components/admin/CuentasCobroTabla.astro'
 
 // Los ajustes se leen UNA vez y se le pasan al semáforo. No cuesta latencia:
 // topeIvaDelAnio ya hacía sus dos consultas en serie, así que esto son las
@@ -39,6 +37,11 @@ const STATUS_STYLE: Record<string, string> = {
   overdue: 'bg-ember/10 text-ember border-ember/25',
   void: 'bg-white/[.04] text-ink-300 border-white/10',
 }
+
+// Las anuladas no se borran (el consecutivo y el rastro contable las necesitan),
+// pero tampoco compiten con las vigentes: van a un archivo plegado al final.
+const vigentes = rows.filter((r) => r.status !== 'void')
+const anuladas = rows.filter((r) => r.status === 'void')
 
 const pendientes = rows.filter((r) => r.status === 'sent' || r.status === 'overdue')
 const pendienteCents = pendientes.reduce((s, r) => s + r.totalCents, 0)
@@ -160,58 +163,30 @@ const conceptos = CONCEPTOS_DEFAULT.map((c) => {
       <p class="text-ink-200">Todavía no hay cuentas de cobro.</p>
     </div>
   ) : (
-    <div class="glass rounded-2xl overflow-hidden">
-      <div class="overflow-x-auto">
-        <table class="w-full text-sm">
-          <thead>
-            <tr class="border-b border-white/5 text-ink-300 text-left text-[11px] font-mono uppercase tracking-wider">
-              <th class="px-4 py-3 font-medium">Nº</th>
-              <th class="px-4 py-3 font-medium">Deudor</th>
-              <th class="px-4 py-3 font-medium">Emitida</th>
-              <th class="px-4 py-3 font-medium text-right">Total</th>
-              <th class="px-4 py-3 font-medium text-right">Neto</th>
-              <th class="px-4 py-3 font-medium">Estado</th>
-              <th class="px-4 py-3 font-medium" />
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-white/5">
-            {rows.map((cc) => (
-              <tr class="text-ink-100 hover:bg-white/[.02] transition-colors">
-                <td class="px-4 py-3 font-mono text-[13px] text-ink-50">
-                  <a href={`/admin/cuentas-cobro/${cc.id}`} class="hover:text-cyan transition-colors">{cc.number}</a>
-                </td>
-                <td class="px-4 py-3">
-                  <div class="text-[13px] text-ink-50">{cc.company ?? cc.clientName}</div>
-                  {cc.concept && <div class="text-[11px] text-ink-300 truncate max-w-[280px]">{cc.concept}</div>}
-                </td>
-                <td class="px-4 py-3 text-[13px] text-ink-200">{formatFechaCorta(cc.issuedAt)}</td>
-                <td class="px-4 py-3 text-right font-mono text-[13px] text-ink-50">{formatMoney(cc.totalCents)}</td>
-                <td class="px-4 py-3 text-right font-mono text-[13px]">
-                  {cc.retentionsCents > 0
-                    ? <span class="text-ink-200">{formatMoney(cc.netCents)}</span>
-                    : <span class="text-ink-300">-</span>}
-                </td>
-                <td class="px-4 py-3">
-                  <span class:list={['px-2 py-0.5 rounded-full border text-[11px] font-mono', STATUS_STYLE[cc.status]]}>
-                    {STATUS_LABELS[cc.status]}
-                  </span>
-                </td>
-                <td class="px-4 py-3 text-right whitespace-nowrap">
-                  <a
-                    href={`/api/admin/cuentas-cobro/${cc.id}/pdf`}
-                    target="_blank"
-                    rel="noopener"
-                    class="h-7 px-3 inline-flex items-center rounded-full bg-white/[.03] border border-white/10 text-[12px] text-ink-200 hover:text-cyan hover:border-cyan/25 transition-colors"
-                  >
-                    PDF
-                  </a>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </div>
+    <>
+      {vigentes.length === 0 ? (
+        <div class="glass rounded-2xl p-10 text-center">
+          <p class="text-ink-200">No hay cuentas vigentes. Las anuladas están en el archivo.</p>
+        </div>
+      ) : (
+        <div class="glass rounded-2xl overflow-hidden">
+          <CuentasCobroTabla rows={vigentes} labels={STATUS_LABELS} styles={STATUS_STYLE} />
+        </div>
+      )}
+
+      {anuladas.length > 0 && (
+        <details class="group glass rounded-2xl overflow-hidden mt-4">
+          <summary class="flex items-center gap-2 px-4 py-3 cursor-pointer select-none text-[13px] text-ink-300 hover:text-ink-100 transition-colors list-none [&::-webkit-details-marker]:hidden">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="transition-transform group-open:rotate-90"><path d="m9 18 6-6-6-6"/></svg>
+            Archivo de anuladas
+            <span class="font-mono text-[11px] text-ink-300">({anuladas.length})</span>
+          </summary>
+          <div class="border-t border-white/5 opacity-70">
+            <CuentasCobroTabla rows={anuladas} labels={STATUS_LABELS} styles={STATUS_STYLE} />
+          </div>
+        </details>
+      )}
+    </>
   )}
 
   <dialog id="dlg" class="backdrop:bg-ink-950/70 backdrop:backdrop-blur-sm bg-transparent p-0 m-auto">

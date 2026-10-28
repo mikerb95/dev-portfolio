@@ -1,0 +1,67 @@
+---
+import type { allCuentasCobro } from '../../lib/cuentas-cobro-db'
+import { formatFechaCorta } from '../../lib/cuentas-cobro'
+// formatFechaCorta y no formatDate: este último usa la zona del servidor, que en
+// Vercel es UTC, y fecharía en el día siguiente todo lo emitido tras las 19:00
+// hora de Colombia. Ver lib/cuentas-cobro.ts.
+import { formatMoney } from '../../lib/portal/format'
+
+interface Props {
+  rows: Awaited<ReturnType<typeof allCuentasCobro>>
+  labels: Record<string, string>
+  styles: Record<string, string>
+}
+
+const { rows, labels, styles } = Astro.props
+---
+
+<div class="overflow-x-auto">
+  <table class="w-full text-sm">
+    <thead>
+      <tr class="border-b border-white/5 text-ink-300 text-left text-[11px] font-mono uppercase tracking-wider">
+        <th class="px-4 py-3 font-medium">Nº</th>
+        <th class="px-4 py-3 font-medium">Deudor</th>
+        <th class="px-4 py-3 font-medium">Emitida</th>
+        <th class="px-4 py-3 font-medium text-right">Total</th>
+        <th class="px-4 py-3 font-medium text-right">Neto</th>
+        <th class="px-4 py-3 font-medium">Estado</th>
+        <th class="px-4 py-3 font-medium" />
+      </tr>
+    </thead>
+    <tbody class="divide-y divide-white/5">
+      {rows.map((cc) => (
+        <tr class="text-ink-100 hover:bg-white/[.02] transition-colors">
+          <td class="px-4 py-3 font-mono text-[13px] text-ink-50">
+            <a href={`/admin/cuentas-cobro/${cc.id}`} class="hover:text-cyan transition-colors">{cc.number}</a>
+          </td>
+          <td class="px-4 py-3">
+            <div class="text-[13px] text-ink-50">{cc.company ?? cc.clientName}</div>
+            {cc.concept && <div class="text-[11px] text-ink-300 truncate max-w-[280px]">{cc.concept}</div>}
+          </td>
+          <td class="px-4 py-3 text-[13px] text-ink-200">{formatFechaCorta(cc.issuedAt)}</td>
+          <td class="px-4 py-3 text-right font-mono text-[13px] text-ink-50">{formatMoney(cc.totalCents)}</td>
+          <td class="px-4 py-3 text-right font-mono text-[13px]">
+            {cc.retentionsCents > 0
+              ? <span class="text-ink-200">{formatMoney(cc.netCents)}</span>
+              : <span class="text-ink-300">-</span>}
+          </td>
+          <td class="px-4 py-3">
+            <span class:list={['px-2 py-0.5 rounded-full border text-[11px] font-mono', styles[cc.status]]}>
+              {labels[cc.status]}
+            </span>
+          </td>
+          <td class="px-4 py-3 text-right whitespace-nowrap">
+            <a
+              href={`/api/admin/cuentas-cobro/${cc.id}/pdf`}
+              target="_blank"
+              rel="noopener"
+              class="h-7 px-3 inline-flex items-center rounded-full bg-white/[.03] border border-white/10 text-[12px] text-ink-200 hover:text-cyan hover:border-cyan/25 transition-colors"
+            >
+              PDF
+            </a>
+          </td>
+        </tr>
+      ))}
+    </tbody>
+  </table>
+</div>

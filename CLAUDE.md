@@ -8,6 +8,10 @@ de Wompi: monitoreo, alertas, SLOs y observabilidad de seguridad son desarrollo
 propio. Las únicas dependencias de UI son `lenis` (scroll suave), `gsap`
 (animaciones de entrada) y `mermaid` (diagramas de `/docs`).
 
+Contexto completo del sistema (arquitectura, módulos, rutas, tablas, API,
+historia, glosario): **wiki en [`docs/wiki/`](docs/wiki/README.md)**. Si un
+cambio altera algo estructural, actualizar la página correspondiente.
+
 ## Regla no negociable: deploys y commits
 
 **El usuario se encarga exclusivamente de disparar deploys (Vercel) y de hacer
