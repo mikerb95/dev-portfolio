@@ -45,8 +45,8 @@ const LEYENDA = [
     </div>
     <div class="rounded-xl bg-white/[.03] px-4 py-3 max-w-sm">
       <p class="text-[12px] text-ink-100 leading-relaxed">
-        Aviso al celular cuando se abre una cita: instala la app <span class="text-ink-50">ntfy</span> y suscríbete a
-        <span class="font-mono text-cyan">{AVISO_APRENDICES.topic}</span>.
+        Aviso al celular cuando se abre una cita: instala la app <span class="text-ink-50">ntfy</span> y suscríbete a{' '}
+        <span class="font-mono text-cyan whitespace-nowrap">{AVISO_APRENDICES.topic}</span>.
       </p>
       <p class="mt-1 text-[11px] text-ink-300 leading-relaxed">
         El aviso y esta página van {RETRASO_PUBLICO_MIN} min después de que la cita se abre.
@@ -141,7 +141,9 @@ const LEYENDA = [
   </div>
 </section>
 
-<style>
+<!-- Global a propósito: el script crea las casillas del calendario, y un
+     estilo acotado de Astro no llega a nodos que no salieron de la plantilla. -->
+<style is:global>
   .ep-celda {
     display: inline-block;
     border-radius: 4px;
