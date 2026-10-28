@@ -15,7 +15,11 @@ import {
   parseConfig,
   parseDisponibilidad,
   resumenSemanas,
-  tocaConsultar,
+  hayRevision,
+  proximaRevision,
+  momentosDeApertura,
+  calendario,
+  AVISO_APRENDICES,
   vistaPublica,
   RETRASO_PUBLICO_MIN,
   type Episodio,
@@ -140,37 +144,78 @@ describe('citas libres', () => {
   })
 })
 
-describe('cuándo consultar', () => {
-  it('siempre en los múltiplos de 10', () => {
-    expect(tocaConsultar(B('2026-10-30T15:40:00'), CFG)).toBe(true)
+// El horario vive en cron-job.org (dos jobs) y aquí hay una copia. Estas
+// pruebas son las que impiden que la copia y las aperturas reales se separen.
+describe('horario de revisión (cron-job.org)', () => {
+  it('revisa siempre en los múltiplos de 10', () => {
+    expect(hayRevision(B('2026-10-30T15:40:00'))).toBe(true)
+    expect(hayRevision(B('2026-10-30T15:43:00'))).toBe(false)
   })
 
-  it('cada minuto alrededor de la apertura móvil (8 días antes de la cita)', () => {
-    // Martes 10 nov 8:00 abre el lunes 2 nov a las 8:00.
-    expect(tocaConsultar(B('2026-11-02T08:03:00'), CFG)).toBe(true)
-    expect(tocaConsultar(B('2026-11-02T07:31:00'), CFG)).toBe(true)
-    // La última cita del martes es a las 11:30: su margen acaba a las 12:00.
-    expect(tocaConsultar(B('2026-11-02T11:59:00'), CFG)).toBe(true)
-    expect(tocaConsultar(B('2026-11-02T12:03:00'), CFG)).toBe(false)
+  it('cada minuto en las franjas de apertura, nada fuera de ellas', () => {
+    expect(hayRevision(B('2026-11-02T08:03:00'))).toBe(true)
+    expect(hayRevision(B('2026-11-04T11:59:00'))).toBe(true)
+    expect(hayRevision(B('2026-11-03T00:17:00'))).toBe(true)
+    expect(hayRevision(B('2026-11-02T12:03:00'))).toBe(false)
+    expect(hayRevision(B('2026-11-05T09:03:00'))).toBe(false)
   })
 
-  it('cada minuto alrededor de la medianoche del día que queda a 8 días', () => {
-    expect(tocaConsultar(B('2026-11-01T23:47:00'), CFG)).toBe(true)
-    expect(tocaConsultar(B('2026-11-02T00:13:00'), CFG)).toBe(true)
+  it('cubre minuto a minuto la media hora siguiente a cada apertura, por las dos hipótesis', () => {
+    const desde = B('2026-11-09T00:00:00')
+    for (const cita of citasTeoricas(CFG, desde, desde + 7 * 86_400_000)) {
+      for (const m of momentosDeApertura(cita, CFG)) {
+        for (let t = m; t < m + 30 * MIN; t += MIN) expect(hayRevision(t), `${fmtCita(cita)} @ ${new Date(t).toISOString()}`).toBe(true)
+      }
+    }
   })
 
-  it('no fuera de las aperturas', () => {
-    expect(tocaConsultar(B('2026-11-02T15:03:00'), CFG)).toBe(false)
-    // Jueves por la mañana no abre nada: ninguna cita cae en viernes.
-    expect(tocaConsultar(B('2026-11-05T09:03:00'), CFG)).toBe(false)
-    expect(tocaConsultar(B('2026-11-07T03:03:00'), CFG)).toBe(false)
-  })
-
-  it('cuesta unas 2.000 consultas por semana, no 10.000', () => {
+  it('cuesta menos de 8.000 consultas al mes, y ninguna llamada vacía', () => {
     let n = 0
-    for (let t = B('2026-11-02T00:00:00'); t < B('2026-11-09T00:00:00'); t += MIN) if (tocaConsultar(t, CFG)) n++
+    for (let t = B('2026-11-02T00:00:00'); t < B('2026-11-09T00:00:00'); t += MIN) if (hayRevision(t)) n++
+    expect(n * 30 / 7).toBeLessThan(8000)
     expect(n).toBeGreaterThan(1500)
-    expect(n).toBeLessThan(2500)
+  })
+
+  it('la próxima revisión es el siguiente minuto con job', () => {
+    expect(proximaRevision(B('2026-10-30T15:43:20'))).toBe(B('2026-10-30T15:50:00'))
+    expect(proximaRevision(B('2026-11-02T08:03:20'))).toBe(B('2026-11-02T08:04:00'))
+    expect(proximaRevision(B('2026-11-02T11:59:30'))).toBe(B('2026-11-02T12:00:00'))
+  })
+})
+
+describe('calendario de /ep', () => {
+  const inicio = B('2026-10-28T11:15:00')
+  const ahora = B('2026-10-30T09:00:00')
+
+  it('una semana por cada lunes que toca la ventana de reserva, con el horario completo', () => {
+    const cal = calendario([], [], CFG, inicio, ahora)
+    expect(cal.map((s) => s.lunes)).toEqual([B('2026-10-26T00:00:00'), B('2026-11-02T00:00:00')])
+    expect(cal.every((s) => s.citas.length === 22)).toBe(true)
+  })
+
+  it('distingue antes del monitor, nunca abierta, por abrir, abierta y libre', () => {
+    const episodios: Episodio[] = [
+      { cita: B('2026-11-03T08:30:00'), abiertaEn: B('2026-10-26T09:00:00'), como: 'liberada', cerradaEn: B('2026-10-26T09:05:00'), cierre: 'ocupada' },
+    ]
+    const libres = [B('2026-11-04T08:00:00')]
+    const cal = calendario(episodios, libres, CFG, inicio, ahora)
+    const estado = (iso: string) => cal.flatMap((s) => s.citas).find((c) => c.cita === B(iso))!.estado
+    expect(estado('2026-11-03T08:00:00')).toBe('sin-datos') // abrió el 26 oct, sin monitor
+    expect(estado('2026-11-05T11:30:00')).toBe('sin-abrir') // abrió el 28 a las 11:30, con monitor
+    expect(estado('2026-11-03T08:30:00')).toBe('se-abrio')
+    expect(estado('2026-11-04T08:00:00')).toBe('libre')
+    expect(estado('2026-11-05T09:00:00')).toBe('sin-datos')
+    const s2 = cal[1]
+    expect(s2.abiertas).toBe(2)
+  })
+
+  it('lo que aún no entra en la ventana sale como por abrir y no cuenta', () => {
+    const cal = calendario([], [], CFG, inicio, B('2026-10-28T12:00:00'))
+    const s = cal.find((x) => x.lunes === B('2026-11-02T00:00:00'))!
+    expect(s.citas.find((c) => c.cita === B('2026-11-05T11:30:00'))!.estado).toBe('sin-abrir')
+    expect(s.citas.filter((c) => c.estado === 'por-abrir')).toHaveLength(0)
+    const s1 = calendario([], [], CFG, inicio, B('2026-10-28T12:00:00')).at(-1)!
+    expect(s1.vigiladas).toBe(1)
   })
 })
 
@@ -267,8 +312,8 @@ describe('vista pública con retraso', () => {
 // se separan, uno de los dos canales se vuelve inútil frente al otro.
 describe('aviso a los aprendices', () => {
   it('sale por sena-agenda-ep con el retraso de la página pública', () => {
-    const src = readFileSync('src/lib/ep-agenda-db.ts', 'utf8')
-    expect(src).toMatch(/topic: 'sena-agenda-ep', retraso: `\$\{RETRASO_PUBLICO_MIN\}m`/)
+    expect(AVISO_APRENDICES.topic).toBe('sena-agenda-ep')
+    expect(AVISO_APRENDICES.retraso).toBe(`${RETRASO_PUBLICO_MIN}m`)
     expect(RETRASO_PUBLICO_MIN).toBe(10)
   })
 })

@@ -1,13 +1,15 @@
 import type { APIRoute } from 'astro'
 import { cronSecretOk } from '../../../lib/cron-auth'
 import { registrarCronRun } from '../../../lib/cron-runs'
-import { citasLibres, compararLibres, enBogota, tocaConsultar, CONFIG_POR_DEFECTO, type EstadoAgenda } from '../../../lib/ep-agenda'
+import { citasLibres, compararLibres, enBogota, CADA_MIN_FONDO, CONFIG_POR_DEFECTO, type EstadoAgenda } from '../../../lib/ep-agenda'
 import { avisarAperturas, consultarBookings, guardarEstado, leerEstado, refrescarConfig, registrarCambios } from '../../../lib/ep-agenda-db'
 
 // Vigía de la agenda del instructor de etapa productiva (ver lib/ep-agenda.ts).
-// cron-job.org lo llama CADA MINUTO, y el endpoint decide si ese minuto toca
-// consultar a Bookings: así la regla de franjas vive en código probado y no
-// repartida en la configuración del scheduler.
+// Lo disparan dos jobs de cron-job.org: "ep-agenda" cada 10 min y
+// "ep-agenda-aperturas" cada minuto en las franjas en que se abren citas. Cada
+// llamada consulta a Bookings: no hay llamadas de "este minuto no toca", que
+// gastaban CPU activa de la cuota de Vercel sin hacer nada. Las franjas están
+// copiadas en `FRANJAS_APERTURA` (lib/ep-agenda.ts), con sus pruebas.
 //
 // Siempre responde 200 tras la autenticación, aunque Bookings falle: cron-job.org
 // deshabilita un job tras 25 fallos seguidos, y a un minuto por llamada eso son
@@ -19,6 +21,14 @@ import { avisarAperturas, consultarBookings, guardarEstado, leerEstado, refresca
 // cadencia que vigila el detector de silencio), toda consulta con cambios y
 // todo fallo.
 
+/**
+ * Dos llamadas casi juntas (un reintento de cron-job.org, o los dos jobs si
+ * alguien desalinea las franjas) compararían contra el mismo estado y
+ * registrarían y avisarían dos veces la misma apertura. Con esto la segunda se
+ * retira.
+ */
+const MIN_ENTRE_CONSULTAS_MS = 30_000
+
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } })
 
@@ -27,7 +37,7 @@ export const GET: APIRoute = async ({ request }) => {
 
   const t0 = Date.now()
   const ahora = t0
-  const enMarca = enBogota(ahora).minuto % 10 === 0
+  const enMarca = enBogota(ahora).minuto % CADA_MIN_FONDO === 0
 
   let previo: EstadoAgenda | null = null
   try {
@@ -40,10 +50,11 @@ export const GET: APIRoute = async ({ request }) => {
     return json({ ok: false, error: 'estado' })
   }
 
-  const config = previo?.config ?? CONFIG_POR_DEFECTO
-  if (!tocaConsultar(ahora, config)) {
+  if (previo && ahora - previo.revisadoEn < MIN_ENTRE_CONSULTAS_MS) {
     return new Response(null, { status: 204 })
   }
+
+  const config = previo?.config ?? CONFIG_POR_DEFECTO
 
   const [r, siguiente] = await Promise.all([consultarBookings(config, ahora), refrescarConfig(previo, ahora)])
 

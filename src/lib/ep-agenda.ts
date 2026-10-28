@@ -275,32 +275,49 @@ export function citasLibres(tramos: Tramo[], config: ConfigServicio, ahora: numb
 // Cuándo consultar
 // ---------------------------------------------------------------------------
 
-/** Margen alrededor de cada apertura en el que se consulta cada minuto. */
-export const MARGEN_APERTURA_MIN = 30
-/** Fuera de las aperturas, la cadencia de fondo (para cancelaciones). */
+/** Cadencia de fondo (para cancelaciones): el job "ep-agenda" de cron-job.org. */
 export const CADA_MIN_FONDO = 10
 
 /**
- * ¿Toca consultar a Bookings en este minuto?
+ * Franjas del job "ep-agenda-aperturas" de cron-job.org, que consulta cada
+ * minuto (salvo los múltiplos de 10, que ya cubre el de fondo).
  *
- * cron-job.org llama cada minuto, y la decisión vive aquí para que ajustar las
- * franjas no exija tocar el scheduler. Se consulta siempre en los múltiplos de
- * 10 (cancelaciones) y cada minuto alrededor de las aperturas. Hay dos
- * hipótesis de cuándo abre una cita y se vigilan las dos, porque no se sabe
- * cuál aplica Bookings: exactamente 8 días antes de su hora (ventana móvil) o
- * a la medianoche del día que queda a 8 días (ventana por días).
+ * POR QUÉ ESTÁ AQUÍ UNA COPIA DEL SCHEDULER: hasta el 28 oct 2026 cron-job.org
+ * llamaba cada minuto y el endpoint decidía si consultar. Eran ~35.000 llamadas
+ * al mes que respondían "no toca" pero pasaban igual por el middleware y por
+ * Turso, y gastaban CPU activa de la cuota gratis de Vercel, que ya iba cerca
+ * del límite. Ahora cron-job.org solo llama cuando hay que consultar, y esta
+ * copia sirve para dos cosas: decir en /ep cuándo será la próxima revisión, y
+ * probar (tests/ep-agenda.test.ts) que las franjas cubren cada apertura y que
+ * los dos jobs nunca disparan en el mismo minuto. Si se cambia una, se cambia
+ * la otra.
+ *
+ * Las franjas salen de las dos hipótesis de cuándo abre una cita, porque no se
+ * sabe cuál aplica Bookings: exactamente 8 días antes de su hora (lunes a
+ * miércoles de 8:00 a 12:00 para el horario actual) o a la medianoche del día
+ * que queda a 8 días (lunes a miércoles a las 0:00).
  */
-export function tocaConsultar(ahora: number, config: ConfigServicio): boolean {
-  if (enBogota(ahora).minuto % CADA_MIN_FONDO === 0) return true
-  const margen = MARGEN_APERTURA_MIN * MIN_MS
-  const adv = config.anticipacionMaxMin * MIN_MS
-  // Citas cuya apertura (por cualquiera de las dos hipótesis) cae cerca de ahora.
-  const candidatas = citasTeoricas(config, ahora + adv - DIA_MS - margen, ahora + adv + DIA_MS + margen)
-  return candidatas.some((c) => {
-    const movil = c - adv
-    const porDia = medianocheBogota(c - adv)
-    return Math.abs(ahora - movil) <= margen || Math.abs(ahora - porDia) <= margen
-  })
+export const FRANJAS_APERTURA = { dias: [1, 2, 3], horas: [0, 8, 9, 10, 11] } as const
+
+/** ¿Revisa algún job en este minuto? */
+export function hayRevision(ms: number): boolean {
+  const { dia, minuto } = enBogota(ms)
+  if (minuto % CADA_MIN_FONDO === 0) return true
+  return (FRANJAS_APERTURA.dias as readonly number[]).includes(dia) &&
+    (FRANJAS_APERTURA.horas as readonly number[]).includes(Math.floor(minuto / 60))
+}
+
+/** Siguiente minuto (exacto) en que revisa algún job, estrictamente después de `ahora`. */
+export function proximaRevision(ahora: number): number {
+  let t = Math.floor(ahora / MIN_MS) * MIN_MS + MIN_MS
+  while (!hayRevision(t)) t += MIN_MS
+  return t
+}
+
+/** Momentos en que puede abrir una cita, por cualquiera de las dos hipótesis. */
+export function momentosDeApertura(cita: number, config: ConfigServicio): number[] {
+  const movil = abreEn(cita, config)
+  return [movil, medianocheBogota(movil)]
 }
 
 // ---------------------------------------------------------------------------
@@ -444,6 +461,15 @@ export function resumenSemanas(episodios: Episodio[], config: ConfigServicio, in
 export const RETRASO_PUBLICO_MIN = 10
 
 /**
+ * Canal público de los aprendices, además del dueño (que recibe al instante por
+ * NTFY_TOPIC). Va fijo en el código y no en una variable de entorno ni en la BD
+ * porque no es secreto: es gratis y se comparte con toda la ficha. El retraso
+ * coincide con el de /ep (RETRASO_PUBLICO_MIN) y lo aplica el propio ntfy.
+ * Vive en el módulo puro porque /ep lo muestra para que la gente se suscriba.
+ */
+export const AVISO_APRENDICES = { topic: 'sena-agenda-ep', retraso: `${RETRASO_PUBLICO_MIN}m`, prioridad: 4 } as const
+
+/**
  * Lo que /ep puede enseñar ahora. Una cita abierta hace menos del retraso no
  * aparece en ninguna parte, ni como fila ni en el conteo semanal, porque que
  * el "sin abrirse" baje de 19 a 18 ya delata que algo se abrió.
@@ -461,6 +487,63 @@ export function vistaPublica(
       .map(([c]) => Number(c))
       .sort((a, b) => a - b),
   }
+}
+
+/**
+ * Estado de cada cita en el calendario de /ep:
+ * - libre: se puede reservar (ya con el retraso público aplicado).
+ * - se-abrio: estuvo libre en algún momento y ya no.
+ * - sin-abrir: ya pudo abrirse, con el monitor mirando, y nunca se vio libre.
+ * - por-abrir: todavía no entra en la ventana de reserva.
+ * - sin-datos: se abrió antes de que existiera el monitor; no se sabe qué pasó.
+ */
+export type EstadoCelda = 'libre' | 'se-abrio' | 'sin-abrir' | 'por-abrir' | 'sin-datos'
+
+export type SemanaCalendario = {
+  lunes: number
+  citas: { cita: number; estado: EstadoCelda }[]
+  /** Citas de la semana que ya pudieron abrirse con el monitor mirando. */
+  vigiladas: number
+  /** De esas, cuántas se vieron libres. */
+  abiertas: number
+}
+
+/**
+ * Las semanas que toca la ventana de reserva (la actual y, casi siempre, la
+ * siguiente), cita por cita. Recibe los episodios y libres YA filtrados por
+ * `vistaPublica`: así el calendario no puede adelantarse al aviso.
+ */
+export function calendario(
+  episodios: Episodio[],
+  libres: number[],
+  config: ConfigServicio,
+  inicio: number,
+  ahora: number
+): SemanaCalendario[] {
+  const conEpisodio = new Set(episodios.map((e) => e.cita))
+  const libresSet = new Set(libres)
+  const semanas: SemanaCalendario[] = []
+  const ultima = lunesBogota(ahora + config.anticipacionMaxMin * MIN_MS)
+
+  for (let lunes = lunesBogota(ahora); lunes <= ultima; lunes += 7 * DIA_MS) {
+    const citas = citasTeoricas(config, lunes, lunes + 7 * DIA_MS - 1).map((c) => {
+      const abre = abreEn(c, config)
+      const estado: EstadoCelda = libresSet.has(c)
+        ? 'libre'
+        : conEpisodio.has(c)
+          ? 'se-abrio'
+          : abre > ahora
+            ? 'por-abrir'
+            : abre < inicio
+              ? 'sin-datos'
+              : 'sin-abrir'
+      return { cita: c, estado }
+    })
+    const vigiladas = citas.filter((c) => c.estado !== 'por-abrir' && c.estado !== 'sin-datos').length
+    const abiertas = citas.filter((c) => c.estado === 'libre' || c.estado === 'se-abrio').length
+    semanas.push({ lunes, citas, vigiladas, abiertas })
+  }
+  return semanas
 }
 
 /** "< 1 min", "4 min", "2 h 5 min", "3 d 2 h". */

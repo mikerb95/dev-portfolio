@@ -6,6 +6,7 @@ import { db } from '../db'
 import { appSettings, epAgendaEpisodios } from '../db/schema'
 import { sendPush } from './notify'
 import {
+  AVISO_APRENDICES,
   CONFIG_POR_DEFECTO,
   RETRASO_PUBLICO_MIN,
   URL_DISPONIBILIDAD,
@@ -15,6 +16,7 @@ import {
   fmtCita,
   parseConfig,
   parseDisponibilidad,
+  calendario,
   resumenSemanas,
   vistaPublica,
   type Apertura,
@@ -23,18 +25,12 @@ import {
   type Episodio,
   type EstadoAgenda,
   type Semana,
+  type SemanaCalendario,
   type Tramo,
 } from './ep-agenda'
 
 const CLAVE_ESTADO = 'ep_agenda_estado'
 
-/**
- * Canal público de los aprendices, además del dueño (que recibe al instante por
- * NTFY_TOPIC). Va fijo en el código y no en una variable de entorno ni en la BD
- * porque no es secreto: es gratis y se comparte con toda la ficha. El retraso
- * coincide con el de /ep (RETRASO_PUBLICO_MIN) y lo aplica el propio ntfy.
- */
-export const AVISO_APRENDICES = { topic: 'sena-agenda-ep', retraso: `${RETRASO_PUBLICO_MIN}m`, prioridad: 4 } as const
 
 /** El horario del instructor cambia rara vez: releerlo en cada consulta sería otra llamada lenta por minuto. */
 const RELEER_CONFIG_MS = 6 * 3_600_000
@@ -173,6 +169,8 @@ export type AgendaPublica = {
   conError: boolean
   libres: number[]
   semanas: Semana[]
+  /** Las semanas de la ventana de reserva, cita por cita, para el calendario. */
+  calendario: SemanaCalendario[]
   episodios: Episodio[]
   urlReserva: string
 }
@@ -184,7 +182,7 @@ const MAX_EPISODIOS = 400
 export async function leerAgendaPublica(ahora: number): Promise<AgendaPublica> {
   const estado = await leerEstado()
   const vacia: AgendaPublica = {
-    ok: true, revisadoEn: null, inicio: null, conError: false, libres: [], semanas: [], episodios: [], urlReserva: URL_RESERVA,
+    ok: true, revisadoEn: null, inicio: null, conError: false, libres: [], semanas: [], calendario: [], episodios: [], urlReserva: URL_RESERVA,
   }
   if (!estado) return vacia
 
@@ -212,6 +210,7 @@ export async function leerAgendaPublica(ahora: number): Promise<AgendaPublica> {
     conError: Boolean(estado.error),
     libres,
     semanas: resumenSemanas(episodios, estado.config, estado.inicio, ahora),
+    calendario: calendario(episodios, libres, estado.config, estado.inicio, ahora),
     episodios,
   }
 }

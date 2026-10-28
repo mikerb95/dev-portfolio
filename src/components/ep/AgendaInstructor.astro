@@ -1,85 +1,182 @@
 ---
 // Bitácora pública de la agenda del instructor (Microsoft Bookings). /ep es
-// prerenderizada, así que la tabla llega desde /api/ep-agenda en el navegador;
-// lo que se pinta en el build es solo el esqueleto y el texto de método.
+// prerenderizada, así que los datos llegan desde /api/ep-agenda en el
+// navegador; lo que se pinta en el build es solo el esqueleto y el método.
 // Lógica y razones en src/lib/ep-agenda.ts.
-import { URL_RESERVA } from '../../lib/ep-agenda'
+//
+// El orden responde a lo que un aprendiz viene a preguntar: ¿hay cita ahora?
+// (la frase grande), ¿cómo va la semana? (el calendario con el horario real
+// del instructor) y, solo si quiere el detalle, las tablas, plegadas.
+import { AVISO_APRENDICES, RETRASO_PUBLICO_MIN, URL_RESERVA } from '../../lib/ep-agenda'
+
+const LEYENDA = [
+  { estado: 'libre', texto: 'Libre ahora' },
+  { estado: 'se-abrio', texto: 'Se abrió y la tomaron' },
+  { estado: 'sin-abrir', texto: 'Nunca se abrió' },
+  { estado: 'por-abrir', texto: 'Aún no se puede reservar' },
+  { estado: 'sin-datos', texto: 'Antes del monitor' },
+]
 ---
 
 <section id="agenda" class="rounded-2xl glass p-6 md:p-7 mb-4 scroll-mt-28" data-agenda>
-  <div class="flex flex-wrap items-center gap-x-3 gap-y-2 mb-1">
+  <div class="flex items-center gap-2 mb-5">
     <span class="w-1.5 h-1.5 rounded-full bg-cyan"></span>
     <span class="text-[11px] font-mono uppercase tracking-[.15em] text-ink-100">Agenda del instructor</span>
-    <span data-agenda-pulso class="ml-auto inline-flex items-center gap-2 text-[11px] font-mono text-ink-300">
-      <span data-agenda-punto class="w-1.5 h-1.5 rounded-full bg-ink-400"></span>
-      <span data-agenda-revision>Cargando…</span>
-    </span>
-  </div>
-  <p class="text-[13px] text-ink-200 leading-relaxed mt-3 mb-6 max-w-2xl">
-    Las reuniones de seguimiento se agendan en el sistema de reservas del instructor, que solo muestra
-    los espacios libres en el momento en que alguien lo abre. Esta tabla lo revisa cada minuto y anota cuándo
-    aparece cada cita libre y cuándo deja de estarlo. Aquí cada cita se publica 10 minutos después de abrirse.
-  </p>
-
-  <div data-agenda-libres class="hidden mb-6 rounded-xl bg-lime/[.08] px-4 py-3">
-    <p class="text-[13px] text-ink-50">
-      <span class="font-medium text-lime">Siguen libres:</span>{' '}
-      <span data-agenda-libres-lista class="font-mono"></span>
-    </p>
-    <a href={URL_RESERVA} target="_blank" rel="noopener noreferrer" class="inline-block mt-1 text-[12px] font-mono text-cyan hover:underline">
-      Reservar en Bookings ↗
-    </a>
   </div>
 
-  <h3 class="text-[13px] text-ink-50 font-medium mb-3">Por semana</h3>
-  <div class="overflow-x-auto -mx-1 px-1 mb-8">
-    <table class="w-full text-[12px]">
-      <thead>
-        <tr class="text-left align-bottom text-[10px] font-mono uppercase tracking-wider text-ink-300">
-          <th class="py-2 pr-3 font-normal">Semana</th>
-          <th class="py-2 pr-3 font-normal text-right" title="Citas que el horario del instructor permite y que entraron en la ventana de reserva desde que corre el monitor">Citas del horario</th>
-          <th class="py-2 pr-3 font-normal text-right">Se abrieron</th>
-          <th class="py-2 pr-3 font-normal text-right">Sin abrirse</th>
-          <th class="py-2 font-normal text-right" title="Mediana de cuánto estuvo libre cada cita antes de tomarse o vencer">Mediana libre</th>
-        </tr>
-      </thead>
-      <tbody data-agenda-semanas>
-        <tr><td colspan="5" class="py-3 text-ink-300">Cargando…</td></tr>
-      </tbody>
-    </table>
+  <!-- Lo que se viene a preguntar: ¿hay cita ahora? -->
+  <div class="grid lg:grid-cols-[minmax(0,1fr)_auto] gap-x-8 gap-y-4 lg:items-end mb-8">
+    <div>
+      <p class="flex items-center gap-3 text-2xl md:text-3xl font-medium tracking-[-.02em] text-ink-50">
+        <span data-agenda-punto class="w-2.5 h-2.5 rounded-full bg-ink-400 shrink-0"></span>
+        <span data-agenda-titular>Revisando la agenda…</span>
+      </p>
+      <p data-agenda-libres class="hidden mt-2 text-[14px] font-mono text-lime"></p>
+      <a
+        data-agenda-reservar
+        href={URL_RESERVA}
+        target="_blank"
+        rel="noopener noreferrer"
+        class="hidden mt-3 h-9 px-4 items-center gap-2 rounded-full bg-lime text-ink-950 text-[13px] font-medium hover:opacity-90 transition-opacity"
+      >
+        Reservar en Bookings ↗
+      </a>
+      <p data-agenda-revision class="mt-3 text-[12px] font-mono text-ink-300"></p>
+    </div>
+    <div class="rounded-xl bg-white/[.03] px-4 py-3 max-w-sm">
+      <p class="text-[12px] text-ink-100 leading-relaxed">
+        Aviso al celular cuando se abre una cita: instala la app <span class="text-ink-50">ntfy</span> y suscríbete a
+        <span class="font-mono text-cyan">{AVISO_APRENDICES.topic}</span>.
+      </p>
+      <p class="mt-1 text-[11px] text-ink-300 leading-relaxed">
+        El aviso y esta página van {RETRASO_PUBLICO_MIN} min después de que la cita se abre.
+      </p>
+    </div>
   </div>
 
-  <h3 class="text-[13px] text-ink-50 font-medium mb-3">Cita por cita</h3>
-  <div class="overflow-x-auto -mx-1 px-1">
-    <table class="w-full min-w-[640px] text-[12px]">
-      <thead>
-        <tr class="text-left text-[10px] font-mono uppercase tracking-wider text-ink-300">
-          <th class="py-2 pr-3 font-normal">Cita</th>
-          <th class="py-2 pr-3 font-normal">Se abrió</th>
-          <th class="py-2 pr-3 font-normal">Cómo</th>
-          <th class="py-2 pr-3 font-normal">Se tomó</th>
-          <th class="py-2 pr-3 font-normal text-right">Estuvo libre</th>
-          <th class="py-2 font-normal">Estado</th>
-        </tr>
-      </thead>
-      <tbody data-agenda-episodios>
-        <tr><td colspan="6" class="py-3 text-ink-300">Cargando…</td></tr>
-      </tbody>
-    </table>
-  </div>
+  <!-- ¿Cómo va la semana? Una casilla por cita del horario real del instructor. -->
+  <div data-agenda-calendario class="grid gap-8 mb-6"></div>
 
-  <p class="mt-6 text-[11px] text-ink-300 leading-relaxed max-w-3xl">
-    Método: se consulta el sistema público de reservas cada 10 minutos, y cada minuto alrededor de las horas en
-    que se abren citas nuevas (8 días antes de cada una). Esta página muestra cada cita 10 minutos después de que
-    se abrió, y en el conteo semanal tampoco cuenta antes. Solo se registra cuándo aparece y desaparece cada cita;
-    el sistema no dice quién reserva y aquí tampoco. La precisión es de un minuto: una cita tomada en segundos
-    aparece como "1 min". Las semanas solo cuentan citas que entraron en la ventana de reserva con el monitor ya
-    corriendo, y una cita "sin abrirse" no se vio libre en ninguna revisión: pudo estar reservada o bloqueada.
-  </p>
+  <ul class="flex flex-wrap gap-x-5 gap-y-2 mb-8 text-[11px] text-ink-200">
+    {LEYENDA.map((l) => (
+      <li class="inline-flex items-center gap-2">
+        <span class={`ep-celda ep-celda--${l.estado} w-3 h-3`}></span>
+        {l.texto}
+      </li>
+    ))}
+  </ul>
+
+  <!-- El detalle, para quien lo quiera. -->
+  <div class="grid gap-2">
+    <details class="ep-pliegue group rounded-xl bg-white/[.02]">
+      <summary class="cursor-pointer list-none px-4 py-3 text-[13px] text-ink-100 flex items-center justify-between gap-3">
+        Semanas anteriores
+        <span class="text-ink-300 transition-transform group-open:rotate-90">›</span>
+      </summary>
+      <div class="px-4 pb-4 overflow-x-auto">
+        <table class="w-full text-[12px]">
+          <thead>
+            <tr class="text-left align-bottom text-[10px] font-mono uppercase tracking-wider text-ink-300">
+              <th class="py-2 pr-3 font-normal">Semana</th>
+              <th class="py-2 pr-3 font-normal text-right">Citas vigiladas</th>
+              <th class="py-2 pr-3 font-normal text-right">Se abrieron</th>
+              <th class="py-2 pr-3 font-normal text-right">Nunca se abrieron</th>
+              <th class="py-2 font-normal text-right" title="Mediana de cuánto estuvo libre cada cita antes de que la tomaran">Duraron libres</th>
+            </tr>
+          </thead>
+          <tbody data-agenda-semanas>
+            <tr><td colspan="5" class="py-3 text-ink-300">Cargando…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </details>
+
+    <details class="ep-pliegue group rounded-xl bg-white/[.02]">
+      <summary class="cursor-pointer list-none px-4 py-3 text-[13px] text-ink-100 flex items-center justify-between gap-3">
+        Historial cita por cita
+        <span class="text-ink-300 transition-transform group-open:rotate-90">›</span>
+      </summary>
+      <div class="px-4 pb-4 overflow-x-auto">
+        <table class="w-full min-w-[620px] text-[12px]">
+          <thead>
+            <tr class="text-left text-[10px] font-mono uppercase tracking-wider text-ink-300">
+              <th class="py-2 pr-3 font-normal">Cita</th>
+              <th class="py-2 pr-3 font-normal">Se abrió</th>
+              <th class="py-2 pr-3 font-normal">Cómo</th>
+              <th class="py-2 pr-3 font-normal">Se tomó</th>
+              <th class="py-2 pr-3 font-normal text-right">Estuvo libre</th>
+              <th class="py-2 font-normal">Estado</th>
+            </tr>
+          </thead>
+          <tbody data-agenda-episodios>
+            <tr><td colspan="6" class="py-3 text-ink-300">Cargando…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </details>
+
+    <details class="ep-pliegue group rounded-xl bg-white/[.02]">
+      <summary class="cursor-pointer list-none px-4 py-3 text-[13px] text-ink-100 flex items-center justify-between gap-3">
+        ¿Cómo funciona?
+        <span class="text-ink-300 transition-transform group-open:rotate-90">›</span>
+      </summary>
+      <div class="px-4 pb-4 grid gap-2 text-[12px] text-ink-200 leading-relaxed max-w-3xl">
+        <p>
+          Las reuniones de seguimiento se agendan en el sistema de reservas del instructor, que solo muestra los
+          espacios libres en el momento en que alguien lo abre. Un programa lo consulta solo y anota cuándo aparece
+          cada cita libre y cuándo deja de estarlo.
+        </p>
+        <p>
+          Se consulta cada 10 minutos, y cada minuto los lunes, martes y miércoles de 8:00 a 12:00 y de 0:00 a 1:00,
+          que es cuando se abren las citas nuevas (8 días antes de cada una). La precisión es de un minuto: una cita
+          tomada en segundos aparece como "1 min".
+        </p>
+        <p>
+          Solo se registra cuándo aparece y desaparece cada cita: el sistema no dice quién reserva y aquí tampoco. Una
+          cita que "nunca se abrió" no se vio libre en ninguna consulta: pudo estar reservada o bloqueada. Las
+          casillas "antes del monitor" son citas que se abrieron cuando el programa todavía no existía.
+        </p>
+      </div>
+    </details>
+  </div>
 </section>
 
+<style>
+  .ep-celda {
+    display: inline-block;
+    border-radius: 4px;
+  }
+  .ep-celda--libre {
+    background: var(--color-lime);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-lime) 25%, transparent);
+  }
+  .ep-celda--se-abrio {
+    background: color-mix(in srgb, var(--color-cyan) 55%, transparent);
+  }
+  .ep-celda--sin-abrir {
+    background: color-mix(in srgb, var(--color-ember) 55%, transparent);
+  }
+  .ep-celda--por-abrir {
+    border: 1px dashed rgb(255 255 255 / 0.22);
+  }
+  .ep-celda--sin-datos {
+    background: rgb(255 255 255 / 0.07);
+  }
+  .ep-pliegue summary::-webkit-details-marker {
+    display: none;
+  }
+</style>
+
 <script>
-  import { fmtCita, fmtDuracion, type Episodio, type Semana } from '../../lib/ep-agenda'
+  import {
+    fmtCita,
+    fmtDuracion,
+    proximaRevision,
+    type EstadoCelda,
+    type Episodio,
+    type Semana,
+    type SemanaCalendario,
+  } from '../../lib/ep-agenda'
 
   type Datos = {
     ok: boolean
@@ -87,23 +184,33 @@ import { URL_RESERVA } from '../../lib/ep-agenda'
     conError: boolean
     libres: number[]
     semanas: Semana[]
+    calendario: SemanaCalendario[]
     episodios: Episodio[]
   }
 
-  const COMO: Record<string, string> = { apertura: 'Apertura', liberada: 'Liberada después', previa: 'Ya libre al iniciar' }
-  const ESTADO: Record<string, string> = { ocupada: 'Tomada', vencio: 'Venció' }
+  const COMO: Record<string, string> = { apertura: 'Al abrirse la semana', liberada: 'Alguien la liberó', previa: 'Ya libre al iniciar' }
+  const ESTADO: Record<string, string> = { ocupada: 'Tomada', vencio: 'Venció sin tomarse' }
+  const TEXTO_CELDA: Record<EstadoCelda, string> = {
+    libre: 'libre ahora',
+    'se-abrio': 'se abrió y la tomaron',
+    'sin-abrir': 'nunca se abrió',
+    'por-abrir': 'aún no se puede reservar',
+    'sin-datos': 'se abrió antes del monitor',
+  }
+  const DIA_MS = 86_400_000
 
   const raiz = document.querySelector<HTMLElement>('[data-agenda]')
   const $ = <T extends HTMLElement>(sel: string) => raiz?.querySelector<T>(sel) ?? null
 
-  const celda = (texto: string, clase = '') => {
-    const td = document.createElement('td')
-    td.className = `py-2 pr-3 border-t border-white/[.06] ${clase}`
-    td.textContent = texto
-    return td
+  const el = <K extends keyof HTMLElementTagNameMap>(tag: K, clase = '', texto?: string) => {
+    const n = document.createElement(tag)
+    if (clase) n.className = clase
+    if (texto !== undefined) n.textContent = texto
+    return n
   }
-  const fila = (celdas: HTMLTableCellElement[]) => {
-    const tr = document.createElement('tr')
+  const celda = (texto: string, clase = '') => el('td', `py-2 pr-3 border-t border-white/[.06] ${clase}`, texto)
+  const fila = (celdas: HTMLElement[]) => {
+    const tr = el('tr')
     tr.append(...celdas)
     return tr
   }
@@ -114,11 +221,12 @@ import { URL_RESERVA } from '../../lib/ep-agenda'
     tbody.replaceChildren(fila([td]))
   }
 
-  // "26-30 oct", o "30 oct-3 nov" si la semana cruza de mes: corto para que
-  // quepa en una línea en el celular.
+  // fmtCita da "mar 10 nov, 8:00": de ahí salen el día y la hora sin otro formateador.
+  const soloDia = (ms: number) => fmtCita(ms).split(',')[0]
+  const soloHora = (ms: number) => fmtCita(ms).split(', ')[1]
   const fmtSemana = (lunes: number) => {
-    const [d1, m1] = fmtCita(lunes).split(',')[0].split(' ').slice(1)
-    const [d2, m2] = fmtCita(lunes + 4 * 86_400_000).split(',')[0].split(' ').slice(1)
+    const [d1, m1] = soloDia(lunes).split(' ').slice(1)
+    const [d2, m2] = soloDia(lunes + 4 * DIA_MS).split(' ').slice(1)
     return m1 === m2 ? `${d1}-${d2} ${m2}` : `${d1} ${m1}-${d2} ${m2}`
   }
   const hace = (ms: number) => {
@@ -126,23 +234,89 @@ import { URL_RESERVA } from '../../lib/ep-agenda'
     return min < 1 ? 'hace menos de 1 min' : `hace ${fmtDuracion(min)}`
   }
 
-  function pintar(d: Datos) {
+  function pintarTitular(d: Datos) {
     const punto = $('[data-agenda-punto]')
-    const revision = $('[data-agenda-revision]')
-    if (revision) revision.textContent = d.revisadoEn ? `Última revisión: ${hace(d.revisadoEn)}` : 'El monitor aún no ha corrido'
-    if (punto) {
-      // Más de 20 min sin revisar es una avería del monitor, no una semana sin citas.
-      const fresco = d.revisadoEn !== null && Date.now() - d.revisadoEn < 20 * 60_000 && !d.conError
-      punto.className = `w-1.5 h-1.5 rounded-full ${fresco ? 'bg-lime' : 'bg-ember'}`
-    }
-
+    const titular = $('[data-agenda-titular]')
     const libres = $('[data-agenda-libres]')
-    if (libres && d.libres.length > 0) {
-      libres.classList.remove('hidden')
-      const lista = $('[data-agenda-libres-lista]')
-      if (lista) lista.textContent = d.libres.map(fmtCita).join(' · ')
-    }
+    const reservar = $('[data-agenda-reservar]')
+    const revision = $('[data-agenda-revision]')
 
+    // Más de 20 min sin consultar es una avería del monitor, no una semana sin
+    // citas: el titular no puede decir "no hay" si nadie está mirando.
+    const fresco = d.revisadoEn !== null && Date.now() - d.revisadoEn < 20 * 60_000 && !d.conError
+    const hay = d.libres.length > 0
+
+    if (titular) {
+      titular.textContent = !fresco
+        ? 'El monitor no está revisando ahora'
+        : hay
+          ? d.libres.length === 1 ? 'Hay 1 cita libre' : `Hay ${d.libres.length} citas libres`
+          : 'No hay citas libres'
+    }
+    if (punto) punto.className = `w-2.5 h-2.5 rounded-full shrink-0 ${!fresco ? 'bg-ember' : hay ? 'bg-lime' : 'bg-ink-400'}`
+    if (libres) {
+      libres.classList.toggle('hidden', !hay)
+      libres.textContent = d.libres.map(fmtCita).join(' · ')
+    }
+    if (reservar) {
+      reservar.classList.toggle('hidden', !hay)
+      reservar.classList.toggle('inline-flex', hay)
+    }
+    if (revision) {
+      revision.textContent = d.revisadoEn
+        ? `Revisado ${hace(d.revisadoEn)} · próxima revisión a las ${soloHora(proximaRevision(Date.now()))}`
+        : 'El monitor aún no ha hecho su primera revisión'
+    }
+  }
+
+  function pintarCalendario(semanas: SemanaCalendario[]) {
+    const cont = $('[data-agenda-calendario]')
+    if (!cont) return
+    cont.replaceChildren(
+      ...semanas.map((s) => {
+        const bloque = el('div')
+        const porAbrir = s.citas.filter((c) => c.estado === 'por-abrir').length
+        const cab = el('p', 'text-[13px] text-ink-100 mb-3')
+        cab.append(el('span', 'font-mono text-ink-50', `Semana ${fmtSemana(s.lunes)}`), ' · ')
+        cab.append(
+          s.vigiladas > 0
+            ? el('span', s.abiertas > 0 ? 'text-lime' : 'text-ember', `${s.abiertas} de ${s.vigiladas} citas se abrieron`)
+            : el('span', 'text-ink-300', 'todavía sin citas que se puedan reservar')
+        )
+        if (porAbrir > 0 && s.vigiladas > 0) cab.append(el('span', 'text-ink-300', ` · ${porAbrir} aún no se pueden reservar`))
+
+        // Columnas = horas del horario de esa semana; filas = días con citas.
+        const minutoDia = (c: number) => c - (Math.floor((c - 5 * 3_600_000) / DIA_MS) * DIA_MS + 5 * 3_600_000)
+        const horas = [...new Set(s.citas.map((c) => minutoDia(c.cita)))].sort((a, b) => a - b)
+        const dias = [...new Set(s.citas.map((c) => c.cita - minutoDia(c.cita)))].sort((a, b) => a - b)
+        const porClave = new Map(s.citas.map((c) => [c.cita, c.estado]))
+
+        const grid = el('div', 'grid gap-1 items-center')
+        grid.style.gridTemplateColumns = `3.25rem repeat(${horas.length}, minmax(0, 2.25rem))`
+        grid.append(el('span'))
+        for (const h of horas) grid.append(el('span', 'text-[9px] sm:text-[10px] font-mono text-ink-300 text-center', soloHora(dias[0] + h)))
+        for (const d of dias) {
+          grid.append(el('span', 'text-[11px] font-mono text-ink-200', soloDia(d).split(' ').slice(0, 2).join(' ')))
+          for (const h of horas) {
+            const estado = porClave.get(d + h)
+            if (!estado) {
+              grid.append(el('span'))
+              continue
+            }
+            const c = el('span', `ep-celda ep-celda--${estado} h-6 w-full`)
+            c.title = `${fmtCita(d + h)} · ${TEXTO_CELDA[estado]}`
+            c.setAttribute('role', 'img')
+            c.setAttribute('aria-label', c.title)
+            grid.append(c)
+          }
+        }
+        bloque.append(cab, grid)
+        return bloque
+      })
+    )
+  }
+
+  function pintarTablas(d: Datos) {
     const semanas = $('[data-agenda-semanas]')
     if (semanas) {
       if (d.semanas.length === 0) vacia(semanas, 5, 'Todavía no hay semanas registradas.')
@@ -186,14 +360,24 @@ import { URL_RESERVA } from '../../lib/ep-agenda'
       const res = await fetch('/api/ep-agenda')
       const d = (await res.json()) as Datos
       if (!d.ok) throw new Error('sin datos')
-      pintar(d)
+      pintarTitular(d)
+      pintarCalendario(d.calendario ?? [])
+      pintarTablas(d)
     } catch {
-      const revision = $('[data-agenda-revision]')
-      if (revision) revision.textContent = 'Sin datos por ahora'
+      const titular = $('[data-agenda-titular]')
+      if (titular) titular.textContent = 'No se pudo leer la agenda'
       vacia($('[data-agenda-semanas]'), 5, 'No se pudo leer la bitácora.')
       vacia($('[data-agenda-episodios]'), 6, 'No se pudo leer la bitácora.')
     }
   }
 
-  if (raiz) cargar()
+  if (raiz) {
+    cargar()
+    // Quien deja la página abierta esperando una cita la ve aparecer sin
+    // recargar. El endpoint va con un minuto de CDN, así que esto no le suma
+    // lecturas a Turso por más pestañas abiertas que haya.
+    setInterval(() => {
+      if (document.visibilityState === 'visible') cargar()
+    }, 60_000)
+  }
 </script>
