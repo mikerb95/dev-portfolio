@@ -23,7 +23,7 @@ import { URL_RESERVA } from '../../lib/ep-agenda'
 
   <div data-agenda-libres class="hidden mb-6 rounded-xl bg-lime/[.08] px-4 py-3">
     <p class="text-[13px] text-ink-50">
-      <span class="font-medium text-lime">Hay citas libres ahora:</span>
+      <span class="font-medium text-lime">Hay citas libres ahora:</span>{' '}
       <span data-agenda-libres-lista class="font-mono"></span>
     </p>
     <a href={URL_RESERVA} target="_blank" rel="noopener noreferrer" class="inline-block mt-1 text-[12px] font-mono text-cyan hover:underline">
@@ -33,9 +33,9 @@ import { URL_RESERVA } from '../../lib/ep-agenda'
 
   <h3 class="text-[13px] text-ink-50 font-medium mb-3">Por semana</h3>
   <div class="overflow-x-auto -mx-1 px-1 mb-8">
-    <table class="w-full min-w-[560px] text-[12px]">
+    <table class="w-full text-[12px]">
       <thead>
-        <tr class="text-left text-[10px] font-mono uppercase tracking-wider text-ink-300">
+        <tr class="text-left align-bottom text-[10px] font-mono uppercase tracking-wider text-ink-300">
           <th class="py-2 pr-3 font-normal">Semana</th>
           <th class="py-2 pr-3 font-normal text-right" title="Citas que el horario del instructor permite y que entraron en la ventana de reserva desde que corre el monitor">Citas del horario</th>
           <th class="py-2 pr-3 font-normal text-right">Se abrieron</th>
@@ -113,10 +113,12 @@ import { URL_RESERVA } from '../../lib/ep-agenda'
     tbody.replaceChildren(fila([td]))
   }
 
+  // "26-30 oct", o "30 oct-3 nov" si la semana cruza de mes: corto para que
+  // quepa en una línea en el celular.
   const fmtSemana = (lunes: number) => {
-    const a = fmtCita(lunes).split(',')[0].replace(/^\S+ /, '')
-    const b = fmtCita(lunes + 4 * 86_400_000).split(',')[0].replace(/^\S+ /, '')
-    return `${a} - ${b}`
+    const [d1, m1] = fmtCita(lunes).split(',')[0].split(' ').slice(1)
+    const [d2, m2] = fmtCita(lunes + 4 * 86_400_000).split(',')[0].split(' ').slice(1)
+    return m1 === m2 ? `${d1}-${d2} ${m2}` : `${d1} ${m1}-${d2} ${m2}`
   }
   const hace = (ms: number) => {
     const min = Math.max(0, Math.round((Date.now() - ms) / 60_000))
@@ -147,7 +149,7 @@ import { URL_RESERVA } from '../../lib/ep-agenda'
         semanas.replaceChildren(
           ...d.semanas.map((s) =>
             fila([
-              celda(fmtSemana(s.lunes), 'font-mono text-ink-100'),
+              celda(fmtSemana(s.lunes), 'font-mono text-ink-100 whitespace-nowrap'),
               celda(String(s.delHorario), 'text-right font-mono text-ink-100'),
               celda(String(s.seAbrieron), `text-right font-mono ${s.seAbrieron ? 'text-lime' : 'text-ink-300'}`),
               celda(String(s.sinAbrirse), `text-right font-mono ${s.sinAbrirse ? 'text-ember' : 'text-ink-300'}`),
