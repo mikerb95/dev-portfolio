@@ -41,17 +41,23 @@ export async function sendEmail(subject: string, text: string, html?: string): P
   }
 }
 
-/** Envía un push al teléfono vía ntfy.sh. No-op si falta NTFY_TOPIC. */
+/**
+ * Envía un push al teléfono vía ntfy.sh. No-op si falta NTFY_TOPIC (o el
+ * `topic` explícito, que sirve para avisar a un canal ajeno al del dueño).
+ */
 export async function sendPush(
   title: string,
   message: string,
-  opts?: { priority?: number; tags?: string; click?: string; actions?: string }
+  opts?: { priority?: number; tags?: string; click?: string; actions?: string; topic?: string; delay?: string }
 ): Promise<NotifyResult> {
-  const topic = env('NTFY_TOPIC')
+  const topic = opts?.topic ?? env('NTFY_TOPIC')
   if (!topic) return { channel: 'push', ok: false, skipped: true }
   const base = env('NTFY_SERVER') ?? 'https://ntfy.sh'
   const headers: Record<string, string> = { Title: headerSafe(title) }
   if (opts?.priority) headers.Priority = String(opts.priority)
+  // Entrega diferida la hace el propio servidor de ntfy ("5m", "1h"): el cron
+  // no tiene que quedarse esperando ni programar un segundo envío.
+  if (opts?.delay) headers['X-Delay'] = opts.delay
   if (opts?.tags) headers.Tags = opts.tags
   if (opts?.click) headers.Click = opts.click
   // Botones de la notificación, en el formato corto de ntfy:

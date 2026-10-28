@@ -1281,6 +1281,30 @@ export const senaEpRecordatorios = sqliteTable('sena_ep_recordatorios', {
   createdAt: integer('created_at', { mode: 'timestamp' }),
 })
 
+// Bitácora de la agenda del instructor de etapa productiva (Microsoft Bookings).
+// Una fila por EPISODIO: cada vez que una cita aparece libre se abre una, y se
+// cierra cuando deja de estarlo. Una misma cita puede tener varias si alguien
+// la reserva y luego cancela. Es la evidencia pública de /ep: cuántas citas se
+// ofrecieron y cuánto duraron libres. Nunca guarda quién reservó (Bookings
+// tampoco lo expone). Lógica en src/lib/ep-agenda.ts.
+export const epAgendaEpisodios = sqliteTable('ep_agenda_episodios', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  // Inicio de la cita (la reunión), no del episodio.
+  cita: integer('cita', { mode: 'timestamp' }).notNull(),
+  abiertaEn: integer('abierta_en', { mode: 'timestamp' }).notNull(),
+  // apertura: apareció al entrar en la ventana de reserva; liberada: apareció
+  // después (cancelación o desbloqueo); previa: ya estaba libre al arrancar el monitor.
+  como: text('como', { enum: ['apertura', 'liberada', 'previa'] }).notNull(),
+  cerradaEn: integer('cerrada_en', { mode: 'timestamp' }),
+  // ocupada: alguien la tomó (o el instructor la bloqueó); vencio: llegó al
+  // mínimo de anticipación sin que nadie la tomara.
+  cierre: text('cierre', { enum: ['ocupada', 'vencio'] }),
+}, (t) => ({
+  // La página pública lee por rango de fecha de cita: con el índice escanea
+  // solo la ventana pedida y no la tabla entera (RNF-25).
+  citaIdx: index('ep_agenda_episodios_cita_idx').on(t.cita),
+}))
+
 // Bitácora de los crons. Hasta ahora las tareas programadas no dejaban rastro
 // propio: se podía ver su EFECTO (un backup nuevo, un sondeo escrito) pero no
 // la ejecución, así que un cron que dejaba de dispararse solo se notaba cuando
