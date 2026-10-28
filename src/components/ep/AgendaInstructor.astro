@@ -18,12 +18,12 @@ import { URL_RESERVA } from '../../lib/ep-agenda'
   <p class="text-[13px] text-ink-200 leading-relaxed mt-3 mb-6 max-w-2xl">
     Las reuniones de seguimiento se agendan en el sistema de reservas del instructor, que solo muestra
     los espacios libres en el momento en que alguien lo abre. Esta tabla lo revisa cada minuto y anota cuándo
-    aparece cada cita libre y cuándo deja de estarlo.
+    aparece cada cita libre y cuándo deja de estarlo. Aquí cada cita se publica 20 minutos después de abrirse.
   </p>
 
   <div data-agenda-libres class="hidden mb-6 rounded-xl bg-lime/[.08] px-4 py-3">
     <p class="text-[13px] text-ink-50">
-      <span class="font-medium text-lime">Hay citas libres ahora:</span>{' '}
+      <span class="font-medium text-lime">Siguen libres:</span>{' '}
       <span data-agenda-libres-lista class="font-mono"></span>
     </p>
     <a href={URL_RESERVA} target="_blank" rel="noopener noreferrer" class="inline-block mt-1 text-[12px] font-mono text-cyan hover:underline">
@@ -70,7 +70,8 @@ import { URL_RESERVA } from '../../lib/ep-agenda'
 
   <p class="mt-6 text-[11px] text-ink-300 leading-relaxed max-w-3xl">
     Método: se consulta el sistema público de reservas cada 10 minutos, y cada minuto alrededor de las horas en
-    que se abren citas nuevas (8 días antes de cada una). Solo se registra cuándo aparece y desaparece cada cita;
+    que se abren citas nuevas (8 días antes de cada una). Esta página muestra cada cita 20 minutos después de que
+    se abrió, y en el conteo semanal tampoco cuenta antes. Solo se registra cuándo aparece y desaparece cada cita;
     el sistema no dice quién reserva y aquí tampoco. La precisión es de un minuto: una cita tomada en segundos
     aparece como "1 min". Las semanas solo cuentan citas que entraron en la ventana de reserva con el monitor ya
     corriendo, y una cita "sin abrirse" no se vio libre en ninguna revisión: pudo estar reservada o bloqueada.

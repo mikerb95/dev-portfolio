@@ -16,6 +16,7 @@ import {
   parseDisponibilidad,
   resumenSemanas,
   tocaConsultar,
+  vistaPublica,
   type Episodio,
   type Tramo,
 } from '../src/lib/ep-agenda'
@@ -233,6 +234,31 @@ describe('resumen semanal', () => {
   it('más reciente primero', () => {
     const s = resumenSemanas([], CFG, inicio, ahora)
     expect(s[0].lunes).toBeGreaterThan(s.at(-1)!.lunes)
+  })
+})
+
+describe('vista pública con retraso', () => {
+  const ahora = B('2026-11-02T08:30:00')
+  const ep = (abierta: string): Episodio => ({ cita: B('2026-11-10T08:00:00'), abiertaEn: B(abierta), como: 'apertura', cerradaEn: null, cierre: null })
+
+  // Si /ep enseñara la cita al minuto, mirar la página ganaría a los avisos de pago (5) y gratis (20).
+  it('no muestra una cita abierta hace menos de 20 min, ni en filas ni en libres', () => {
+    const v = vistaPublica([ep('2026-11-02T08:20:00')], { [B('2026-11-10T08:00:00')]: B('2026-11-02T08:20:00') }, ahora)
+    expect(v.episodios).toEqual([])
+    expect(v.libres).toEqual([])
+  })
+
+  it('la muestra cumplidos los 20 min', () => {
+    const v = vistaPublica([ep('2026-11-02T08:10:00')], { [B('2026-11-10T08:00:00')]: B('2026-11-02T08:10:00') }, ahora)
+    expect(v.episodios).toHaveLength(1)
+    expect(v.libres).toEqual([B('2026-11-10T08:00:00')])
+  })
+
+  it('el conteo semanal tampoco delata una apertura reciente', () => {
+    const inicio = B('2026-10-28T10:00:00')
+    const visible = vistaPublica([ep('2026-11-02T08:20:00')], {}, ahora).episodios
+    const s = resumenSemanas(visible, CFG, inicio, ahora).find((x) => x.lunes === B('2026-11-09T00:00:00'))!
+    expect(s.seAbrieron).toBe(0)
   })
 })
 

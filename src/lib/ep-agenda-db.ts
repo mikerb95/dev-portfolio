@@ -15,6 +15,7 @@ import {
   parseConfig,
   parseDisponibilidad,
   resumenSemanas,
+  vistaPublica,
   type Apertura,
   type Cierre,
   type ConfigServicio,
@@ -25,8 +26,18 @@ import {
 } from './ep-agenda'
 
 const CLAVE_ESTADO = 'ep_agenda_estado'
-/** Topic de ntfy del grupo de aprendices. Se edita en /admin/settings; vacío = no se avisa a nadie más. */
-export const CLAVE_TOPIC_GRUPO = 'ep_agenda_topic_grupo'
+
+/**
+ * Niveles de aviso para los aprendices, además del dueño (que recibe al
+ * instante por NTFY_TOPIC). Los topics se editan en /admin/settings; uno vacío
+ * no avisa. En ntfy.sh un topic no tiene contraseña: el de pago se protege
+ * cambiándole el nombre cada cierto tiempo, y por eso vive en la BD y no en
+ * una variable de entorno que exigiría un deploy.
+ */
+export const NIVELES_AVISO = [
+  { clave: 'ep_agenda_topic_pago', etiqueta: 'Topic de pago', retraso: '5m', retrasoMin: 5, prioridad: 4 },
+  { clave: 'ep_agenda_topic_gratis', etiqueta: 'Topic gratis', retraso: '20m', retrasoMin: 20, prioridad: 3 },
+] as const
 
 /** El horario del instructor cambia rara vez: releerlo en cada consulta sería otra llamada lenta por minuto. */
 const RELEER_CONFIG_MS = 6 * 3_600_000
@@ -36,8 +47,6 @@ const RELEER_CONFIG_MS = 6 * 3_600_000
 // disponibilidad, nunca antes: en serie las dos podían pasar de 30 s.
 const TIMEOUT_DISPONIBILIDAD_MS = 20_000
 const TIMEOUT_CONFIG_MS = 20_000
-
-const RETRASO_GRUPO = '5m'
 
 async function leerClave(clave: string): Promise<string | null> {
   const [fila] = await db.select().from(appSettings).where(eq(appSettings.key, clave)).limit(1)
@@ -134,18 +143,29 @@ export async function registrarCambios(abiertas: Apertura[], cerradas: Cierre[],
   }
 }
 
-/** Push al dueño al instante y al grupo con retraso. Nunca lanza (sendPush ya es no-op si falta config). */
+/**
+ * Push al dueño al instante y a cada nivel con su retraso. El retraso lo aplica
+ * ntfy en su servidor, así que todo sale en esta misma corrida. Nunca lanza
+ * (sendPush ya es no-op si falta config).
+ */
 export async function avisarAperturas(abiertas: Apertura[]): Promise<void> {
   if (abiertas.length === 0) return
   const citas = abiertas.map((a) => a.cita).sort((x, y) => x - y)
   const titulo = citas.length === 1 ? 'Cita libre con el instructor' : `${citas.length} citas libres con el instructor`
-  const cuerpo = `${citas.map((c) => `- ${fmtCita(c)}`).join('\n')}\n\nReserva en Bookings antes de que alguien la tome.`
-  const opts = { priority: 5, tags: 'calendar', click: URL_RESERVA }
+  const lista = citas.map((c) => `- ${fmtCita(c)}`).join('\n')
+  const opts = { tags: 'calendar', click: URL_RESERVA }
 
-  const topicGrupo = await leerClave(CLAVE_TOPIC_GRUPO).catch(() => null)
+  const topics = await Promise.all(NIVELES_AVISO.map((n) => leerClave(n.clave).catch(() => null)))
   await Promise.all([
-    sendPush(titulo, cuerpo, opts),
-    topicGrupo ? sendPush(titulo, cuerpo, { ...opts, priority: 4, topic: topicGrupo, delay: RETRASO_GRUPO }) : null,
+    sendPush(titulo, `${lista}\n\nReserva en Bookings antes de que alguien la tome.`, { ...opts, priority: 5 }),
+    ...NIVELES_AVISO.map((n, i) => {
+      const topic = topics[i]
+      if (!topic) return null
+      // El mensaje se arma al enviarlo pero llega después: lo dice, para que
+      // nadie crea que la cita sigue libre seguro.
+      const cuerpo = `${lista}\n\nSe abrió hace ${n.retrasoMin} min; puede que ya no esté libre. Revisa en Bookings.`
+      return sendPush(titulo, cuerpo, { ...opts, priority: n.prioridad, topic, delay: n.retraso })
+    }),
   ])
 }
 
@@ -180,20 +200,21 @@ export async function leerAgendaPublica(ahora: number): Promise<AgendaPublica> {
     .orderBy(desc(epAgendaEpisodios.abiertaEn))
     .limit(MAX_EPISODIOS)
 
-  const episodios: Episodio[] = filas.map((f) => ({
+  const todos: Episodio[] = filas.map((f) => ({
     cita: f.cita.getTime(),
     abiertaEn: f.abiertaEn.getTime(),
     como: f.como,
     cerradaEn: f.cerradaEn ? f.cerradaEn.getTime() : null,
     cierre: f.cierre ?? null,
   }))
+  const { episodios, libres } = vistaPublica(todos, estado.libres, ahora)
 
   return {
     ...vacia,
     revisadoEn: estado.revisadoEn,
     inicio: estado.inicio,
     conError: Boolean(estado.error),
-    libres: Object.keys(estado.libres).map(Number).sort((a, b) => a - b),
+    libres,
     semanas: resumenSemanas(episodios, estado.config, estado.inicio, ahora),
     episodios,
   }

@@ -435,6 +435,34 @@ export function resumenSemanas(episodios: Episodio[], config: ConfigServicio, in
     .map(({ libres, ...s }) => ({ ...s, medianaLibreMin: mediana(libres) }))
 }
 
+/**
+ * Retraso de la página pública. Los avisos van por niveles (el dueño al
+ * instante, el topic de pago a los 5 min, el gratis a los 20), y /ep no puede
+ * adelantarse al nivel gratis: si mostrara la cita al minuto, mirar la página
+ * valdría más que cualquier suscripción.
+ */
+export const RETRASO_PUBLICO_MIN = 20
+
+/**
+ * Lo que /ep puede enseñar ahora. Una cita abierta hace menos del retraso no
+ * aparece en ninguna parte, ni como fila ni en el conteo semanal, porque que
+ * el "sin abrirse" baje de 19 a 18 ya delata que algo se abrió.
+ */
+export function vistaPublica(
+  episodios: Episodio[],
+  libres: Record<string, number>,
+  ahora: number
+): { episodios: Episodio[]; libres: number[] } {
+  const corte = ahora - RETRASO_PUBLICO_MIN * MIN_MS
+  return {
+    episodios: episodios.filter((e) => e.abiertaEn <= corte),
+    libres: Object.entries(libres)
+      .filter(([, desde]) => desde <= corte)
+      .map(([c]) => Number(c))
+      .sort((a, b) => a - b),
+  }
+}
+
 /** "< 1 min", "4 min", "2 h 5 min", "3 d 2 h". */
 export function fmtDuracion(min: number): string {
   if (min < 1) return '< 1 min'
