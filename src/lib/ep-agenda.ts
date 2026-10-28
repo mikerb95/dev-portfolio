@@ -402,6 +402,8 @@ export type Episodio = {
 export type Semana = {
   /** Lunes 00:00 de Bogotá. */
   lunes: number
+  /** Todas las citas del horario del instructor esa semana, vigiladas o no. */
+  total: number
   /** Citas del horario que ya entraron en la ventana de reserva desde que hay monitor. */
   delHorario: number
   /** De esas, cuántas se vieron libres al menos una vez. */
@@ -435,7 +437,17 @@ export function resumenSemanas(episodios: Episodio[], config: ConfigServicio, in
 
   for (const c of vigiladas) {
     const lunes = lunesBogota(c)
-    const s = porSemana.get(lunes) ?? { lunes, delHorario: 0, seAbrieron: 0, sinAbrirse: 0, medianaLibreMin: null, libres: [] }
+    // El total se cuenta aparte: "3 citas vigiladas" no dice nada si no se sabe
+    // que la semana tenía 24 y las otras se abrieron antes del monitor.
+    const s = porSemana.get(lunes) ?? {
+      lunes,
+      total: citasTeoricas(config, lunes, lunes + 7 * DIA_MS - 1).length,
+      delHorario: 0,
+      seAbrieron: 0,
+      sinAbrirse: 0,
+      medianaLibreMin: null,
+      libres: [],
+    }
     s.delHorario++
     if (abiertas.has(c)) s.seAbrieron++
     else s.sinAbrirse++

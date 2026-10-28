@@ -259,6 +259,7 @@ describe('resumen semanal', () => {
     // la mañana abrieron el 28 antes de las 10).
     const s2 = semanas.find((s) => s.lunes === B('2026-11-02T00:00:00'))!
     expect(s2.delHorario).toBe(3)
+    expect(s2.total).toBe(22)
     expect(s2.sinAbrirse).toBe(3)
     expect(s2.medianaLibreMin).toBeNull()
     // La semana siguiente ya entró entera en la ventana con el monitor corriendo.
