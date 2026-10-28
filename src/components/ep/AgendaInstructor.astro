@@ -319,6 +319,33 @@ const LEYENDA = [
     )
   }
 
+  // Primero lo que no se pudo ver (antes del monitor), después lo que sí: así
+  // cada número dice de qué total sale y no hay ceros sueltos.
+  function fraseSemana(s: Semana): string {
+    const antes = s.total - s.delHorario
+    const partes = [`El instructor tenía ${plural(s.total, 'cita', 'citas')} en su horario.`]
+    if (antes > 0) {
+      partes.push(
+        antes === s.total
+          ? 'Todas se abrieron antes de que existiera el monitor, así que no se sabe qué pasó con ellas.'
+          : `${plural(antes, 'se abrió', 'se abrieron')} antes de que existiera el monitor, así que no se sabe qué pasó con ${antes === 1 ? 'ella' : 'ellas'}.`
+      )
+    }
+    if (s.delHorario === 0) return partes.join(' ')
+
+    const de = antes === 0 ? 'De todas' : s.delHorario === 1 ? 'De la restante' : `De las ${s.delHorario} restantes`
+    const libres =
+      s.seAbrieron === 0
+        ? ''
+        : s.seAbrieron === 1
+          ? `1 se vio libre${s.medianaLibreMin === null ? '' : ` y duró así ${fmtDuracion(s.medianaLibreMin)}`}`
+          : `${s.seAbrieron} se vieron libres${s.medianaLibreMin === null ? '' : ` y por lo general duraron así ${fmtDuracion(s.medianaLibreMin)}`}`
+    const nunca =
+      s.sinAbrirse === 0 ? '' : s.seAbrieron === 0 ? 'ninguna se abrió nunca' : plural(s.sinAbrirse, 'nunca se abrió', 'nunca se abrieron')
+    partes.push(`${de}, ${[libres, nunca].filter(Boolean).join(' y ')}.`)
+    return partes.join(' ')
+  }
+
   function pintarTablas(d: Datos) {
     const semanas = $('[data-agenda-semanas]')
     if (semanas) {
@@ -331,19 +358,7 @@ const LEYENDA = [
           ? [el('li', 'text-ink-300', 'Todavía no termina ninguna semana con el monitor funcionando. Cuando termine cada una, aquí queda su resumen.')]
           : terminadas.map((s) => {
               const li = el('li')
-              const antes = s.total - s.delHorario
-              const partes = [
-                `El instructor tenía ${plural(s.total, 'cita', 'citas')} en su horario.`,
-                s.delHorario === 0
-                  ? ''
-                  : s.seAbrieron > 0
-                  ? `${plural(s.seAbrieron, 'se vio libre', 'se vieron libres')}` +
-                    (s.medianaLibreMin === null ? '' : ` (normalmente duraban libres ${fmtDuracion(s.medianaLibreMin)})`) +
-                    ` y ${plural(s.sinAbrirse, 'nunca se abrió', 'nunca se abrieron')}.`
-                  : s.sinAbrirse === 1 ? 'La única que el monitor alcanzó a ver nunca se abrió.' : `Ninguna de las ${s.sinAbrirse} que el monitor alcanzó a ver se abrió.`,
-                antes > 0 ? `${plural(antes, 'se abrió', 'se abrieron')} antes de que existiera el monitor, así que no se sabe qué pasó con ${antes === 1 ? 'ella' : 'ellas'}.` : '',
-              ]
-              li.append(el('span', 'font-mono text-ink-50', `Semana del ${fmtSemana(s.lunes)}. `), partes.filter(Boolean).join(' '))
+              li.append(el('span', 'font-mono text-ink-50', `Semana del ${fmtSemana(s.lunes)}. `), fraseSemana(s))
               return li
             }))
       )

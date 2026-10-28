@@ -9,7 +9,8 @@ Planes: [`docs/plan-automatizaciones.md`](../plan-automatizaciones.md),
 - **Motor**: [`src/lib/monitors.ts`](../../src/lib/monitors.ts). Hace la
   petición HTTP, mide latencia, valida status y contenido esperado, refresca la
   expiración del certificado TLS, abre y cierra **incidentes**
-  (`monitor_incidents`). Redirecciones manuales + `ssrf-guard`.
+  (`monitor_incidents`). Redirecciones manuales + `ssrf-guard`, con la IP
+  validada fijada al conectar (`agentePublico`, cierra el DNS rebinding).
 - Nació porque UptimeRobot decía "todo bien" mientras producción servía la
   página equivocada.
 - Datos: `monitors`, `monitor_checks` (crudo, con purga), `monitor_daily`
@@ -65,7 +66,7 @@ Dos orígenes: **Vercel Cron** (`vercel.json`, plan Hobby = como mucho diario) y
 | `security-rollup` | cron-job.org | ~15 min | Rollup, anomalías, auto-block | Anomalías sin base de comparación |
 | `sena-recordatorio` | cron-job.org | 12:00 | Recordatorio de la calculadora de etapa productiva | Se pierde el recordatorio |
 | `marketing-envio` | cron-job.org | 60 min | Envía correos en cola dentro del horario legal y el cupo diario | La campaña queda a medias (**pendiente de dar de alta**) |
-| `ep-agenda` | cron-job.org | cada minuto, consulta ~10 min | Vigía de la agenda del instructor (Bookings): avisa cuando aparece una cita libre | Las citas libres pasan sin aviso |
+| `ep-agenda` | cron-job.org (dos jobs) | cada 10 min (cancelaciones) y cada minuto lun-mié de 0 a 1 y de 8 a 12 (aperturas) | Vigía de la agenda del instructor (Bookings): avisa a Mike al momento y a los aprendices a los 10 min | Las citas libres pasan sin aviso |
 
 Además, `vigia` (Managed Agents) corre de noche y reporta por webhook; ver
 [11](11-ia-y-agentes.md#vigía-nocturno-del-repositorio).

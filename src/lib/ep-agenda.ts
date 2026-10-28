@@ -453,8 +453,12 @@ export function resumenSemanas(episodios: Episodio[], config: ConfigServicio, in
     else s.sinAbrirse++
     porSemana.set(lunes, s)
   }
+  // Solo las vigiladas: una cita que ya estaba libre al arrancar el monitor no
+  // cuenta como "se abrió", y si entrara en la mediana la frase diría cuánto
+  // duraron libres citas que no aparecen en ningún otro número.
+  const vigiladasSet = new Set(vigiladas)
   for (const e of episodios) {
-    if (e.cerradaEn === null) continue
+    if (e.cerradaEn === null || !vigiladasSet.has(e.cita)) continue
     const s = porSemana.get(lunesBogota(e.cita))
     if (s) s.libres.push(Math.round((e.cerradaEn - e.abiertaEn) / MIN_MS))
   }

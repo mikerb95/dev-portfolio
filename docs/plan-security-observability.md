@@ -466,6 +466,26 @@ distinguirlos, y del panel casi nada dejaba rastro.
   `recordSession` no puede LEER la sesión, el panel responde 503. Las
   escrituras siguen siendo fail-open. Las rutas de la sustentación quedan fuera.
 
+### Honeypot que no se puede disparar desde otra web ✅ IMPLEMENTADO (2026-10-20)
+
+Salió de la auditoría de las superficies públicas (20 oct 2026, hallazgo 3). El
+bloqueo inline por honeypot (Fase 2) castigaba a cualquier IP que pidiera una
+ruta señuelo, y un navegador pide lo que otra página le dice: una imagen
+apuntando a una ruta señuelo, puesta en cualquier web, dejaba bloqueado del
+sitio a quien la abriera (un cliente, Mike, o un salón entero tras el mismo
+wifi). `SECURITY_IP_ALLOWLIST` no lo cubría porque no está en producción.
+
+- `vieneDeNavegador` (`src/lib/security/sensor.ts`): los navegadores modernos
+  mandan `Sec-Fetch-Mode` en toda petición y los escáneres no. Si lo trae, el
+  evento se registra igual pero con una regla propia y severidad media.
+- Esa regla **no bloquea**: ni el bloqueo inline del middleware ni el
+  auto-block del cron la cuentan como honeypot.
+- El bloqueo inline tampoco toca las IPs de sesiones admin vivas (`esIpPropia`,
+  que antes solo usaba el cron), por el autobloqueo del 10 sep 2026.
+- Límite aceptado: un escáner que finja la cabecera esquiva el bloqueo inline,
+  pero no el registro ni el bloqueo del cron por severidad alta.
+- Tests: `tests/security-honeypot-navegador.test.ts` (4 casos).
+
 ## Métricas y SLOs del módulo (los que se publican)
 
 | Métrica | Objetivo | Medición |

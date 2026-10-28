@@ -185,7 +185,7 @@ Para regenerar esta tabla, ver el script descrito en
 | RF-604 | Agregación y rollups | implementado | media | security_rollups |
 | RF-605 | Detección de anomalías | implementado | media | security_anomalies, src/lib/security/anomaly.ts |
 | RF-606 | Panel de seguridad consolidado | implementado | media | src/pages/admin/security.astro, src/pages/api/admin/security.ts |
-| RF-607 | Bloqueo escalado con enforcement inline de honeypots | implementado | alta | src/lib/security/blocklist.ts (blockIpEscalated), src/middleware.ts |
+| RF-607 | Bloqueo escalado con enforcement inline de honeypots | implementado | alta | src/lib/security/blocklist.ts (blockIpEscalated), src/middleware.ts, src/lib/security/sensor.ts (vieneDeNavegador), src/lib/security/autoblock.ts (esIpPropia) |
 | RF-608 | Bloqueo masivo con protección del operador | implementado | alta | src/lib/security/autoblock.ts (selectBulkBlockIps, blockAllAttackerIps), src/pages/api/admin/security.ts |
 | RF-609 | Sensor portable para proyectos vigilados | planeado | media | docs/plan-siem-multiproyecto.md (Fase 2) |
 | RF-610 | Ingesta de eventos de seguridad de terceros | planeado | media | docs/plan-siem-multiproyecto.md (Fases 3 y 4) |
@@ -233,7 +233,7 @@ Para regenerar esta tabla, ver el script descrito en
 | RNF-31 | Las llaves de seguridad no se pueden repetir ni plantar | implementado | alta | src/lib/webauthn.ts (storeChallenge, consumeChallenge, notifyPasskeyChange), webauthn_challenges, src/lib/auth.ts (isRecentAuth), auth.config.ts (authTime), src |
 | RNF-32 | Lo privado cuenta, pero no se publica | implementado | alta | src/pages/api/github/activity.ts (esPublico) |
 | RNF-33 | Lo que sale de la base no puede convertirse en código | implementado | media | src/lib/json-script.ts (jsonEnScript, en 25 páginas y layouts), src/lib/safe-url.ts (urlSegura), src/pages/api/lab/ingest.ts, src/middleware.ts (Cache-Control p |
-| RNF-34 | El servidor no sondea su propia red interna (SSRF) | implementado | alta | src/lib/ssrf-guard.ts (assertPublicHost) |
+| RNF-34 | El servidor no sondea su propia red interna (SSRF) | implementado | alta | src/lib/ssrf-guard.ts (assertPublicHost, lookupPublico, agentePublico, fetchPublico) |
 
 ### Confiabilidad y disponibilidad
 

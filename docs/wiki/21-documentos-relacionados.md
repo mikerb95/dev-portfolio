@@ -9,7 +9,7 @@ del código: verificar).
 | Plan | Tema | Estado declarado |
 |---|---|---|
 | [plan-roadmap-2026-07](../plan-roadmap-2026-07.md) | Plan maestro: 11 etapas | Todas completas desde el 1 oct 2026 |
-| [plan-security-observability](../plan-security-observability.md) | Micro-SIEM | Fases 0-6 implementadas |
+| [plan-security-observability](../plan-security-observability.md) | Micro-SIEM | Fases 0-6 implementadas; honeypot a prueba de otras webs el 20 oct |
 | [plan-siem-multiproyecto](../plan-siem-multiproyecto.md) | Sensor portable e ingesta de terceros | Auditado, RF-609 a RF-611 planeados |
 | [plan-analista-siem](../plan-analista-siem.md) | Analista de IA del SIEM | Fases 0-6 ✅ |
 | [plan-lab](../plan-lab.md), [plan-lab-fases-pendientes](../plan-lab-fases-pendientes.md) | LAB SENA | Completo (fase 5 k6 el 18 sep) |
@@ -22,7 +22,7 @@ del código: verificar).
 | [plan-cobrar](../plan-cobrar.md) | Cobros de campo | Implementado |
 | [plan-cuentas-de-cobro](../plan-cuentas-de-cobro.md) | Cuentas de cobro | Fases 0-3 y 5 |
 | [plan-plano](../plan-plano.md) | Plano | Implementado |
-| [plan-cotiza](../plan-cotiza.md) | Cotiza | Fases 0-5 (la cabecera aún dice "planeado") |
+| [plan-cotiza](../plan-cotiza.md) | Cotiza | Fases 0-5; frenos del PIN reforzados el 20 oct |
 | [plan-asistente](../plan-asistente.md) | Asistente, cotizador y asesor | Todas las fases |
 | [plan-marketing](../plan-marketing.md) | Correos promocionales | Implementado; falta cron y prueba real |
 | [plan-computo-clientes](../plan-computo-clientes.md) | Cómputo y cuota de Vercel | Implementado |

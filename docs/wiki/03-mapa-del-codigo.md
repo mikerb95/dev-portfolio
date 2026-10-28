@@ -53,7 +53,8 @@
 escalado 1 h → 1 d → 7 d, caché 30 s), `autoblock.ts`, `ratelimit-durable.ts`
 (memoria + Turso), `anomaly.ts` / `anomaly-store.ts` (z-score), `rollup.ts`,
 `honeypot.ts`, `audit.ts` (`AUDIT_CATEGORIES`), `paths.ts`, `private-headers.ts`,
-`csp-report.ts`, `redact.ts`, `vitrina.ts`. Afines: `ssrf-guard.ts`,
+`csp-report.ts`, `redact.ts`, `vitrina.ts`. Afines: `ssrf-guard.ts` (con
+`fetchPublico` y un dispatcher de `undici` que fija la IP validada),
 `safe-url.ts`, `json-script.ts`, `crypto.ts` (AES-256-GCM), `vault.ts`,
 `webauthn.ts`, `auth.ts` (allowlist), `device-sessions.ts`, `device-info.ts`,
 `ratelimit.ts`, `chaos.ts`.

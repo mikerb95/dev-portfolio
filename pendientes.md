@@ -4,7 +4,9 @@
 > rojo heredados y los límites del simulador de infra) y la revisión del
 > **6 oct 2026** (variables de Vercel y monitores consultados de verdad, ítems
 > ya resueltos cerrados, pendientes del Plano y del hero), más el vigía del repo
-> con Managed Agents y sus arreglos (noche del 6 oct, PRs #4 y #5). Este archivo es el
+> con Managed Agents y sus arreglos (noche del 6 oct, PRs #4 y #5), y la revisión
+> del **28 oct 2026** (auditoría del 20 oct: tres hallazgos cerrados y cinco
+> abiertos en §4; rendimiento de la portada). Este archivo es el
 > inventario vivo de lo que falta:
 > acciones manuales (variables de entorno, altas en servicios externos,
 > verificaciones en producción) y trabajo de código todavía sin hacer. Lo ya
@@ -95,11 +97,12 @@ base de archivo, dos corridas seguidas.
 
 ### 🟠 Vigía del repo con Managed Agents: activarlo (6 oct 2026)
 
-Código en el PR #4; agente, memoria y corrida nocturna ya aplicados en
+Código ya en `main` (PR #4); agente, memoria y corrida nocturna ya aplicados en
 Anthropic, con la corrida **pausada** (`depl_01LkirG8vctAohi2Jn282Jmk`, nunca
 disparó). Detalle y orden exacto en `docs/plan-managed-agents.md`.
 
-- [ ] Revisar y mergear **#5 primero** (arreglos) y luego #4 (vigía).
+- [x] Revisar y mergear **#5 primero** (arreglos) y luego #4 (vigía): los dos
+      están en `main` desde el 8 oct 2026.
 - [ ] Aplicar la migración `0048` (tabla `vigia_corridas`) en las dos bases Turso.
 - [ ] Console → Manage → Webhooks: `https://codebymike.net/api/managed/webhook`,
       eventos `session.status_idled` y `session.status_terminated`; el `whsec_`
@@ -118,6 +121,10 @@ disparó). Detalle y orden exacto en `docs/plan-managed-agents.md`.
   `ant auth login` otra vez.
 
 ### 🟠 Workshop de Managed Agents (sábado 24 oct 2026)
+
+> La fecha ya pasó (revisión del 28 oct): marcar lo que se hizo y quitar lo que
+> ya no aplica. Desde el repo solo se puede comprobar el último punto: no hay
+> artículo del taller en `/notes`.
 
 - [ ] **Antes del domingo 11 oct:** mandar la propuesta al organizador por
       privado. Texto listo en `docs/propuesta-workshop-managed-agents.md`.
@@ -540,7 +547,7 @@ fallidos», once scrypt seguidos) rozaban los 5 s por defecto con la suite en
 paralelo. Los dos llevan ahora timeout explícito de 30 s. `npm test`: 170
 archivos, 2756 tests en verde.
 
-### ✅ Errores de `astro check` heredados (corregidos en el PR #5, falta mergear)
+### ✅ Errores de `astro check` heredados (corregidos en el PR #5, en `main` desde el 8 oct)
 
 22 errores al 6 oct 2026, ninguno nuevo de esta revisión: 12 en
 `scripts/asistente-prueba-panel.ts`, 5 en `tests/indexnow.test.ts`, y uno en
@@ -571,6 +578,52 @@ proveedor de email/magic link, que este sitio no usa. La versión parcheada
 en `.npmrc` escondería el choque.
 
 - [ ] Actualizar cuando `auth-astro` acepte `@auth/core` 0.41. No forzarlo.
+      Revisado el 28 oct 2026: `auth-astro` sigue en 4.2.0 con peer
+      `@auth/core ^0.37.3`. Cuando se pueda subir, quitar también el parche de
+      `issuer` de `auth.config.ts`, que existe solo por la 0.37. Es el hallazgo
+      7 de la auditoría del 20 oct (ver abajo).
+
+### Auditoría de las superficies públicas (20 oct 2026): lo que sigue abierto
+
+Ocho hallazgos, ninguno crítico. Cerrados el mismo 20 oct: **SSRF del
+analizador público** (`fetchPublico`, RNF-34), **carrera del PIN de Cotiza**
+(intento reservado antes de verificar, RF-220) y **honeypot disparable desde
+otra web** (RF-607). Detalle en `docs/wiki/08-seguridad-micro-siem.md`. Los
+cinco que quedan, por prioridad:
+
+- [ ] **`/decks/<id>.html` sin control de acceso**, con ids secuenciales: quien
+      adivine el número lee el deck. Latente (no había decks en la base el
+      20 oct), pero un deck de cliente subido mañana quedaría expuesto. Arreglo:
+      exigir la sesión admin o el pase del público de esa presentación, o ids
+      no adivinables.
+- [ ] **Historial del asesor falsificable**: el navegador manda la conversación
+      completa y puede inventar turnos `asesor`, que terminan guardados en
+      `/admin/asesor` y en el borrador de Plano. Los precios ya se recalculan
+      en el servidor; lo que queda es el texto. Arreglo: marcar en el panel lo
+      que vino del navegador, o guardar solo lo que el servidor respondió.
+- [ ] **`SUSTENTACION_PASSWORD` sigue en producción**: abre
+      `/admin/sustentacion` sin GitHub. Acción manual: quitarla de Vercel si la
+      sustentación ya pasó.
+- [ ] **`@auth/core` 0.37.4** con avisos: ver la sección anterior.
+- [ ] **Menores**: el estado "bloqueada" del portal solo existe en cuentas
+      reales (permite saber si un correo tiene cuenta) y su contador de fallos
+      no es atómico; `/mis-pagos` confirma si un teléfono tiene cobros (su
+      comentario dice lo contrario); `/api/portal/demo` es GET y pisa la cookie
+      de sesión; el guardia de impersonación de `mock/pay` compara la ruta sin
+      normalizar.
+
+### Rendimiento de la portada en celular (20-21 oct 2026)
+
+Medido con Playwright (Pixel 7, CPU x4, GPU real): el hilo principal está al
+95-99 % en reposo porque cualquier animación visible obliga a Chrome a rehacer
+las capas de toda la página. Ya se pausan las animaciones fuera de vista (sin
+bajar ese porcentaje).
+
+- [ ] Decidir `content-visibility: auto` en las secciones bajo el hero: probado
+      inyectándolo en producción, baja a 77-82 %. Riesgo: el pipeline fijado de
+      ScrollTrigger calcula con alturas estimadas.
+- [ ] Decidir si los fantasmas de octubre se quitan en celular (solos ocupan el
+      hilo en el hero). Se apagan solos el 1 nov.
 
 ### IA del Plano y del hero contra la API real (6 oct 2026)
 

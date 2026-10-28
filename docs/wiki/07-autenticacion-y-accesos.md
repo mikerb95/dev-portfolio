@@ -64,7 +64,11 @@ recomendación de 6), tolerables por:
 1. **Alcance**: solo rutas de Cotiza; bóveda, cobros, finanzas y clientes siguen
    tras GitHub.
 2. **Frenos**: 5 fallos por IP cierran esa IP 15 min; 10 fallos en una hora
-   entre todas las IP apagan la puerta del PIN una hora.
+   entre todas las IP apagan la puerta del PIN una hora. El intento se suma
+   **antes** de verificar (`reservarIntento`) y se devuelve si acierta
+   (`devolverIntento`): así cada intento es un turno atómico y una ráfaga en
+   paralelo desde muchas IP no pasa la revisión entera antes de que se cuente
+   un fallo (hallazgo de la auditoría del 20 oct 2026).
 3. **Falla cerrada**: si no se puede leer el PIN o los contadores, no abre.
 
 El PIN se fija en `/admin/settings`.

@@ -3,10 +3,10 @@
 Fuente: [`src/data/iteraciones-portfolio.ts`](../../src/data/iteraciones-portfolio.ts)
 (publicado como kanban en `/docs/kanban`). Cada iteración trae además su
 resumen, sus historias y el rango de commits en GitHub. El repo empezó el
-**26 abr 2026**; a la fecha de esta foto lleva 3.303 commits (el entorno de
+**26 abr 2026**; a la fecha de esta foto lleva 3.310 commits (el entorno de
 trabajo commitea cada edición, así que la historia es muy granular).
 
-## Iteraciones (54)
+## Iteraciones (65)
 
 | # | Fecha | Iteración |
 |---|---|---|
@@ -60,27 +60,34 @@ trabajo commitea cada edición, así que la historia es muy granular).
 | 48 | 7 y 22 sep | **Cómputo por proyecto** y cuota compartida |
 | 49 | 22-28 sep | **Motion propio** en la portada y las páginas de ingeniería |
 | 50 | 1 oct | Halloween en la portada |
-| 51 | 6 oct | **Plano** |
-| 52 | 6 oct | **Dashboard con caja del asistente** |
-| 53 | 6 oct | **Cotiza** |
-| 54 | 6 oct | **Escrituras del asistente** con aprobación |
+| 51 | 28 sep-1 oct | **Analista de IA del micro-SIEM** con aprobación humana |
+| 52 | 1-3 oct | Motion en `/ep`, `/contact` y `/architecture` |
+| 53 | 1-6 oct | **Asesor público**, asesor en vivo y hero con cotizador |
+| 54 | 6 oct | **Plano** |
+| 55 | 6 oct | **Dashboard con caja del asistente** |
+| 56 | 6 oct | **Cotiza** |
+| 57 | 6 oct | **Escrituras del asistente** con aprobación |
+| 58 | 6-8 oct | **Vigía nocturno** del repo con Managed Agents |
+| 59 | 6 oct | **Correo promocional** con doble confirmación |
+| 60 | 19 oct | **Titular rotativo** por servicios |
+| 61 | 20 oct | **AEO** y kit de Facebook |
+| 62 | 20 oct | **Auditoría de las superficies públicas** (3 de 8 hallazgos cerrados) |
+| 63 | 20-21 oct | Rendimiento de la portada en celular |
+| 64 | 28 oct | **Vigía de la agenda** del instructor de etapa productiva |
+| 65 | 28 oct | Esta wiki |
 
-Todas las fechas son de 2026.
+Todas las fechas son de 2026. Las iteraciones 51 a 53 se añadieron al kanban
+después de las del 6 oct, así que las que antes eran 51 a 54 (Plano, dashboard,
+Cotiza, escrituras) ahora son 54 a 57.
 
-## Después de la iteración 54 (aún sin entrada en el kanban)
+## Lo que quedó abierto en la última foto
 
-- 28 sep - 1 oct: **analista del micro-SIEM** (RF-613), presentado en un meetup
-  el 1 oct.
-- 1-2 oct: **asesor público** en la burbuja de WhatsApp (RF-212) y **asesor en
-  vivo** (RF-213); `/ep` y `/contact` con motion; tarifas fijadas.
-- 3 oct: `/architecture` con trazador de peticiones (RF-036).
-- 6 oct: **hero con cotizador de IA** (RF-037), **marketing por correo**
-  (RF-225), **vigía nocturno** con Managed Agents (RF-510).
-- 20 oct: **AEO** (RF-039), página de Facebook con kit de 12 posts, auditoría
-  del sitio con 8 hallazgos.
-- 21 oct: análisis de rendimiento de la portada (cuello: actualización de capas
-  por fotograma; `content-visibility` probado, sin implementar).
-- 28 oct: **vigía de la agenda del instructor** de etapa productiva (RF-040).
+- **Auditoría del 20 oct**: cerrados SSRF del analizador (RNF-34), carrera del
+  PIN de Cotiza (RF-220) y honeypot disparable desde otra web (RF-607). Siguen
+  abiertos cinco, listados en [`pendientes.md`](../../pendientes.md).
+- **Rendimiento de la portada**: `content-visibility` probado en producción
+  (baja el hilo principal en reposo de 95-99 % a 77-82 %), sin implementar por
+  el riesgo con el pipeline fijado de ScrollTrigger.
 
 ## Incidentes reales y lo que dejaron
 
@@ -95,6 +102,7 @@ Todas las fechas son de 2026.
 | 18 sep | La fase 5 del LAB (k6) llevaba dos meses "bloqueada" esperando un token que no hacía falta: un preview no puede ser objetivo de carga | k6 contra `sqld` local; artículo `/notes/el-bloqueo-que-no-era-una-credencial` |
 | 6 oct | El vigía abre PRs (#4, #5) | Regla: nunca ramas ni PRs, cambios sin commitear |
 | 6 oct | Un bug de `waitUntil` en el SIEM | Cerrado |
+| 20 oct | La auditoría encuentra que una imagen puesta en cualquier web podía dejar bloqueado del sitio a quien la abriera (o a un salón entero tras el mismo wifi) | Lo que pide un navegador se registra pero no bloquea (RF-607) |
 | (antes) | Un emoji en un header HTTP rompía todas las alertas ntfy | Arreglado en `notify.ts` |
 
 ## Hitos académicos (SENA)

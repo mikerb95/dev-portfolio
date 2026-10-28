@@ -6,7 +6,7 @@ Está escrita para que **cualquier lector** (una persona nueva, un jurado, un LL
 o un agente de código) pueda entender el sistema completo sin haber estado en
 las sesiones donde se construyó.
 
-> **Foto del 28 oct 2026** (último commit revisado: `c31edc1d`, 3.303 commits
+> **Foto del 28 oct 2026** (último commit revisado: `d1b5da13`, 3.310 commits
 > desde el 26 abr 2026). El código manda: si algo de aquí contradice al código,
 > el código tiene razón y esta wiki está desactualizada en ese punto.
 
@@ -41,7 +41,7 @@ las sesiones donde se construyó.
 | 16 | [Desarrollo y operación](16-desarrollo-y-operacion.md) | Entorno, comandos, Docker, variables de entorno, runbooks, trampas conocidas |
 | 17 | [Reglas y convenciones](17-convenciones.md) | Reglas no negociables, estilo de código, escritura, diseño |
 | 18 | [Requisitos](18-requisitos.md) | Índice completo RF/RNF con estado y ubicación en el código |
-| 19 | [Historia e iteraciones](19-historia-e-iteraciones.md) | Línea de tiempo, 54 iteraciones, incidentes reales y lo que enseñaron |
+| 19 | [Historia e iteraciones](19-historia-e-iteraciones.md) | Línea de tiempo, 65 iteraciones, incidentes reales y lo que enseñaron |
 | 20 | [Glosario](20-glosario.md) | Vocabulario propio del proyecto (beat, Plano, Cotiza, vigía, fail-open…) |
 | 21 | [Documentos relacionados](21-documentos-relacionados.md) | Planes vivos, runbooks, artículos de `/notes` y entregables SENA |
 

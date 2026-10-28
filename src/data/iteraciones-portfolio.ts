@@ -2315,8 +2315,128 @@ export const ITERACIONES: Iteracion[] = [
   },
   // ───────────────────────────────────────────────────────────────────────
   {
+    id: 'pf-analista',
+    fase: 'Fase 51 · Un analista que propone y no decide',
+    nombre: 'Analista de IA del micro-SIEM con aprobación humana',
+    rango: '28 sep – 1 oct 2026',
+    ghSince: '2026-09-28',
+    ghUntil: '2026-10-01',
+    resumen:
+      'El micro-SIEM ya registraba y bloqueaba, pero leerlo seguía siendo trabajo de Mike. Un agente de IA lo lee con herramientas propias, decide qué investigar, explica lo que encontró en lenguaje claro y puede proponer bloqueos, que siempre aprueba o rechaza una persona. Nació como prototipo con la Claude Agent SDK para un meetup el 1 oct y quedó en producción en el panel.',
+    historias: [
+      {
+        id: 'PF-AN-01', titulo: 'Como Mike, quiero que un agente lea el micro-SIEM y me diga en claro qué está pasando',
+        tipo: 'historia', valor: 'alto', col: 'aceptada', par: 'MR', agente: 'Claude',
+        fecha: '2026-10-01', tags: ['seguridad', 'ia', 'siem', 'fase-51'],
+        dod: [
+          ok('Seis herramientas propias sobre el micro-SIEM y un bucle propio que se pausa ante una propuesta de bloqueo (RF-613).'),
+          ok('/admin/analista con historial, transmisión en vivo de cada paso y retoma de un bloqueo pendiente aunque se cierre la pestaña; análisis automático cada mañana.'),
+          ok('IPs seudonimizadas ante el modelo; la IP real solo la ve quien decide, y revelarla queda auditado.'),
+          ok('e2e/analista.spec.ts de punta a punta contra una API de Claude falsa, sin gastar créditos.'),
+        ],
+      },
+      {
+        id: 'PF-AN-02', titulo: 'Como Mike, quiero comprobar que un atacante no puede darle órdenes al analista desde sus propios datos',
+        tipo: 'historia', valor: 'alto', col: 'aceptada', par: 'MR', agente: 'Claude',
+        fecha: '2026-10-01', tags: ['seguridad', 'ia', 'pruebas', 'fase-51'],
+        dod: [
+          ok('Prueba adversarial con el modelo real: un atacante esconde en su user-agent la orden de no ser bloqueado y de bloquear al más inocente, y el agente no obedece.'),
+          ok('Prototipo con la Claude Agent SDK (npm run analista) presentado en el meetup del 1 oct 2026.'),
+        ],
+      },
+    ],
+  },
+  // ───────────────────────────────────────────────────────────────────────
+  {
+    id: 'pf-motion-2',
+    fase: 'Fase 52 · Motion en las páginas que faltaban',
+    nombre: '/ep, /contact y /architecture con motion',
+    rango: '1 – 3 oct 2026',
+    ghSince: '2026-10-01',
+    ghUntil: '2026-10-03',
+    resumen:
+      'Segunda tanda de la fase 49, con su misma regla: cada pieza muestra algo real y con movimiento reducido todo queda completo y quieto. En /contact la pieza nueva se rechazó (una ruta, un celular, una franja añadidos sonaban infantiles para una página seria) y quedó solo movimiento sobre el diseño existente.',
+    historias: [
+      {
+        id: 'PF-M2-01', titulo: 'Como aprendiz SENA, quiero ver mi etapa productiva como una cinta de días con bitácoras, visitas y festivos',
+        tipo: 'historia', valor: 'medio', col: 'aceptada', par: 'MR', agente: 'Claude',
+        fecha: '2026-10-01', tags: ['motion', 'ep', 'fase-52'],
+        dod: [
+          ok('Cinta de 180 días compartida con la calculadora, lectura de cada día y versión móvil en seis filas (RF-032).'),
+          ok('De paso, la página dejó de medir 635 px de ancho en un celular de 390 px.'),
+          ok('tests/motion-ep.test.ts (19 casos).'),
+        ],
+      },
+      {
+        id: 'PF-M2-02', titulo: 'Como visitante, quiero un contacto con movimiento sin que la página deje de ser seria',
+        tipo: 'historia', valor: 'bajo', col: 'aceptada', par: 'MR', agente: 'Claude',
+        fecha: '2026-10-01', tags: ['motion', 'contacto', 'fase-52'],
+        dod: [
+          ok('Mismo diseño, textos y formulario; solo movimiento encima (RF-033).'),
+          ok('Capturas en Chromium con GPU real, en español e inglés, con el endpoint simulado para no escribir en la base.'),
+        ],
+      },
+      {
+        id: 'PF-M2-03', titulo: 'Como visitante técnico, quiero ver por dónde pasa una petición y hasta dónde la deja llegar el sitio',
+        tipo: 'historia', valor: 'medio', col: 'aceptada', par: 'MR', agente: 'Claude',
+        fecha: '2026-10-03', tags: ['motion', 'arquitectura', 'fase-52'],
+        dod: [
+          ok('Trazador de peticiones con seis visitantes y dos interruptores que rompen el sensor o Turso (RF-036).'),
+          ok('Guion calculado en el build con las funciones reales del middleware: al navegador no viajan rutas señuelo ni ids de reglas.'),
+          ok('tests/motion-arquitectura.test.ts fija cada desenlace contra esas funciones.'),
+        ],
+      },
+    ],
+  },
+  // ───────────────────────────────────────────────────────────────────────
+  {
+    id: 'pf-asesor',
+    fase: 'Fase 53 · Un asesor que no inventa precios',
+    nombre: 'Asesor público con IA, asesor en vivo y hero con cotizador',
+    rango: '1 – 6 oct 2026',
+    ghSince: '2026-10-01',
+    ghUntil: '2026-10-06',
+    resumen:
+      'La burbuja de WhatsApp gana un asesor de IA que resuelve dudas de los servicios y da precios estimados calculados con el tarifario, nunca inventados. Cuando hay interés real, Mike recibe un aviso y puede entrar a la misma conversación desde el panel. El 6 oct la portada se rehízo para hablarle al cliente, con un campo donde la persona cuenta su idea y recibe la primera respuesta del asesor ahí mismo.',
+    historias: [
+      {
+        id: 'PF-AS-01', titulo: 'Como visitante, quiero resolver mis dudas y saber cuánto costaría lo que necesito sin esperar a que me respondan',
+        tipo: 'historia', valor: 'alto', col: 'aceptada', par: 'MR', agente: 'Claude',
+        fecha: '2026-10-01', tags: ['asesor', 'ia', 'fase-53'],
+        dod: [
+          ok('Agente separado del asistente del panel, que solo ve información pública; WhatsApp sigue siendo la opción principal (RF-212).'),
+          ok('Un precio inventado o sacado de un historial manipulado se rechaza; los cálculos previos se recalculan en el servidor.'),
+          ok('Topes por conversación, por IP y de gasto diario (tests/asesor.test.ts y tests/asesor-presupuesto.test.ts contra SQLite real).'),
+          ok('Revisión con la API real el 1 oct 2026 en celular y escritorio, incluido hacerse pasar por Mike para cambiar un precio.'),
+        ],
+      },
+      {
+        id: 'PF-AS-02', titulo: 'Como Mike, quiero entrar a una conversación del asesor cuando el visitante está interesado',
+        tipo: 'historia', valor: 'medio', col: 'aceptada', par: 'MR', agente: 'Claude',
+        fecha: '2026-10-02', tags: ['asesor', 'fase-53'],
+        dod: [
+          ok('Aviso por ntfy al dar un precio, preparar el WhatsApp u ofrecer el formulario; si Mike escribe, el asesor se calla (RF-213).'),
+          ok('La conversación solo se guarda desde la señal de interés, el chat lo dice y se borra a las 48 h.'),
+          ok('tests/asesor-vivo.test.ts y e2e/asesor-vivo.spec.ts con la API de Claude falsa.'),
+        ],
+      },
+      {
+        id: 'PF-AS-03', titulo: 'Como cliente, quiero contar mi idea en la portada y ver al momento qué haría Mike, en cuánto tiempo y por cuánto',
+        tipo: 'historia', valor: 'alto', col: 'aceptada', par: 'MR', agente: 'Claude',
+        fecha: '2026-10-06', tags: ['portada', 'asesor', 'fase-53'],
+        dod: [
+          ok('Titular para el cliente en una grotesca condensada y campo "Cuéntame qué necesitas" sobre el terreno (RF-037).'),
+          ok('"Seguir preguntando" abre la burbuja con la misma conversación; el WhatsApp lleva la idea escrita.'),
+          ok('Probado con la API real el 6 oct 2026: se corrigieron voseo y preguntas de más en el prompt.'),
+          ok('tests/asesor-portada.test.ts y capturas en Chromium con GPU real.'),
+        ],
+      },
+    ],
+  },
+  // ───────────────────────────────────────────────────────────────────────
+  {
     id: 'pf-plano',
-    fase: 'Fase 51 · Cotizar sin improvisar',
+    fase: 'Fase 54 · Cotizar sin improvisar',
     nombre: 'Plano: propuestas a la medida',
     rango: '6 oct 2026',
     ghSince: '2026-10-06',
@@ -2327,7 +2447,7 @@ export const ITERACIONES: Iteracion[] = [
       {
         id: 'PF-PL-01', titulo: 'Como Mike, quiero armar una propuesta en la que el precio se ajuste a medida que la configuro',
         tipo: 'historia', valor: 'alto', col: 'aceptacion', par: 'MR', agente: 'Claude',
-        fecha: '2026-10-06', tags: ['plano', 'pagos', 'fase-51'],
+        fecha: '2026-10-06', tags: ['plano', 'pagos', 'fase-54'],
         dod: [
           ok('Constructor en /admin/plano con el mismo motor de precios del sitio; las preguntas cierran el rango sin salir de la tabla (RF-214).'),
           ok('Reglas de pago por monto, cuotas con recargo comparado con la usura y fechas hábiles con quincenas y ciclos de empresa, editables en /admin/plano/ajustes (RF-215).'),
@@ -2340,7 +2460,7 @@ export const ITERACIONES: Iteracion[] = [
       {
         id: 'PF-PL-02', titulo: 'Como Mike, quiero que la IA arme el borrador desde la conversación y revise la propuesta como un cliente difícil',
         tipo: 'historia', valor: 'medio', col: 'aceptacion', par: 'MR', agente: 'Claude',
-        fecha: '2026-10-06', tags: ['plano', 'ia', 'fase-51'],
+        fecha: '2026-10-06', tags: ['plano', 'ia', 'fase-54'],
         dod: [
           ok('Salida estructurada sin campos de dinero; solo componentes de la tabla; citas verificadas como literales (RF-216).'),
           ok('Hallazgos con cifras inventadas descartados por la guardia de cifras del asistente.'),
@@ -2350,7 +2470,7 @@ export const ITERACIONES: Iteracion[] = [
       {
         id: 'PF-PL-03', titulo: 'Como cliente, quiero ver mi proyecto, ajustar lo que me dejen y aceptarlo desde un enlace',
         tipo: 'historia', valor: 'alto', col: 'aceptacion', par: 'MR', agente: 'Claude',
-        fecha: '2026-10-06', tags: ['plano', 'motion', 'fase-51'],
+        fecha: '2026-10-06', tags: ['plano', 'motion', 'fase-54'],
         dod: [
           ok('El proyecto dibujado como un plano: habitaciones construidas o punteadas, que se construyen al tocarlas y mueven el precio (RF-217).'),
           ok('Perillas recalculadas en el servidor desde la versión enviada; la vista no lleva citas, horas ni el rango interno.'),
@@ -2361,7 +2481,7 @@ export const ITERACIONES: Iteracion[] = [
       {
         id: 'PF-PL-04', titulo: 'Como Mike, quiero que el anticipo pagado se convierta solo en proyecto',
         tipo: 'tarea', valor: 'alto', col: 'aceptada', par: 'MR', agente: 'Claude',
-        fecha: '2026-10-06', tags: ['plano', 'pagos', 'fase-51'],
+        fecha: '2026-10-06', tags: ['plano', 'pagos', 'fase-54'],
         dod: [
           ok('Cliente, proyecto, hitos, cuentas de cobro en borrador e invitación al portal, una sola vez aunque el webhook se repita (RF-218).'),
           ok('tests/plano-db.test.ts recorre el flujo completo contra libSQL temporal con las migraciones reales.'),
@@ -2371,7 +2491,7 @@ export const ITERACIONES: Iteracion[] = [
   },
   {
     id: 'pf-dashboard-asistente',
-    fase: 'Fase 52 · Preguntarle al panel',
+    fase: 'Fase 55 · Preguntarle al panel',
     nombre: 'Dashboard con caja para preguntar y buscar',
     rango: '6 oct 2026',
     ghSince: '2026-10-06',
@@ -2382,7 +2502,7 @@ export const ITERACIONES: Iteracion[] = [
       {
         id: 'PF-DA-01', titulo: 'Como Mike, quiero preguntarle al panel en lenguaje normal y encontrar cualquier cosa sin navegar el menú',
         tipo: 'historia', valor: 'alto', col: 'aceptacion', par: 'MR', agente: 'Claude',
-        fecha: '2026-10-06', tags: ['asistente', 'ia', 'fase-52'],
+        fecha: '2026-10-06', tags: ['asistente', 'ia', 'fase-55'],
         dod: [
           ok('Caja al estilo de Notion con búsqueda instantánea sin costo y Ctrl+K en todo el panel (RF-219).'),
           ok('Consultas nuevas del asistente: pagos recibidos, vencimientos y búsqueda en el panel, sin datos personales (RF-210).'),
@@ -2394,7 +2514,7 @@ export const ITERACIONES: Iteracion[] = [
       {
         id: 'PF-DA-02', titulo: 'Como Mike, quiero pedirle una cuenta de cobro y que haga todo el proceso hasta el borrador',
         tipo: 'historia', valor: 'alto', col: 'aceptacion', par: 'MR', agente: 'Claude',
-        fecha: '2026-10-06', tags: ['asistente', 'cuentas-de-cobro', 'fase-52'],
+        fecha: '2026-10-06', tags: ['asistente', 'cuentas-de-cobro', 'fase-55'],
         dod: [
           ok('Busca cliente y proyecto, pregunta lo que falte y propone; la tarjeta muestra líneas, retenciones, neto y lo que falta para emitir.'),
           ok('Nada se escribe sin "Aprobar"; "Pedir cambios" vuelve al modelo como indicación; la propuesta sobrevive a recargar.'),
@@ -2407,7 +2527,7 @@ export const ITERACIONES: Iteracion[] = [
   },
   {
     id: 'pf-cotiza',
-    fase: 'Fase 53 · El precio pactado no se toca',
+    fase: 'Fase 56 · El precio pactado no se toca',
     nombre: 'Cotiza: consultoría con alcance controlado',
     rango: '6 oct 2026',
     ghSince: '2026-10-06',
@@ -2418,7 +2538,7 @@ export const ITERACIONES: Iteracion[] = [
       {
         id: 'PF-CO-01', titulo: 'Como Mike, quiero entrar a Cotiza con un PIN sin que ese PIN abra el resto del panel',
         tipo: 'historia', valor: 'alto', col: 'aceptacion', par: 'MR', agente: 'Claude',
-        fecha: '2026-10-06', tags: ['cotiza', 'seguridad', 'fase-53'],
+        fecha: '2026-10-06', tags: ['cotiza', 'seguridad', 'fase-56'],
         dod: [
           ok('Rutas abiertas por el PIN con patrones anclados; cualquier otra de /admin va a /login (RF-220).'),
           ok('Frenos por IP y general, falla cerrada, aviso por ntfy en cada entrada y PIN triviales rechazados.'),
@@ -2429,7 +2549,7 @@ export const ITERACIONES: Iteracion[] = [
       {
         id: 'PF-CO-02', titulo: 'Como Mike, quiero cotizar por entregables contables con un precio que se congela',
         tipo: 'historia', valor: 'alto', col: 'aceptacion', par: 'MR', agente: 'Claude',
-        fecha: '2026-10-06', tags: ['cotiza', 'pagos', 'fase-53'],
+        fecha: '2026-10-06', tags: ['cotiza', 'pagos', 'fase-56'],
         dod: [
           ok('Motor puro e isomorfo: horas por entregable, colchón, redondeo, tramos de pago de Plano, cupos y adicionales (RF-221).'),
           ok('Al congelar, el servidor recalcula y guarda tarifas, cupos y reglas del día con huella SHA-256.'),
@@ -2440,7 +2560,7 @@ export const ITERACIONES: Iteracion[] = [
       {
         id: 'PF-CO-03', titulo: 'Como Mike, quiero que la bitácora decida sola cuándo algo ya no cabe en lo pactado',
         tipo: 'historia', valor: 'alto', col: 'aceptacion', par: 'MR', agente: 'Claude',
-        fecha: '2026-10-06', tags: ['cotiza', 'fase-53'],
+        fecha: '2026-10-06', tags: ['cotiza', 'fase-56'],
         dod: [
           ok('Pedidos, reuniones y rondas anotados en una transacción con su adicional; recargo por la hora del pedido en Bogotá (RF-222).'),
           ok('Textos para WhatsApp de la propuesta, de cada adicional y de cada resumen de reunión.'),
@@ -2452,7 +2572,7 @@ export const ITERACIONES: Iteracion[] = [
       {
         id: 'PF-CO-04', titulo: 'Como Mike, quiero que la IA convierta el pedido en alcance, clasifique pedidos nuevos y ordene mis notas',
         tipo: 'historia', valor: 'medio', col: 'aceptacion', par: 'MR', agente: 'Claude',
-        fecha: '2026-10-06', tags: ['cotiza', 'ia', 'fase-53'],
+        fecha: '2026-10-06', tags: ['cotiza', 'ia', 'fase-56'],
         dod: [
           ok('Esquemas sin campos de dinero, citas literales verificadas y guardia que quita cifras que no venían en el texto (RF-223).'),
           ok('tests/cotiza-ia.test.ts (14 casos) y recorrido contra una API falsa con citas y cifras inventadas a propósito.'),
@@ -2462,7 +2582,7 @@ export const ITERACIONES: Iteracion[] = [
       {
         id: 'PF-CO-05', titulo: 'Como cliente, quiero ver mi propuesta, aceptarla y aprobar adicionales desde un enlace',
         tipo: 'historia', valor: 'alto', col: 'aceptacion', par: 'MR', agente: 'Claude',
-        fecha: '2026-10-06', tags: ['cotiza', 'fase-53'],
+        fecha: '2026-10-06', tags: ['cotiza', 'fase-56'],
         dod: [
           ok('Token de 128 bits guardado como huella y cifrado; aceptación con la huella de lo que se vio y monto en el WHERE (RF-224).'),
           ok('Constancias SHA-256 recalculables y aviso por ntfy en cada decisión.'),
@@ -2472,7 +2592,7 @@ export const ITERACIONES: Iteracion[] = [
       {
         id: 'PF-CO-06', titulo: 'Como lector, quiero entender cómo se cotiza consultoría sin que el alcance se descontrole',
         tipo: 'tarea', valor: 'bajo', col: 'aceptada', par: 'MR', agente: 'Claude',
-        fecha: '2026-10-06', tags: ['cotiza', 'notes', 'fase-53'],
+        fecha: '2026-10-06', tags: ['cotiza', 'notes', 'fase-56'],
         dod: [
           ok('Nota /notes/el-precio-pactado-no-se-toca en español e inglés, sin tarifas, rutas del panel ni umbrales de los frenos.'),
         ],
@@ -2481,7 +2601,7 @@ export const ITERACIONES: Iteracion[] = [
   },
   {
     id: 'pf-asistente-escribe',
-    fase: 'Fase 54 · Un asistente que escribe con permiso',
+    fase: 'Fase 57 · Un asistente que escribe con permiso',
     nombre: 'Escrituras del asistente, cotizar con Plano y banco de casos con el modelo real',
     rango: '6 oct 2026',
     ghSince: '2026-10-06',
@@ -2492,7 +2612,7 @@ export const ITERACIONES: Iteracion[] = [
       {
         id: 'PF-DA-03', titulo: 'Como Mike, quiero pedirle al asistente que cambie un proyecto, un hito, el seguimiento o los mensajes, y aprobarlo viendo el cambio',
         tipo: 'historia', valor: 'alto', col: 'aceptada', par: 'MR', agente: 'Claude',
-        fecha: '2026-10-06', tags: ['asistente', 'ia', 'fase-54'],
+        fecha: '2026-10-06', tags: ['asistente', 'ia', 'fase-57'],
         dod: [
           ok('Cuatro escrituras con tarjeta común de antes y después (RF-210): proyecto, hito, seguimiento y mensajes leídos.'),
           ok('Lo público del portafolio y la visibilidad de un hito no se tocan aunque el modelo los mande; las notas internas solo crecen.'),
@@ -2503,7 +2623,7 @@ export const ITERACIONES: Iteracion[] = [
       {
         id: 'PF-DA-04', titulo: 'Como Mike, quiero pegarle lo que me escribió un cliente y encontrar la propuesta lista en Plano',
         tipo: 'historia', valor: 'alto', col: 'aceptada', par: 'MR', agente: 'Claude',
-        fecha: '2026-10-06', tags: ['asistente', 'plano', 'cotizar', 'fase-54'],
+        fecha: '2026-10-06', tags: ['asistente', 'plano', 'cotizar', 'fase-57'],
         dod: [
           ok('crear_propuesta deja el borrador en Plano y lo lee con su IA al aprobar, no al preparar (RF-211).'),
           ok('Devuelve el rango del motor y las preguntas abiertas, sin el teléfono ni el correo que haya en la conversación.'),
@@ -2513,7 +2633,7 @@ export const ITERACIONES: Iteracion[] = [
       {
         id: 'PF-DA-05', titulo: 'Como Mike, quiero saber qué hace el modelo real con preguntas reales antes de confiarle escrituras',
         tipo: 'historia', valor: 'alto', col: 'aceptada', par: 'MR', agente: 'Claude',
-        fecha: '2026-10-06', tags: ['asistente', 'ia', 'pruebas', 'fase-54'],
+        fecha: '2026-10-06', tags: ['asistente', 'ia', 'pruebas', 'fase-57'],
         dod: [
           ok('scripts/asistente-banco-casos.ts: 18 casos contra la base demo que se califican solos y dejan la demo como estaba.'),
           ok('Primera corrida: 14 de 18; corregidos la guardia de dólares con centavos, la capacitación enviada a Plano y la búsqueda de un hito por nombre.'),
@@ -2523,9 +2643,259 @@ export const ITERACIONES: Iteracion[] = [
       {
         id: 'PF-DA-06', titulo: 'Como lector, quiero entender cómo se le da permiso de escribir a un asistente sin perder el control',
         tipo: 'tarea', valor: 'bajo', col: 'aceptada', par: 'MR', agente: 'Claude',
-        fecha: '2026-10-06', tags: ['asistente', 'notes', 'fase-54'],
+        fecha: '2026-10-06', tags: ['asistente', 'notes', 'fase-57'],
         dod: [
           ok('Nota /notes/un-asistente-que-escribe-con-permiso en español e inglés, sin rutas del panel ni detalles de las defensas.'),
+        ],
+      },
+    ],
+  },
+  // ───────────────────────────────────────────────────────────────────────
+  {
+    id: 'pf-vigia-repo',
+    fase: 'Fase 58 · Un revisor que trabaja de noche',
+    nombre: 'Vigía nocturno del repositorio con Claude Managed Agents',
+    rango: '6 – 8 oct 2026',
+    ghSince: '2026-10-06',
+    ghUntil: '2026-10-08',
+    resumen:
+      'Primera pieza del sitio que necesita un contenedor de verdad: clonar el repositorio, instalar y ejecutar, algo que una función de Vercel no hace. Un agente en un contenedor de Anthropic corre npm audit, los tests y astro check, mide los headers del sitio publicado y entrega un informe priorizado. Su primera corrida real encontró siete problemas que nadie había visto, y se corrigieron en los PRs #4 y #5.',
+    historias: [
+      {
+        id: 'PF-VR-01', titulo: 'Como Mike, quiero un informe priorizado del repositorio sin tener que pedirlo',
+        tipo: 'historia', valor: 'medio', col: 'aceptacion', par: 'MR', agente: 'Claude',
+        fecha: '2026-10-06', tags: ['managed-agents', 'ia', 'calidad', 'fase-58'],
+        dod: [
+          ok('Agente, entorno y memoria versionados en agents/vigia/; red del contenedor cerrada a los dominios que la revisión necesita y tope de gasto por sesión (RF-510).'),
+          ok('El informe llega por webhook a /admin/lab/security y al celular; abrir un issue o un PR exige aprobación desde el panel.'),
+          ok('Corrida real el 6 oct 2026 (US$1,91, unos 10 min): siete hallazgos, entre ellos "NaN commits" en el deck de sustentación y el 302 de /admin sin headers endurecidos, todos verificados y corregidos.'),
+          ok('tests/vigia.test.ts usa ese informe real como fixture; tests/vigia-sesion-db.test.ts prueba avisos duplicados y fuera de orden contra libSQL.'),
+          pend('ANTHROPIC_WEBHOOK_SIGNING_KEY en producción para que las corridas lleguen al panel.'),
+        ],
+      },
+    ],
+  },
+  // ───────────────────────────────────────────────────────────────────────
+  {
+    id: 'pf-marketing',
+    fase: 'Fase 59 · Correo promocional con permiso',
+    nombre: 'Campañas de correo con doble confirmación y la Ley 2300',
+    rango: '6 oct 2026',
+    ghSince: '2026-10-06',
+    ghUntil: '2026-10-06',
+    resumen:
+      'Un apartado del panel para escribir campañas y mandarlas a una lista que solo tiene gente que pidió entrar. La lista arranca vacía a propósito: no se importan clientes ni contactos, porque la Ley 1581 pide autorización previa y expresa. El motor es propio sobre la API de Resend para que el consentimiento viva junto al resto de los datos personales, y la cola respeta el horario de la Ley 2300.',
+    historias: [
+      {
+        id: 'PF-MK-01', titulo: 'Como visitante, quiero suscribirme a las novedades y darme de baja cuando quiera',
+        tipo: 'historia', valor: 'medio', col: 'aceptada', par: 'MR', agente: 'Claude',
+        fecha: '2026-10-06', tags: ['marketing', 'datos-personales', 'fase-59'],
+        dod: [
+          ok('Formulario público /novedades, casilla opcional en /contact y casilla en la cuenta del portal; las dos públicas con doble confirmación por correo (RF-225).'),
+          ok('Se guarda el texto exacto que aceptó cada persona; cada correo lleva su enlace de baja.'),
+          ok('tests/marketing-db.test.ts (15 casos sobre libSQL temporal con la migración real): doble opt-in de un solo uso, freno de confirmaciones, baja después del disparo.'),
+        ],
+      },
+      {
+        id: 'PF-MK-02', titulo: 'Como Mike, quiero escribir una campaña, probarla en mi correo y dejarla en cola sin saltarme la ley',
+        tipo: 'historia', valor: 'medio', col: 'aceptacion', par: 'MR', agente: 'Claude',
+        fecha: '2026-10-06', tags: ['marketing', 'fase-59'],
+        dod: [
+          ok('/admin/marketing con vista previa en vivo, envío de prueba y disparo a la lista.'),
+          ok('Franja legal en hora de Colombia con festivos, una promoción por persona por semana y cupo diario que deja sitio a los correos del portal (tests/marketing-reglas.test.ts, 19 casos).'),
+          ok('Disparo idempotente y reintento de lote con la misma llave; sin MARKETING_SECRET no sale nada (falla cerrada).'),
+          ok('Correo real de prueba enviado y entregado el 6 oct 2026.'),
+          pend('Programar el cron de envío en cron-job.org y probar un lote real.'),
+        ],
+      },
+    ],
+  },
+  // ───────────────────────────────────────────────────────────────────────
+  {
+    id: 'pf-hero-rotativo',
+    fase: 'Fase 60 · Un titular por servicio',
+    nombre: 'Titular rotativo del hero con cifras del tarifario',
+    rango: '19 oct 2026',
+    ghSince: '2026-10-19',
+    ghUntil: '2026-10-19',
+    resumen:
+      'El titular fijo de la portada vendía todo a la vez y nada en concreto. Ahora rotan cinco cuadros, uno por servicio, cada uno con su dato real, su prueba y su botón. Dos ideas se probaron y se retiraron a pedido de Mike: una barra de pasos sobre el titular (estorbaba) y un relieve del terreno distinto por servicio (dañaba las ondas).',
+    historias: [
+      {
+        id: 'PF-HR-01', titulo: 'Como visitante, quiero ver qué hace Mike servicio por servicio, con un precio o un plazo real, sin buscarlo',
+        tipo: 'historia', valor: 'alto', col: 'aceptada', par: 'MR', agente: 'Claude',
+        fecha: '2026-10-19', tags: ['portada', 'motion', 'fase-60'],
+        dod: [
+          ok('Cinco cuadros (páginas web, software a la medida, capacitación en IA, IA para tu negocio, apps móviles) que cambian línea por línea (RF-038).'),
+          ok('Cifras sacadas del tarifario en la moneda de cada idioma; el asesor recibe los mismos cinco cuadros.'),
+          ok('Se detiene con el cursor encima, con el teclado dentro del hero, con la pestaña oculta o el hero fuera de pantalla; botón de pausa al llegar con el teclado; con movimiento reducido no rota.'),
+          ok('h1 con la frase entera y cuadros aria-hidden: un lector de pantalla no oye cinco titulares cambiando.'),
+          ok('tests/hero-servicios.test.ts (12 casos) y capturas en Chromium con GPU real en escritorio, 390x844 y movimiento reducido.'),
+        ],
+      },
+    ],
+  },
+  // ───────────────────────────────────────────────────────────────────────
+  {
+    id: 'pf-aeo',
+    fase: 'Fase 61 · Que los asistentes de IA lo conozcan',
+    nombre: 'AEO: llms.txt, robots generado y JSON-LD con precios',
+    rango: '20 oct 2026',
+    ghSince: '2026-10-20',
+    ghUntil: '2026-10-20',
+    resumen:
+      'Cada vez más clientes preguntan a un asistente de IA antes de buscar en Google. El sitio se presenta a esos asistentes con archivos generados desde las mismas fuentes que la página (tarifario, diccionarios, notas), y el panel cuenta qué agentes lo leen. Decisión de Mike: se abren también los bots de entrenamiento, porque un modelo que ya conoce el negocio lo nombra aunque no busque en la web. El mismo día se armó el kit de la página de Facebook.',
+    historias: [
+      {
+        id: 'PF-AE-01', titulo: 'Como visitante que pregunta a un asistente de IA, quiero que conozca los servicios y precios reales de Mike',
+        tipo: 'historia', valor: 'medio', col: 'aceptada', par: 'MR', agente: 'Claude',
+        fecha: '2026-10-20', tags: ['seo', 'aeo', 'fase-61'],
+        dod: [
+          ok('llms.txt y llms-full.txt por SSR, generados desde el tarifario, los diccionarios y las notas (RF-039).'),
+          ok('robots.txt generado: el grupo de agentes de IA repite todos los Disallow del grupo *, porque un bot con grupo propio ignora el general (RFC 9309).'),
+          ok('JSON-LD de negocio con ofertas y precios del tarifario, y FAQPage en /paginas-web y /capacitacion-ia.'),
+          ok('/admin/aeo: agentes que leen el sitio y visitas que llegan desde un asistente, un contador por día y fuente sin IP ni User-Agent.'),
+          ok('tests/aeo.test.ts (24 casos).'),
+        ],
+      },
+      {
+        id: 'PF-AE-02', titulo: 'Como Mike, quiero una página de Facebook con publicaciones listas para programar',
+        tipo: 'tarea', valor: 'bajo', col: 'aceptada', par: 'MR', agente: 'Claude',
+        fecha: '2026-10-20', tags: ['marketing', 'fase-61'],
+        dod: [
+          ok('Página "Codebymike" creada y kit en docs/facebook/ con 12 publicaciones e imágenes.'),
+          ok('Ficha de Google Business Profile en docs/google-perfil/.'),
+        ],
+      },
+    ],
+  },
+  // ───────────────────────────────────────────────────────────────────────
+  {
+    id: 'pf-auditoria-oct',
+    fase: 'Fase 62 · Auditoría de las superficies públicas',
+    nombre: 'SSRF del analizador, carrera del PIN y honeypot disparable desde otra web',
+    rango: '20 oct 2026',
+    ghSince: '2026-10-20',
+    ghUntil: '2026-10-20',
+    resumen:
+      'Auditoría de lo que se había abierto al público desde la de septiembre. Salieron ocho hallazgos, ninguno crítico. Se cerraron los tres que sí eran explotables desde fuera: el analizador público seguía redirecciones hacia la red interna, una ráfaga en paralelo se saltaba los frenos del PIN de Cotiza, y una imagen en cualquier web podía dejar bloqueado del sitio a quien la abriera. Los otros cinco quedan en pendientes.md.',
+    historias: [
+      {
+        id: 'PF-AO-01', titulo: 'Como operador, quiero que el analizador público no pueda usarse para mirar la red interna del servidor',
+        tipo: 'historia', valor: 'alto', col: 'aceptada', par: 'MR', agente: 'Claude',
+        fecha: '2026-10-20', tags: ['seguridad', 'ssrf', 'fase-62'],
+        dod: [
+          ok('fetchPublico sigue las redirecciones a mano y valida cada destino; un 302 hacia 127.0.0.1 ya no se sigue (RNF-34, RF-020).'),
+          ok('La conexión usa un lookup que rechaza IPs privadas al abrir el socket: cierra el DNS rebinding, en el analizador y en los monitores.'),
+          ok('tests/ssrf-guard.test.ts (9 casos) y tres casos nuevos en tests/diagnostics.test.ts.'),
+        ],
+      },
+      {
+        id: 'PF-AO-02', titulo: 'Como Mike, quiero que los frenos del PIN de Cotiza aguanten una ráfaga en paralelo',
+        tipo: 'historia', valor: 'alto', col: 'aceptada', par: 'MR', agente: 'Claude',
+        fecha: '2026-10-20', tags: ['seguridad', 'cotiza', 'fase-62'],
+        dod: [
+          ok('El intento se suma antes de verificar el PIN y se devuelve si acierta: cada intento es un turno atómico (RF-220).'),
+          ok('Contra libSQL temporal: 30 IP en paralelo solo dejan verificar el tope global, y una sola IP solo 5.'),
+        ],
+      },
+      {
+        id: 'PF-AO-03', titulo: 'Como visitante, quiero que otra página no pueda hacer que este sitio me bloquee',
+        tipo: 'historia', valor: 'alto', col: 'aceptada', par: 'MR', agente: 'Claude',
+        fecha: '2026-10-20', tags: ['seguridad', 'siem', 'fase-62'],
+        dod: [
+          ok('Lo que pide un navegador se registra en el micro-SIEM pero no bloquea, ni inline ni en el cron (RF-607).'),
+          ok('Nunca se bloquea la IP de una sesión admin viva.'),
+          ok('tests/security-honeypot-navegador.test.ts (4 casos).'),
+        ],
+      },
+      {
+        id: 'PF-AO-04', titulo: 'Como Mike, quiero los hallazgos que quedan abiertos anotados con su arreglo',
+        tipo: 'tarea', valor: 'medio', col: 'cola', par: 'MR', agente: 'Claude',
+        fecha: '2026-10-20', tags: ['seguridad', 'fase-62'],
+        dod: [
+          ok('Cinco hallazgos abiertos en pendientes.md con su arreglo propuesto.'),
+          pend('Control de acceso de los decks, historial del asesor, SUSTENTACION_PASSWORD, @auth/core y los menores del portal.'),
+        ],
+      },
+    ],
+  },
+  // ───────────────────────────────────────────────────────────────────────
+  {
+    id: 'pf-rendimiento-portada',
+    fase: 'Fase 63 · La portada en un celular',
+    nombre: 'Animaciones que duermen fuera de la vista',
+    rango: '20 – 21 oct 2026',
+    ghSince: '2026-10-20',
+    ghUntil: '2026-10-21',
+    resumen:
+      'Mike notó que la portada tardaba en la mayoría de dispositivos. La red y el servidor estaban bien (CDN con HIT, LCP p75 de 1,1 s); el cuello era el hilo principal del celular, ocupado casi entero en reposo porque cualquier animación visible obliga a Chrome a rehacer las capas de toda la página. Se quitó el trabajo inútil; la medida que sí bajaba el porcentaje (content-visibility) se probó pero no se implementó, por el riesgo con el pipeline fijado.',
+    historias: [
+      {
+        id: 'PF-RP-01', titulo: 'Como visitante en celular, quiero que la portada no gaste batería animando lo que no veo',
+        tipo: 'historia', valor: 'medio', col: 'aceptacion', par: 'MR', agente: 'Claude',
+        fecha: '2026-10-21', tags: ['rendimiento', 'portada', 'fase-63'],
+        dod: [
+          ok('Las animaciones CSS de cada sección se pausan fuera de la vista y retoman donde iban.'),
+          ok('El bucle de los fantasmas duerme sin puntero, y la capa (CSS y SMIL) se congela fuera de la vista.'),
+          ok('Tipografía del titular fija de 14 KB, preload de Inter y avatar servido desde el propio sitio.'),
+          ok('Medido con Playwright (Pixel 7, CPU x4, GPU real): quita trabajo inútil, pero no baja el porcentaje en reposo.'),
+          pend('Decidir content-visibility en las secciones bajo el hero (probado: baja de 95-99 % a 77-82 %).'),
+        ],
+      },
+    ],
+  },
+  // ───────────────────────────────────────────────────────────────────────
+  {
+    id: 'pf-ep-agenda',
+    fase: 'Fase 64 · Una cita que no se escapa',
+    nombre: 'Vigía de la agenda del instructor de etapa productiva',
+    rango: '28 oct 2026',
+    ghSince: '2026-10-28',
+    ghUntil: '2026-10-28',
+    resumen:
+      'A la fecha no se había conseguido agendar ninguna reunión de la etapa productiva y la indicación era revisar con frecuencia. La página de reservas consume una API anónima que devuelve los tramos ocupados, así que basta un cron, sin navegador ni modelo de IA. El mismo día se cambió de una llamada por minuto a dos horarios de cron-job.org, porque las llamadas vacías gastaban CPU de la cuota gratis de Vercel, y se descartó una versión con aviso pagado al decidir no cobrar.',
+    historias: [
+      {
+        id: 'PF-EA-01', titulo: 'Como aprendiz, quiero enterarme cuando el instructor tiene una cita libre',
+        tipo: 'historia', valor: 'alto', col: 'aceptada', par: 'MR', agente: 'Claude',
+        fecha: '2026-10-28', tags: ['ep', 'crons', 'fase-64'],
+        dod: [
+          ok('Aviso inmediato al celular de Mike y, con 10 minutos de retraso, a los aprendices suscritos al topic público (RF-040).'),
+          ok('Dos jobs de cron-job.org: cada 10 min para cancelaciones y cada minuto en las franjas de apertura; menos de 8.000 consultas al mes.'),
+          ok('Responde 200 aunque Bookings falle, para que cron-job.org no deshabilite el job; un estado desconocido cuenta como libre.'),
+        ],
+      },
+      {
+        id: 'PF-EA-02', titulo: 'Como aprendiz, quiero ver en /ep cuándo se abren las citas y cuánto duran libres',
+        tipo: 'historia', valor: 'medio', col: 'aceptada', par: 'MR', agente: 'Claude',
+        fecha: '2026-10-28', tags: ['ep', 'fase-64'],
+        dod: [
+          ok('Titular, calendario por semana con una casilla por cita del horario real y bitácora plegada, con el mismo retraso del aviso.'),
+          ok('tests/ep-agenda.test.ts (34 casos), con la respuesta real del 28 oct 2026; API verificada con curl sin sesión.'),
+        ],
+      },
+    ],
+  },
+  // ───────────────────────────────────────────────────────────────────────
+  {
+    id: 'pf-wiki',
+    fase: 'Fase 65 · El sistema explicado de una vez',
+    nombre: 'Wiki del repositorio',
+    rango: '28 oct 2026',
+    ghSince: '2026-10-28',
+    ghUntil: '2026-10-28',
+    resumen:
+      'Seis meses y más de 3.300 commits repartidos en planes, notas, memorias y comentarios. La wiki de docs/wiki/ los conecta en 21 páginas para que una persona nueva, un jurado o un agente de código entienda el sistema sin haber estado en las sesiones. Resume y enlaza; las fuentes de verdad siguen siendo el código, documentacion.ts y los planes.',
+    historias: [
+      {
+        id: 'PF-WK-01', titulo: 'Como persona que llega al proyecto, quiero entender el sistema completo sin leer seis meses de historial',
+        tipo: 'tarea', valor: 'medio', col: 'aceptada', par: 'MR', agente: 'Claude',
+        fecha: '2026-10-28', tags: ['documentacion', 'fase-65'],
+        dod: [
+          ok('21 páginas: visión, arquitectura, mapa del código, cada módulo, base de datos, API, testing, operación, convenciones, requisitos, historia y glosario.'),
+          ok('Rutas de lectura por tipo de lector y tabla de fuentes de verdad; CLAUDE.md enlaza la wiki.'),
+          ok('Sin rutas señuelo, reglas de detección ni valores de variables de entorno (el repositorio es público).'),
         ],
       },
     ],
@@ -2535,9 +2905,9 @@ export const ITERACIONES: Iteracion[] = [
 export const COMMITS_POR_MES = [
   { mes: 'abr', commits: 80 },
   { mes: 'may', commits: 21 },
-  { mes: 'jun', commits: 104 },
+  { mes: 'jun', commits: 109 },
   { mes: 'jul', commits: 1631 },
-  { mes: 'ago', commits: 568 },
-  { mes: 'sep', commits: 634 },
-  { mes: 'oct', commits: 8 },
+  { mes: 'ago', commits: 567 },
+  { mes: 'sep', commits: 663 },
+  { mes: 'oct', commits: 214 },
 ]

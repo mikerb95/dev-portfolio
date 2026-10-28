@@ -44,7 +44,14 @@ Vercel (DDoS automático + WAF con 3 reglas propias, gestionadas con `vercel fir
 - `SECURITY_IP_ALLOWLIST` y las IP de las sesiones admin (`esIpPropia`) nunca se
   bloquean por honeypot. Esto existe por el **autobloqueo del 10 sep 2026**,
   cuando Mike se dejó fuera a sí mismo. Recuperación: borrar su fila en
-  `blocked_ips`.
+  `blocked_ips`. Desde el 20 oct el bloqueo inline del middleware también
+  consulta `esIpPropia`.
+- Un honeypot pedido por un **navegador** (`vieneDeNavegador` en
+  `security/sensor.ts`: trae `Sec-Fetch-Mode`, que los escáneres no mandan) se
+  registra con su propia regla y menor severidad, pero **no bloquea**, ni inline
+  ni en el cron. Antes, una imagen apuntando a una ruta señuelo en cualquier web
+  dejaba bloqueado a quien la abriera. Un escáner que finja la cabecera esquiva
+  ese bloqueo, no el registro ni el bloqueo por severidad alta (RF-607).
 
 ### 3. Honeypots (`security/honeypot.ts`)
 
@@ -100,7 +107,7 @@ cuándo se usa el panel). Las acciones del panel usan `recordAdminEvent` con
 |---|---|---|
 | Secretos en reposo | AES-256-GCM con `ENCRYPTION_KEY`; nunca en listados ni HTML SSR; solo por endpoint de revelado bajo sesión admin | `lib/crypto.ts`, `lib/vault.ts`, `/api/admin/services/<id>/secrets` |
 | XSS desde la base | `jsonEnScript` para JSON en `<script>`, `urlSegura` para `href` (solo http/https), escape antes de `innerHTML` | `lib/json-script.ts`, `lib/safe-url.ts` (RNF-33) |
-| SSRF | `assertPublicHost` resuelve DNS y rechaza redes privadas; redirecciones manuales en el motor de monitores | `lib/ssrf-guard.ts` (RNF-34) |
+| SSRF | `assertPublicHost` resuelve DNS y rechaza redes privadas; `fetchPublico` sigue redirecciones a mano validando cada salto; `lookupPublico` (dispatcher de undici y `tls.connect`) vuelve a rechazar IPs privadas al conectar, lo que cierra el DNS rebinding. Lo usan los monitores y el analizador público | `lib/ssrf-guard.ts` (RNF-34) |
 | CSP | Enforce + reporting a `/api/security/csp-report` | `lib/security/private-headers.ts` |
 | Llaves repetidas o plantadas | Challenges de un solo uso, aviso al cambiar passkeys | `lib/webauthn.ts` (RNF-31) |
 | Privacidad en `/log` | Los repos privados cuentan pero no se publican | `/api/github/activity` (RNF-32) |
@@ -127,6 +134,19 @@ falla, sirve la foto vieja y nunca guarda ceros.
 - **Sep 2026** (22-24 sep): auditoría completa del admin en 4 bloques, cerrada.
   Fuera a propósito: CSP sin `unsafe-inline`, upload de certificaciones en
   Vercel, SSRF en monitores (después resuelto con `ssrf-guard`).
-- **Oct 2026** (20 oct): 8 hallazgos (SSRF en site-check, carrera en el PIN de
-  Cotiza, honeypot disparable desde otra web, decks sin auth…). Revisar el
-  estado de cada uno contra el código antes de darlos por abiertos.
+- **Oct 2026** (20 oct): 8 hallazgos en las superficies públicas, ninguno
+  crítico. Estado verificado contra el código el 28 oct:
+
+  | # | Hallazgo | Estado |
+  |---|---|---|
+  | 1 | SSRF en el analizador público: seguía redirecciones y había rebinding | ✅ Cerrado (`fetchPublico`, RNF-34) |
+  | 2 | Carrera en el PIN de Cotiza: una ráfaga en paralelo se saltaba los frenos | ✅ Cerrado (intento reservado antes de verificar, RF-220) |
+  | 3 | Honeypot disparable desde otra web | ✅ Cerrado (navegador no bloquea, IP propia excluida, RF-607) |
+  | 4 | `/decks/<id>.html` sin control de acceso, ids secuenciales | Abierto (latente: sin decks en la base) |
+  | 5 | El asesor acepta del navegador turnos "asesor" que se guardan en el panel y en Plano | Abierto |
+  | 6 | `SUSTENTACION_PASSWORD` sigue en producción | Abierto (acción manual) |
+  | 7 | `@auth/core` 0.37.4 con avisos | Abierto |
+  | 8 | Menores del portal y de `mis-pagos` | Abierto |
+
+  Los abiertos, con su arreglo propuesto, están en
+  [`pendientes.md`](../../pendientes.md).

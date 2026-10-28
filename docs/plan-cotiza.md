@@ -1,6 +1,7 @@
 # Plan: Cotiza, consultoría con alcance que no se descontrola
 
-> Requisitos: RF-220 a RF-224 en `src/data/documentacion.ts` (estado `planeado`).
+> Requisitos: RF-220 a RF-224 en `src/data/documentacion.ts` (todos
+> `implementado`; fases 0 a 5 entregadas el 6 oct 2026).
 > Relacionados: `docs/plan-plano.md` (cláusulas, reglas de pago, versiones
 > congeladas), `docs/plan-asistente.md` (motor de IA del panel),
 > `src/lib/sustentacion/acceso.ts` (la puerta por contraseña que sirve de
@@ -135,6 +136,16 @@ cerrada de rutas y ninguna más.
   no basta contra un intento repartido entre muchas IP. Con 10 fallos en una
   hora, sumando todas, la puerta del PIN se apaga una hora y llega un aviso por
   ntfy. GitHub sigue funcionando.
+- **El intento se cuenta antes de verificar** (20 oct 2026). La primera versión
+  leía los frenos, verificaba con scrypt y sumaba el fallo después: una ráfaga
+  en paralelo desde varias IP pasaba entera la revisión antes de que se contara
+  un solo fallo, y los dos frenos dejaban de existir. Ahora `reservarIntento`
+  (`pin-db.ts`) suma el intento a los dos contadores, `decidirReserva`
+  (`acceso.ts`) decide con los contadores ya sumados, y si el PIN acierta
+  `devolverIntento` limpia la IP y resta el intento del total. Cada intento es
+  un turno atómico: con cualquier concurrencia solo los primeros llegan a
+  scrypt. Probado contra libSQL con 30 IP en paralelo (`tests/cotiza-pin-db.test.ts`).
+  Hallazgo 2 de la auditoría del 20 oct 2026.
 - **Falla cerrada.** Es autorización, no observabilidad (misma excepción que la
   revocación de sesiones): si no se puede leer el hash o el contador, el PIN no
   abre. Nunca afecta la entrada con GitHub.
