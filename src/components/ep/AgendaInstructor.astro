@@ -70,25 +70,12 @@ const LEYENDA = [
   <div class="grid gap-2">
     <details class="ep-pliegue group rounded-xl bg-white/[.02]">
       <summary class="cursor-pointer list-none px-4 py-3 text-[13px] text-ink-100 flex items-center justify-between gap-3">
-        Semanas anteriores
+        Semanas que ya terminaron
         <span class="text-ink-300 transition-transform group-open:rotate-90">›</span>
       </summary>
-      <div class="px-4 pb-4 overflow-x-auto">
-        <table class="w-full text-[12px]">
-          <thead>
-            <tr class="text-left align-bottom text-[10px] font-mono uppercase tracking-wider text-ink-300">
-              <th class="py-2 pr-3 font-normal">Semana</th>
-              <th class="py-2 pr-3 font-normal text-right">Citas vigiladas</th>
-              <th class="py-2 pr-3 font-normal text-right">Se abrieron</th>
-              <th class="py-2 pr-3 font-normal text-right">Nunca se abrieron</th>
-              <th class="py-2 font-normal text-right" title="Mediana de cuánto estuvo libre cada cita antes de que la tomaran">Duraron libres</th>
-            </tr>
-          </thead>
-          <tbody data-agenda-semanas>
-            <tr><td colspan="5" class="py-3 text-ink-300">Cargando…</td></tr>
-          </tbody>
-        </table>
-      </div>
+      <ul data-agenda-semanas class="px-4 pb-4 grid gap-3 text-[13px] text-ink-200 leading-relaxed max-w-3xl">
+        <li class="text-ink-300">Cargando…</li>
+      </ul>
     </details>
 
     <details class="ep-pliegue group rounded-xl bg-white/[.02]">
@@ -199,7 +186,16 @@ const LEYENDA = [
     'por-abrir': 'aún no se puede reservar',
     'sin-datos': 'se abrió antes del monitor',
   }
+  const ORDEN_CONTEO: EstadoCelda[] = ['libre', 'se-abrio', 'sin-abrir', 'por-abrir', 'sin-datos']
+  const CONTEO: Record<EstadoCelda, [string, string]> = {
+    libre: ['libre ahora', 'libres ahora'],
+    'se-abrio': ['se abrió y la tomaron', 'se abrieron y las tomaron'],
+    'sin-abrir': ['nunca se abrió', 'nunca se abrieron'],
+    'por-abrir': ['aún no se puede reservar', 'aún no se pueden reservar'],
+    'sin-datos': ['se abrió antes del monitor', 'se abrieron antes del monitor'],
+  }
   const DIA_MS = 86_400_000
+  const plural = (n: number, uno: string, varios: string) => `${n} ${n === 1 ? uno : varios}`
 
   const raiz = document.querySelector<HTMLElement>('[data-agenda]')
   const $ = <T extends HTMLElement>(sel: string) => raiz?.querySelector<T>(sel) ?? null
@@ -229,7 +225,7 @@ const LEYENDA = [
   const fmtSemana = (lunes: number) => {
     const [d1, m1] = soloDia(lunes).split(' ').slice(1)
     const [d2, m2] = soloDia(lunes + 4 * DIA_MS).split(' ').slice(1)
-    return m1 === m2 ? `${d1}-${d2} ${m2}` : `${d1} ${m1}-${d2} ${m2}`
+    return m1 === m2 ? `${d1} al ${d2} ${m2}` : `${d1} ${m1} al ${d2} ${m2}`
   }
   const hace = (ms: number) => {
     const min = Math.max(0, Math.round((Date.now() - ms) / 60_000))
@@ -277,15 +273,20 @@ const LEYENDA = [
     cont.replaceChildren(
       ...semanas.map((s) => {
         const bloque = el('div')
-        const porAbrir = s.citas.filter((c) => c.estado === 'por-abrir').length
-        const cab = el('p', 'text-[13px] text-ink-100 mb-3')
-        cab.append(el('span', 'font-mono text-ink-50', `Semana ${fmtSemana(s.lunes)}`), ' · ')
-        cab.append(
-          s.vigiladas > 0
-            ? el('span', s.abiertas > 0 ? 'text-lime' : 'text-ember', `${s.abiertas} de ${s.vigiladas} citas se abrieron`)
-            : el('span', 'text-ink-300', 'todavía sin citas que se puedan reservar')
-        )
-        if (porAbrir > 0 && s.vigiladas > 0) cab.append(el('span', 'text-ink-300', ` · ${porAbrir} aún no se pueden reservar`))
+        const cab = el('div', 'mb-3')
+        cab.append(el('p', 'text-[14px] font-mono text-ink-50 mb-1.5', `Semana del ${fmtSemana(s.lunes)}`))
+        // Un conteo por color, con la misma casilla de la leyenda: así cada
+        // número se lee igual que el calendario de abajo, sin porcentajes ni
+        // "N de M" que obliguen a adivinar de qué total se habla.
+        const conteos = el('p', 'flex flex-wrap gap-x-4 gap-y-1 text-[12px] text-ink-200')
+        for (const estado of ORDEN_CONTEO) {
+          const n = s.citas.filter((c) => c.estado === estado).length
+          if (n === 0) continue
+          const item = el('span', 'inline-flex items-center gap-1.5')
+          item.append(el('span', `ep-celda ep-celda--${estado} w-2.5 h-2.5`), `${n} ${n === 1 ? CONTEO[estado][0] : CONTEO[estado][1]}`)
+          conteos.append(item)
+        }
+        cab.append(conteos)
 
         // Columnas = horas del horario de esa semana; filas = días con citas.
         const minutoDia = (c: number) => c - (Math.floor((c - 5 * 3_600_000) / DIA_MS) * DIA_MS + 5 * 3_600_000)
@@ -321,19 +322,31 @@ const LEYENDA = [
   function pintarTablas(d: Datos) {
     const semanas = $('[data-agenda-semanas]')
     if (semanas) {
-      if (d.semanas.length === 0) vacia(semanas, 5, 'Todavía no hay semanas registradas.')
-      else
-        semanas.replaceChildren(
-          ...d.semanas.map((s) =>
-            fila([
-              celda(fmtSemana(s.lunes), 'font-mono text-ink-100 whitespace-nowrap'),
-              celda(String(s.delHorario), 'text-right font-mono text-ink-100'),
-              celda(String(s.seAbrieron), `text-right font-mono ${s.seAbrieron ? 'text-lime' : 'text-ink-300'}`),
-              celda(String(s.sinAbrirse), `text-right font-mono ${s.sinAbrirse ? 'text-ember' : 'text-ink-300'}`),
-              celda(s.medianaLibreMin === null ? '-' : fmtDuracion(s.medianaLibreMin), 'text-right font-mono text-ink-100 whitespace-nowrap pr-0'),
-            ])
-          )
-        )
+      // Solo semanas cerradas: las que siguen en curso ya están en el
+      // calendario, y un resumen a medias ("1 cita vigilada") confunde más de
+      // lo que informa.
+      const terminadas = d.semanas.filter((s) => s.lunes + 7 * DIA_MS <= Date.now())
+      semanas.replaceChildren(
+        ...(terminadas.length === 0
+          ? [el('li', 'text-ink-300', 'Todavía no termina ninguna semana con el monitor funcionando. Cuando termine cada una, aquí queda su resumen.')]
+          : terminadas.map((s) => {
+              const li = el('li')
+              const antes = s.total - s.delHorario
+              const partes = [
+                `El instructor tenía ${plural(s.total, 'cita', 'citas')} en su horario.`,
+                s.delHorario === 0
+                  ? ''
+                  : s.seAbrieron > 0
+                  ? `${plural(s.seAbrieron, 'se vio libre', 'se vieron libres')}` +
+                    (s.medianaLibreMin === null ? '' : ` (normalmente duraban libres ${fmtDuracion(s.medianaLibreMin)})`) +
+                    ` y ${plural(s.sinAbrirse, 'nunca se abrió', 'nunca se abrieron')}.`
+                  : s.sinAbrirse === 1 ? 'La única que el monitor alcanzó a ver nunca se abrió.' : `Ninguna de las ${s.sinAbrirse} que el monitor alcanzó a ver se abrió.`,
+                antes > 0 ? `${plural(antes, 'se abrió', 'se abrieron')} antes de que existiera el monitor, así que no se sabe qué pasó con ${antes === 1 ? 'ella' : 'ellas'}.` : '',
+              ]
+              li.append(el('span', 'font-mono text-ink-50', `Semana del ${fmtSemana(s.lunes)}. `), partes.filter(Boolean).join(' '))
+              return li
+            }))
+      )
     }
 
     const episodios = $('[data-agenda-episodios]')
@@ -368,7 +381,7 @@ const LEYENDA = [
     } catch {
       const titular = $('[data-agenda-titular]')
       if (titular) titular.textContent = 'No se pudo leer la agenda'
-      vacia($('[data-agenda-semanas]'), 5, 'No se pudo leer la bitácora.')
+      $('[data-agenda-semanas]')?.replaceChildren(el('li', 'text-ink-300', 'No se pudo leer la bitácora.'))
       vacia($('[data-agenda-episodios]'), 6, 'No se pudo leer la bitácora.')
     }
   }
