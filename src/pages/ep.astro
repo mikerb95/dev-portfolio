@@ -347,6 +347,8 @@ const meta = [
 
     <CintaEtapa cinta={cinta} entrada={entradaCinta} rango={`${fLargo(inicioD)} → ${fLargo(finD)}`} />
 
+    <AgendaInstructor />
+
     <!-- Detalle + barra lateral -->
     <div id="ep-detalle" class="grid grid-cols-[minmax(0,1fr)] lg:grid-cols-[minmax(0,1fr)_300px] gap-4 items-start mb-4">
 
@@ -630,8 +632,6 @@ const meta = [
       </aside>
 
     </div>
-
-    <AgendaInstructor />
 
     <!-- Correos al instructor: el lineamiento de asuntos y un generador que lo
          aplica. CC, ficha y nombre se recuerdan solo en este navegador
