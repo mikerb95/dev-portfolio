@@ -436,12 +436,12 @@ export function resumenSemanas(episodios: Episodio[], config: ConfigServicio, in
 }
 
 /**
- * Retraso de la página pública. Los avisos van por niveles (el dueño al
- * instante, el topic de pago a los 5 min, el gratis a los 20), y /ep no puede
- * adelantarse al nivel gratis: si mostrara la cita al minuto, mirar la página
- * valdría más que cualquier suscripción.
+ * Retraso de la página pública. El dueño recibe el aviso al instante y los
+ * aprendices suscritos a los 10 min; /ep va con el mismo retraso que ellos para
+ * no adelantarse: si mostrara la cita al minuto, mirar la página valdría más
+ * que suscribirse.
  */
-export const RETRASO_PUBLICO_MIN = 20
+export const RETRASO_PUBLICO_MIN = 10
 
 /**
  * Lo que /ep puede enseñar ahora. Una cita abierta hace menos del retraso no

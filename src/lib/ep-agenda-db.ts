@@ -7,6 +7,7 @@ import { appSettings, epAgendaEpisodios } from '../db/schema'
 import { sendPush } from './notify'
 import {
   CONFIG_POR_DEFECTO,
+  RETRASO_PUBLICO_MIN,
   URL_DISPONIBILIDAD,
   URL_RESERVA,
   URL_SERVICIOS,
@@ -28,16 +29,12 @@ import {
 const CLAVE_ESTADO = 'ep_agenda_estado'
 
 /**
- * Niveles de aviso para los aprendices, además del dueño (que recibe al
- * instante por NTFY_TOPIC). Los topics se editan en /admin/settings; uno vacío
- * no avisa. En ntfy.sh un topic no tiene contraseña: el de pago se protege
- * cambiándole el nombre cada cierto tiempo, y por eso vive en la BD y no en
- * una variable de entorno que exigiría un deploy.
+ * Canal público de los aprendices, además del dueño (que recibe al instante por
+ * NTFY_TOPIC). Va fijo en el código y no en una variable de entorno ni en la BD
+ * porque no es secreto: es gratis y se comparte con toda la ficha. El retraso
+ * coincide con el de /ep (RETRASO_PUBLICO_MIN) y lo aplica el propio ntfy.
  */
-export const NIVELES_AVISO = [
-  { clave: 'ep_agenda_topic_pago', etiqueta: 'Topic de pago', retraso: '5m', retrasoMin: 5, prioridad: 4 },
-  { clave: 'ep_agenda_topic_gratis', etiqueta: 'Topic gratis', retraso: '20m', retrasoMin: 20, prioridad: 3 },
-] as const
+export const AVISO_APRENDICES = { topic: 'sena-agenda-ep', retraso: `${RETRASO_PUBLICO_MIN}m`, prioridad: 4 } as const
 
 /** El horario del instructor cambia rara vez: releerlo en cada consulta sería otra llamada lenta por minuto. */
 const RELEER_CONFIG_MS = 6 * 3_600_000
@@ -144,9 +141,9 @@ export async function registrarCambios(abiertas: Apertura[], cerradas: Cierre[],
 }
 
 /**
- * Push al dueño al instante y a cada nivel con su retraso. El retraso lo aplica
- * ntfy en su servidor, así que todo sale en esta misma corrida. Nunca lanza
- * (sendPush ya es no-op si falta config).
+ * Push al dueño al instante y a los aprendices con retraso. El retraso lo
+ * aplica ntfy en su servidor, así que todo sale en esta misma corrida. Nunca
+ * lanza (sendPush ya es no-op si falta config).
  */
 export async function avisarAperturas(abiertas: Apertura[]): Promise<void> {
   if (abiertas.length === 0) return
@@ -155,16 +152,15 @@ export async function avisarAperturas(abiertas: Apertura[]): Promise<void> {
   const lista = citas.map((c) => `- ${fmtCita(c)}`).join('\n')
   const opts = { tags: 'calendar', click: URL_RESERVA }
 
-  const topics = await Promise.all(NIVELES_AVISO.map((n) => leerClave(n.clave).catch(() => null)))
   await Promise.all([
     sendPush(titulo, `${lista}\n\nReserva en Bookings antes de que alguien la tome.`, { ...opts, priority: 5 }),
-    ...NIVELES_AVISO.map((n, i) => {
-      const topic = topics[i]
-      if (!topic) return null
-      // El mensaje se arma al enviarlo pero llega después: lo dice, para que
-      // nadie crea que la cita sigue libre seguro.
-      const cuerpo = `${lista}\n\nSe abrió hace ${n.retrasoMin} min; puede que ya no esté libre. Revisa en Bookings.`
-      return sendPush(titulo, cuerpo, { ...opts, priority: n.prioridad, topic, delay: n.retraso })
+    // El mensaje se arma al enviarlo pero llega después: lo dice, para que
+    // nadie crea que la cita sigue libre seguro.
+    sendPush(titulo, `${lista}\n\nSe abrió hace ${RETRASO_PUBLICO_MIN} min; puede que ya no esté libre. Revisa en Bookings.`, {
+      ...opts,
+      priority: AVISO_APRENDICES.prioridad,
+      topic: AVISO_APRENDICES.topic,
+      delay: AVISO_APRENDICES.retraso,
     }),
   ])
 }

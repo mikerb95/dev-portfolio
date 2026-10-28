@@ -7,7 +7,6 @@ import { ALLOWED_GITHUB_LOGINS } from '../../lib/auth'
 import { CONCEPTOS_DEFAULT, UVT_2026_CENTS } from '../../lib/cuentas-cobro'
 import { estadoPuerta, type EstadoPuerta } from '../../lib/cotiza/pin-db'
 import { formatFechaCorta } from '../../lib/fecha-co'
-import { NIVELES_AVISO } from '../../lib/ep-agenda-db'
 
 const settingsRows = await db.select().from(appSettings)
 const map = Object.fromEntries(settingsRows.map((r) => [r.key, r.value]))
@@ -280,45 +279,6 @@ const horaCo = (d: Date) =>
       </div>
     </div>
 
-    <!-- Agenda del instructor de etapa productiva (cron ep-agenda) -->
-    <div class="rounded-2xl glass p-5 md:p-6">
-      <h2 class="text-base font-medium text-ink-50">Agenda del instructor (/ep)</h2>
-      <p class="text-[12px] text-ink-300 mt-1 mb-4">
-        Cuando aparece una cita libre, el aviso te llega al instante por tu topic de siempre, y a cada topic de abajo con
-        su retraso. Un campo vacío no avisa. La bitácora pública de <a href="/ep#agenda" class="text-cyan hover:underline">/ep</a>
-        muestra cada cita <span class="text-ink-100">20 minutos después</span> de abrirse, para no adelantarse al nivel gratis.
-      </p>
-      <p class="text-[12px] text-ink-300 mb-4">
-        En ntfy.sh un topic no tiene contraseña: quien sepa el nombre lo recibe. Cambia el nombre del de pago cada cierto
-        tiempo y dáselo solo a quien pagó; aquí se cambia sin deploy.
-      </p>
-      <div class="grid grid-cols-1 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] gap-3 items-end">
-        {NIVELES_AVISO.map((n) => (
-          <div>
-            <label for={n.clave} class="block text-[11px] font-mono uppercase tracking-wider text-ink-300 mb-1">
-              {n.etiqueta} · {n.retrasoMin} min
-            </label>
-            <input
-              id={n.clave}
-              data-ep-topic={n.clave}
-              type="text"
-              autocomplete="off"
-              spellcheck="false"
-              value={valueOf(n.clave)}
-              placeholder="vacío: no avisa"
-              class="input-base w-full rounded-lg px-3 py-2 text-[13px] font-mono"
-            />
-          </div>
-        ))}
-        <div class="flex items-center gap-3">
-          <button id="save-ep" class="h-9 px-4 text-[13px] font-medium rounded-full bg-cyan text-ink-950 hover:bg-cyan-glow transition-colors">
-            Guardar
-          </button>
-          <span id="ep-status" class="text-[12px] font-mono text-lime hidden">✓ Guardado</span>
-        </div>
-      </div>
-    </div>
-
     <!-- Info -->
     <div class="rounded-2xl glass p-5 md:p-6">
       <h2 class="text-base font-medium text-ink-50 mb-2">Moneda base</h2>
@@ -412,30 +372,4 @@ const horaCo = (d: Date) =>
     }
   })
 
-  document.getElementById('save-ep')?.addEventListener('click', async () => {
-    const settings: Record<string, string | null> = {}
-    document.querySelectorAll<HTMLInputElement>('[data-ep-topic]').forEach((el) => {
-      const key = el.dataset.epTopic
-      if (key) settings[key] = el.value.trim() || null
-    })
-    const valores = Object.values(settings).filter(Boolean)
-    // El mismo topic en los dos niveles mandaría cada aviso dos veces al mismo
-    // celular, y el gratis llegaría como si fuera de pago.
-    if (new Set(valores).size !== valores.length) {
-      alert('Los dos topics deben ser distintos.')
-      return
-    }
-    const res = await fetch('/api/admin/settings', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ settings }),
-    })
-    const status = document.getElementById('ep-status')!
-    if (res.ok) {
-      status.classList.remove('hidden')
-      setTimeout(() => status.classList.add('hidden'), 2500)
-    } else {
-      alert('Error al guardar los topics de la agenda.')
-    }
-  })
 </script>
