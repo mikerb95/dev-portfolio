@@ -11,6 +11,7 @@ import { htmlMini, modeloCinta, type EntradaCinta } from '../lib/motion/cinta-ep
 import CintaEtapa from '../components/ep/CintaEtapa.astro'
 import BandejaInstructor from '../components/ep/BandejaInstructor.astro'
 import CarpetaCierre from '../components/ep/CarpetaCierre.astro'
+import AgendaInstructor from '../components/ep/AgendaInstructor.astro'
 
 const INICIO_ISO = '2026-09-09'
 const FIN_ISO = '2027-03-08'
@@ -629,6 +630,8 @@ const meta = [
       </aside>
 
     </div>
+
+    <AgendaInstructor />
 
     <!-- Correos al instructor: el lineamiento de asuntos y un generador que lo
          aplica. CC, ficha y nombre se recuerdan solo en este navegador

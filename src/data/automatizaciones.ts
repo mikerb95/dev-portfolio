@@ -363,6 +363,23 @@ export const CRONS: readonly Cron[] = [
       en: 'A launched campaign stays half-sent until someone presses "Send pending" in the panel.',
     },
   },
+  {
+    // cron-job.org lo llama cada minuto, pero solo consulta (y deja fila en la
+    // bitácora) cada 10 fuera de las aperturas: esa es la cadencia que el
+    // detector de silencio puede exigir.
+    job: 'ep-agenda',
+    horario: { es: 'cada ~10 min', en: 'every ~10 min' },
+    cadaMin: 10,
+    origen: 'cron-job.org',
+    hace: {
+      es: 'Revisa la agenda pública de reservas del instructor de etapa productiva, avisa al celular en cuanto aparece una cita libre y anota cuánto duró libre. Cada minuto alrededor de las horas en que se abren citas nuevas.',
+      en: 'Checks the apprenticeship instructor public booking page, pings my phone as soon as a slot opens and logs how long it stayed free. Every minute around the times new slots open.',
+    },
+    siFalla: {
+      es: 'Las citas libres vuelven a pasar sin que nadie se entere, y la bitácora pública de /ep deja de crecer.',
+      en: 'Free slots go by unnoticed again, and the public log on /ep stops growing.',
+    },
+  },
 ]
 
 /**
