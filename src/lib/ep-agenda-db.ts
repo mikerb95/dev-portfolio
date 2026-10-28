@@ -32,8 +32,10 @@ export const CLAVE_TOPIC_GRUPO = 'ep_agenda_topic_grupo'
 const RELEER_CONFIG_MS = 6 * 3_600_000
 // cron-job.org corta a los 30 s. Bookings tarda ~11 s en responder; con 20 s
 // de tope queda margen para escribir y responder aunque Microsoft vaya lento.
+// La configuración (3 a 10 s medidos) se pide EN PARALELO con la
+// disponibilidad, nunca antes: en serie las dos podían pasar de 30 s.
 const TIMEOUT_DISPONIBILIDAD_MS = 20_000
-const TIMEOUT_CONFIG_MS = 6_000
+const TIMEOUT_CONFIG_MS = 20_000
 
 const RETRASO_GRUPO = '5m'
 
@@ -98,8 +100,12 @@ export async function consultarBookings(
   }
 }
 
-/** Configuración vigente: la guardada si es reciente, si no la de Bookings, y como último recurso la conocida. */
-export async function configVigente(previo: EstadoAgenda | null, ahora: number): Promise<{ config: ConfigServicio; leidaEn?: number }> {
+/**
+ * Configuración para la PRÓXIMA consulta: la guardada si es reciente, si no la
+ * de Bookings, y como último recurso la que ya había. La consulta en curso usa
+ * la anterior, para poder pedir las dos cosas a la vez.
+ */
+export async function refrescarConfig(previo: EstadoAgenda | null, ahora: number): Promise<{ config: ConfigServicio; leidaEn?: number }> {
   if (previo?.configLeidaEn && ahora - previo.configLeidaEn < RELEER_CONFIG_MS) {
     return { config: previo.config, leidaEn: previo.configLeidaEn }
   }

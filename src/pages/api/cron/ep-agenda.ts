@@ -2,7 +2,7 @@ import type { APIRoute } from 'astro'
 import { cronSecretOk } from '../../../lib/cron-auth'
 import { registrarCronRun } from '../../../lib/cron-runs'
 import { citasLibres, compararLibres, enBogota, tocaConsultar, CONFIG_POR_DEFECTO, type EstadoAgenda } from '../../../lib/ep-agenda'
-import { avisarAperturas, configVigente, consultarBookings, guardarEstado, leerEstado, registrarCambios } from '../../../lib/ep-agenda-db'
+import { avisarAperturas, consultarBookings, guardarEstado, leerEstado, refrescarConfig, registrarCambios } from '../../../lib/ep-agenda-db'
 
 // Vigía de la agenda del instructor de etapa productiva (ver lib/ep-agenda.ts).
 // cron-job.org lo llama CADA MINUTO, y el endpoint decide si ese minuto toca
@@ -40,16 +40,16 @@ export const GET: APIRoute = async ({ request }) => {
     return json({ ok: false, error: 'estado' })
   }
 
-  if (!tocaConsultar(ahora, previo?.config ?? CONFIG_POR_DEFECTO)) {
+  const config = previo?.config ?? CONFIG_POR_DEFECTO
+  if (!tocaConsultar(ahora, config)) {
     return new Response(null, { status: 204 })
   }
 
-  const { config, leidaEn } = await configVigente(previo, ahora)
-  const r = await consultarBookings(config, ahora)
+  const [r, siguiente] = await Promise.all([consultarBookings(config, ahora), refrescarConfig(previo, ahora)])
 
   if ('error' in r) {
     if (previo) {
-      await guardarEstado({ ...previo, error: r.error, config, configLeidaEn: leidaEn }).catch(() => {})
+      await guardarEstado({ ...previo, error: r.error, config: siguiente.config, configLeidaEn: siguiente.leidaEn }).catch(() => {})
     }
     await registrarCronRun('ep-agenda', false, Date.now() - t0, r.error)
     return json({ ok: false, error: r.error })
@@ -68,8 +68,8 @@ export const GET: APIRoute = async ({ request }) => {
       libres,
       inicio: previo?.inicio ?? ahora,
       revisadoEn: ahora,
-      config,
-      configLeidaEn: leidaEn,
+      config: siguiente.config,
+      configLeidaEn: siguiente.leidaEn,
       estadosVistos,
     })
 

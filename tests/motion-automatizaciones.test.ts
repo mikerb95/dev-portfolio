@@ -42,7 +42,9 @@ describe('partitura: carriles', () => {
     expect(uptime.origenes.sort()).toEqual(['cron-job.org', 'vercel'])
     expect(uptime.horarios).toEqual([7 * 60])
     expect(carriles[0].job).toBe('uptime-check')
-    expect(carriles[1].job).toBe('security-rollup')
+    // ep-agenda (cada 10) cae entre el sondeo de 5 y el rollup de 15.
+    expect(carriles[1].job).toBe('ep-agenda')
+    expect(carriles[2].job).toBe('security-rollup')
     // Los frecuentes (sin hora del día: cada 5, 15, 60 min) van primero, del
     // más denso al menos; los diarios después, por hora declarada.
     const frecuentes = carriles.filter((c) => c.cadaMin < 1440)
