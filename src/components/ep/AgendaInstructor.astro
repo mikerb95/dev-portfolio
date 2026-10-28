@@ -40,7 +40,7 @@ import { URL_RESERVA } from '../../lib/ep-agenda'
           <th class="py-2 pr-3 font-normal text-right" title="Citas que el horario del instructor permite y que entraron en la ventana de reserva desde que corre el monitor">Citas del horario</th>
           <th class="py-2 pr-3 font-normal text-right">Se abrieron</th>
           <th class="py-2 pr-3 font-normal text-right">Sin abrirse</th>
-          <th class="py-2 font-normal text-right">Tiempo libre (mediana)</th>
+          <th class="py-2 font-normal text-right" title="Mediana de cuánto estuvo libre cada cita antes de tomarse o vencer">Mediana libre</th>
         </tr>
       </thead>
       <tbody data-agenda-semanas>
@@ -153,7 +153,7 @@ import { URL_RESERVA } from '../../lib/ep-agenda'
               celda(String(s.delHorario), 'text-right font-mono text-ink-100'),
               celda(String(s.seAbrieron), `text-right font-mono ${s.seAbrieron ? 'text-lime' : 'text-ink-300'}`),
               celda(String(s.sinAbrirse), `text-right font-mono ${s.sinAbrirse ? 'text-ember' : 'text-ink-300'}`),
-              celda(s.medianaLibreMin === null ? '-' : fmtDuracion(s.medianaLibreMin), 'text-right font-mono text-ink-100 pr-0'),
+              celda(s.medianaLibreMin === null ? '-' : fmtDuracion(s.medianaLibreMin), 'text-right font-mono text-ink-100 whitespace-nowrap pr-0'),
             ])
           )
         )
