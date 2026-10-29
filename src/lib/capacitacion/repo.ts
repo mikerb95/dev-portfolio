@@ -147,6 +147,26 @@ export function registrarVista(id: number): void {
 }
 
 /** Canje de un código de grupo. Devuelve el id si sirve, o null. */
+/**
+ * ¿Hay un recurso que este visitante puede ver y que enlaza este deck? Es la
+ * prueba que pide `/decks/<id>.html` para servir un deck fuera de una
+ * presentación (ver lib/present/deck-acceso.ts). Mismo filtro de visibilidad
+ * que la página del recurso: sin pase, solo lo público.
+ */
+export async function deckVisibleEnBanco(deckId: number, opts: { conPase: boolean }): Promise<boolean> {
+  const [row] = await db
+    .select({ id: trainingResources.id })
+    .from(trainingResources)
+    .where(
+      and(
+        eq(trainingResources.deckId, deckId),
+        inArray(trainingResources.visibility, visibilidadesVisibles(opts.conPase))
+      )
+    )
+    .limit(1)
+  return Boolean(row)
+}
+
 export async function canjearCodigo(input: string, now = new Date()): Promise<Codigo | null> {
   const code = normalizeAccessCode(input)
   const [row] = await db
