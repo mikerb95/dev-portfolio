@@ -469,26 +469,32 @@ export function resumenSemanas(episodios: Episodio[], config: ConfigServicio, in
 }
 
 /**
- * Retraso de la página pública. El dueño recibe el aviso al instante y los
- * aprendices suscritos a los 10 min; /ep va con el mismo retraso que ellos para
- * no adelantarse: si mostrara la cita al minuto, mirar la página valdría más
- * que suscribirse.
+ * Retraso de la página pública: ninguno. Hasta el 28 oct 2026 /ep iba con los
+ * mismos 10 min que el aviso de los aprendices, para que mirar la página no
+ * valiera más que suscribirse; Mike lo quitó porque la página es la evidencia
+ * de la auditoría y tiene que mostrar lo que el monitor ve en cuanto lo ve.
+ * Se deja la constante (y el filtro de `vistaPublica`) por si se vuelve a
+ * querer un retraso.
  */
-export const RETRASO_PUBLICO_MIN = 10
+export const RETRASO_PUBLICO_MIN = 0
+
+/** Retraso del aviso a los aprendices; el dueño lo recibe al instante. */
+export const RETRASO_APRENDICES_MIN = 10
 
 /**
  * Canal público de los aprendices, además del dueño (que recibe al instante por
  * NTFY_TOPIC). Va fijo en el código y no en una variable de entorno ni en la BD
  * porque no es secreto: es gratis y se comparte con toda la ficha. El retraso
- * coincide con el de /ep (RETRASO_PUBLICO_MIN) y lo aplica el propio ntfy.
+ * lo aplica el propio ntfy (X-Delay).
  * Vive en el módulo puro porque /ep lo muestra para que la gente se suscriba.
  */
-export const AVISO_APRENDICES = { topic: 'sena-agenda-ep', retraso: `${RETRASO_PUBLICO_MIN}m`, prioridad: 4 } as const
+export const AVISO_APRENDICES = { topic: 'sena-agenda-ep', retraso: `${RETRASO_APRENDICES_MIN}m`, prioridad: 4 } as const
 
 /**
- * Lo que /ep puede enseñar ahora. Una cita abierta hace menos del retraso no
- * aparece en ninguna parte, ni como fila ni en el conteo semanal, porque que
- * el "sin abrirse" baje de 19 a 18 ya delata que algo se abrió.
+ * Lo que /ep puede enseñar ahora. Con retraso, una cita abierta hace menos de
+ * ese tiempo no aparece en ninguna parte, ni como fila ni en el conteo
+ * semanal, porque que el "sin abrirse" baje de 19 a 18 ya delata que algo se
+ * abrió. Con RETRASO_PUBLICO_MIN = 0 lo muestra todo.
  */
 export function vistaPublica(
   episodios: Episodio[],
@@ -507,7 +513,7 @@ export function vistaPublica(
 
 /**
  * Estado de cada cita en el calendario de /ep:
- * - libre: se puede reservar (ya con el retraso público aplicado).
+ * - libre: se puede reservar (con el retraso público, si lo hay, ya aplicado).
  * - se-abrio: estuvo libre en algún momento y ya no.
  * - sin-abrir: ya pudo abrirse, con el monitor mirando, y nunca se vio libre.
  * - por-abrir: todavía no entra en la ventana de reserva.
@@ -527,7 +533,7 @@ export type SemanaCalendario = {
 /**
  * Las semanas que toca la ventana de reserva (la actual y, casi siempre, la
  * siguiente), cita por cita. Recibe los episodios y libres YA filtrados por
- * `vistaPublica`: así el calendario no puede adelantarse al aviso.
+ * `vistaPublica`: así el calendario nunca enseña algo que la página oculta.
  */
 export function calendario(
   episodios: Episodio[],

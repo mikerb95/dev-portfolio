@@ -22,6 +22,7 @@ import {
   AVISO_APRENDICES,
   vistaPublica,
   RETRASO_PUBLICO_MIN,
+  RETRASO_APRENDICES_MIN,
   type Episodio,
   type Tramo,
 } from '../src/lib/ep-agenda'
@@ -284,38 +285,24 @@ describe('resumen semanal', () => {
   })
 })
 
-describe('vista pública con retraso', () => {
+describe('vista pública', () => {
   const ahora = B('2026-11-02T08:30:00')
   const ep = (abierta: string): Episodio => ({ cita: B('2026-11-10T08:00:00'), abiertaEn: B(abierta), como: 'apertura', cerradaEn: null, cierre: null })
 
-  // Si /ep enseñara la cita al minuto, mirar la página ganaría al aviso de los aprendices (10 min).
-  it('no muestra una cita abierta hace menos de 10 min, ni en filas ni en libres', () => {
-    const v = vistaPublica([ep('2026-11-02T08:25:00')], { [B('2026-11-10T08:00:00')]: B('2026-11-02T08:25:00') }, ahora)
-    expect(v.episodios).toEqual([])
-    expect(v.libres).toEqual([])
-  })
-
-  it('la muestra cumplidos los 10 min', () => {
-    const v = vistaPublica([ep('2026-11-02T08:20:00')], { [B('2026-11-10T08:00:00')]: B('2026-11-02T08:20:00') }, ahora)
+  // /ep es la evidencia de la auditoría: enseña lo que el monitor ve en cuanto lo ve.
+  it('muestra al instante una cita que se acaba de abrir, en filas y en libres', () => {
+    const v = vistaPublica([ep('2026-11-02T08:29:00')], { [B('2026-11-10T08:00:00')]: B('2026-11-02T08:29:00') }, ahora)
+    expect(RETRASO_PUBLICO_MIN).toBe(0)
     expect(v.episodios).toHaveLength(1)
     expect(v.libres).toEqual([B('2026-11-10T08:00:00')])
   })
-
-  it('el conteo semanal tampoco delata una apertura reciente', () => {
-    const inicio = B('2026-10-28T10:00:00')
-    const visible = vistaPublica([ep('2026-11-02T08:25:00')], {}, ahora).episodios
-    const s = resumenSemanas(visible, CFG, inicio, ahora).find((x) => x.lunes === B('2026-11-09T00:00:00'))!
-    expect(s.seAbrieron).toBe(0)
-  })
 })
 
-// El aviso a los aprendices y la página pública van con el mismo retraso: si
-// se separan, uno de los dos canales se vuelve inútil frente al otro.
 describe('aviso a los aprendices', () => {
-  it('sale por sena-agenda-ep con el retraso de la página pública', () => {
+  it('sale por sena-agenda-ep a los 10 min', () => {
     expect(AVISO_APRENDICES.topic).toBe('sena-agenda-ep')
-    expect(AVISO_APRENDICES.retraso).toBe(`${RETRASO_PUBLICO_MIN}m`)
-    expect(RETRASO_PUBLICO_MIN).toBe(10)
+    expect(AVISO_APRENDICES.retraso).toBe(`${RETRASO_APRENDICES_MIN}m`)
+    expect(RETRASO_APRENDICES_MIN).toBe(10)
   })
 })
 

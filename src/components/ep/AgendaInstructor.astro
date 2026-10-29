@@ -7,7 +7,7 @@
 // El orden responde a lo que un aprendiz viene a preguntar: ¿hay cita ahora?
 // (la frase grande), ¿cómo va la semana? (el calendario con el horario real
 // del instructor) y, solo si quiere el detalle, las tablas, plegadas.
-import { AVISO_APRENDICES, RETRASO_PUBLICO_MIN, URL_RESERVA } from '../../lib/ep-agenda'
+import { AVISO_APRENDICES, RETRASO_APRENDICES_MIN, URL_RESERVA } from '../../lib/ep-agenda'
 
 const LEYENDA = [
   { estado: 'libre', texto: 'Libre ahora' },
@@ -49,7 +49,7 @@ const LEYENDA = [
         <span class="font-mono text-cyan whitespace-nowrap">{AVISO_APRENDICES.topic}</span>.
       </p>
       <p class="mt-1 text-[11px] text-ink-300 leading-relaxed">
-        El aviso y esta página van {RETRASO_PUBLICO_MIN} min después de que la cita se abre.
+        El aviso llega {RETRASO_APRENDICES_MIN} min después de que la cita se abre. Esta página la muestra en cuanto el monitor la ve.
       </p>
     </div>
   </div>

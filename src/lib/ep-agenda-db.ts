@@ -8,7 +8,7 @@ import { sendPush } from './notify'
 import {
   AVISO_APRENDICES,
   CONFIG_POR_DEFECTO,
-  RETRASO_PUBLICO_MIN,
+  RETRASO_APRENDICES_MIN,
   URL_DISPONIBILIDAD,
   URL_RESERVA,
   URL_SERVICIOS,
@@ -152,7 +152,7 @@ export async function avisarAperturas(abiertas: Apertura[]): Promise<void> {
     sendPush(titulo, `${lista}\n\nReserva en Bookings antes de que alguien la tome.`, { ...opts, priority: 5 }),
     // El mensaje se arma al enviarlo pero llega después: lo dice, para que
     // nadie crea que la cita sigue libre seguro.
-    sendPush(titulo, `${lista}\n\nSe abrió hace ${RETRASO_PUBLICO_MIN} min; puede que ya no esté libre. Revisa en Bookings.`, {
+    sendPush(titulo, `${lista}\n\nSe abrió hace ${RETRASO_APRENDICES_MIN} min; puede que ya no esté libre. Revisa en Bookings.`, {
       ...opts,
       priority: AVISO_APRENDICES.prioridad,
       topic: AVISO_APRENDICES.topic,
