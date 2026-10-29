@@ -142,11 +142,11 @@ falla, sirve la foto vieja y nunca guarda ceros.
   | 1 | SSRF en el analizador público: seguía redirecciones y había rebinding | ✅ Cerrado (`fetchPublico`, RNF-34) |
   | 2 | Carrera en el PIN de Cotiza: una ráfaga en paralelo se saltaba los frenos | ✅ Cerrado (intento reservado antes de verificar, RF-220) |
   | 3 | Honeypot disparable desde otra web | ✅ Cerrado (navegador no bloquea, IP propia excluida, RF-607) |
-  | 4 | `/decks/<id>.html` sin control de acceso, ids secuenciales | Abierto (latente: sin decks en la base) |
-  | 5 | El asesor acepta del navegador turnos "asesor" que se guardan en el panel y en Plano | Abierto |
+  | 4 | `/decks/<id>.html` sin control de acceso, ids secuenciales | ✅ Cerrado el 28 oct (sesión admin, presentación viva de ese deck o recurso visible del banco; 404 sin permiso, RF-208) |
+  | 5 | El asesor acepta del navegador turnos "asesor" que se guardan en el panel y en Plano | ✅ Cerrado el 28 oct (respuestas firmadas; lo que llega sin firma se guarda marcado como no verificado, RF-212) |
   | 6 | `SUSTENTACION_PASSWORD` sigue en producción | Abierto (acción manual) |
-  | 7 | `@auth/core` 0.37.4 con avisos | Abierto |
-  | 8 | Menores del portal y de `mis-pagos` | Abierto |
+  | 7 | `@auth/core` 0.37.4 con avisos | Bloqueado (espera a que `auth-astro` acepte la 0.41) |
+  | 8 | Menores del portal y de `mis-pagos` | ✅ Cerrados el 28 oct salvo uno: login del portal atómico y sin enumeración (RF-801), demo que no pisa una sesión real (RF-810), impersonación con ruta canónica (RF-806). Sigue abierto: `/mis-pagos` confirma si un teléfono tiene cobros (RF-307, decisión de Mike) |
 
   Los abiertos, con su arreglo propuesto, están en
   [`pendientes.md`](../../pendientes.md).

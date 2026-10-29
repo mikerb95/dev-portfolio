@@ -42,6 +42,11 @@ RF-212, RF-213, RF-037. Skill reutilizable: `chat-ia`. Artículo:
   (`wa.me` no sirve para avisar a Mike: abre un chat, no notifica.)
 - Botón "Enviarle esto a Mike" puede crear una propuesta en Plano
   (`asesor/propuesta.ts`).
+- **Respuestas firmadas** (`asesor/firma.ts`): el navegador reenvía la
+  conversación en cada pregunta, así que podría inventar turnos del asesor.
+  Cada respuesta sale con una firma HMAC de su texto y vuelve con ella; un turno
+  del asesor sin firma válida se guarda y se le pasa al modelo con la marca
+  `[No verificado]`, para que Mike no lea como del asesor algo que no dijo.
 
 ## Asistente del panel
 

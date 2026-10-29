@@ -43,7 +43,11 @@ Variables: `PRESENT_BUS_REST_URL`, `PRESENT_BUS_REST_TOKEN`,
   lista los segmentos que ya existen para que un PIN nunca los tape.
 - Máquina de estados y validación de comandos en `present/state.ts`.
 - `/decks/<id>.html` sirve el HTML enmarcado con su propia CSP
-  (`frame-ancestors 'self'`).
+  (`frame-ancestors 'self'`). Los ids son secuenciales, así que el id no es
+  la llave: solo se sirve con sesión admin, con el id de una presentación viva
+  de ese mismo deck (`?s=`, que ponen la pantalla y la vista del público) o si
+  un recurso visible del banco de capacitación lo enlaza. Sin permiso, 404
+  (`lib/present/deck-acceso.ts`).
 - Reemplazó al sistema viejo (PNG por proyecto con polling contra Turso); sus
   rutas redirigen y sus tablas siguen intactas.
 

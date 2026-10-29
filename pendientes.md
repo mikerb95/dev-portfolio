@@ -5,8 +5,8 @@
 > **6 oct 2026** (variables de Vercel y monitores consultados de verdad, ítems
 > ya resueltos cerrados, pendientes del Plano y del hero), más el vigía del repo
 > con Managed Agents y sus arreglos (noche del 6 oct, PRs #4 y #5), y la revisión
-> del **28 oct 2026** (auditoría del 20 oct: tres hallazgos cerrados y cinco
-> abiertos en §4; rendimiento de la portada). Este archivo es el
+> del **28 oct 2026** (auditoría del 20 oct: seis hallazgos cerrados el 20 y el 28 oct, dos
+> abiertos y uno bloqueado en §4; rendimiento de la portada). Este archivo es el
 > inventario vivo de lo que falta:
 > acciones manuales (variables de entorno, altas en servicios externos,
 > verificaciones en producción) y trabajo de código todavía sin hacer. Lo ya
@@ -588,29 +588,30 @@ en `.npmrc` escondería el choque.
 Ocho hallazgos, ninguno crítico. Cerrados el mismo 20 oct: **SSRF del
 analizador público** (`fetchPublico`, RNF-34), **carrera del PIN de Cotiza**
 (intento reservado antes de verificar, RF-220) y **honeypot disparable desde
-otra web** (RF-607). Detalle en `docs/wiki/08-seguridad-micro-siem.md`. Los
-cinco que quedan, por prioridad:
+otra web** (RF-607). Cerrados el 28 oct (detalle en `documentacion.ts` y en
+`docs/wiki/08-seguridad-micro-siem.md`):
 
-- [ ] **`/decks/<id>.html` sin control de acceso**, con ids secuenciales: quien
-      adivine el número lee el deck. Latente (no había decks en la base el
-      20 oct), pero un deck de cliente subido mañana quedaría expuesto. Arreglo:
-      exigir la sesión admin o el pase del público de esa presentación, o ids
-      no adivinables.
-- [ ] **Historial del asesor falsificable**: el navegador manda la conversación
-      completa y puede inventar turnos `asesor`, que terminan guardados en
-      `/admin/asesor` y en el borrador de Plano. Los precios ya se recalculan
-      en el servidor; lo que queda es el texto. Arreglo: marcar en el panel lo
-      que vino del navegador, o guardar solo lo que el servidor respondió.
+- [x] **`/decks/<id>.html` sin control de acceso** (RF-208): exige sesión
+      admin, el id de una presentación viva de ese deck o un recurso visible
+      del banco de capacitación. Queda sin probar de punta a punta con un deck
+      real (en e2e no hay Blob); la regla tiene tests unitarios.
+- [x] **Historial del asesor falsificable** (RF-212): respuestas firmadas; lo
+      que llega sin firma se guarda con la marca `[No verificado]`.
+- [x] **Menores**: login del portal con intento atómico antes de verificar y
+      bloqueo igual para correos inexistentes (RF-801); `/api/portal/demo` ya
+      no pisa una sesión real (RF-810); el guardia de impersonación de
+      `mock/pay` usa la ruta canónica y `mock/pay.ts` rechaza la sesión
+      impersonada (RF-806).
+
+Lo que sigue abierto:
+
+- [ ] **`/mis-pagos` confirma si un teléfono tiene cobros** (RF-307). El
+      comentario que decía lo contrario ya se corrigió; quitar la consulta solo
+      por número (y dejar únicamente el link firmado) es decisión de Mike.
 - [ ] **`SUSTENTACION_PASSWORD` sigue en producción**: abre
       `/admin/sustentacion` sin GitHub. Acción manual: quitarla de Vercel si la
       sustentación ya pasó.
 - [ ] **`@auth/core` 0.37.4** con avisos: ver la sección anterior.
-- [ ] **Menores**: el estado "bloqueada" del portal solo existe en cuentas
-      reales (permite saber si un correo tiene cuenta) y su contador de fallos
-      no es atómico; `/mis-pagos` confirma si un teléfono tiene cobros (su
-      comentario dice lo contrario); `/api/portal/demo` es GET y pisa la cookie
-      de sesión; el guardia de impersonación de `mock/pay` compara la ruta sin
-      normalizar.
 
 ### Rendimiento de la portada en celular (20-21 oct 2026)
 

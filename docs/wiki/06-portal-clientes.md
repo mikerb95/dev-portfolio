@@ -27,7 +27,12 @@ Artículos: `/notes/el-client-id-nunca-viene-de-la-url` y
 - Rate limit propio del login: 10 POST/min por IP, más estrecho que el de
   `/api/auth` (un login legítimo es un POST, y así un diccionario no llega a
   scrypt).
-- Defensa contra enumeración y fuerza bruta en `lib/portal/login.ts`.
+- Defensa contra enumeración y fuerza bruta en `lib/portal/login.ts`: el
+  intento se anota con un incremento atómico antes de verificar la contraseña,
+  y un correo inexistente se bloquea igual que uno real (contador por hash del
+  correo en el rate limit durable), así el bloqueo no delata quién es cliente.
+- La entrada a la demo (`GET /api/portal/demo`) no pisa una sesión real: si el
+  navegador ya la tiene, lo manda a su portal.
 - Todo evento sensible (login, fallo, invitación, pago) va al micro-SIEM como
   auditoría y a `portal_audit_log`.
 
