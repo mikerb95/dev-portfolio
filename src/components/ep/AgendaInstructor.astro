@@ -14,7 +14,7 @@ const LEYENDA = [
   { estado: 'se-abrio', texto: 'Se abrió y la tomaron' },
   { estado: 'sin-abrir', texto: 'Nunca se abrió' },
   { estado: 'por-abrir', texto: 'Aún no se puede reservar' },
-  { estado: 'sin-datos', texto: 'Antes del monitor' },
+  { estado: 'sin-datos', texto: 'Sin datos (antes del monitor)' },
 ]
 ---
 
@@ -160,7 +160,7 @@ const LEYENDA = [
   import {
     fmtCita,
     fmtDuracion,
-    proximaRevision,
+    proximaRevisionPublica,
     type EstadoCelda,
     type Episodio,
     type Semana,
@@ -170,6 +170,7 @@ const LEYENDA = [
   type Datos = {
     ok: boolean
     revisadoEn: number | null
+    vigiaEn: number | null
     conError: boolean
     libres: number[]
     semanas: Semana[]
@@ -184,7 +185,7 @@ const LEYENDA = [
     'se-abrio': 'se abrió y la tomaron',
     'sin-abrir': 'nunca se abrió',
     'por-abrir': 'aún no se puede reservar',
-    'sin-datos': 'se abrió antes del monitor',
+    'sin-datos': 'sin datos: se pudo reservar antes de que existiera el monitor',
   }
   const ORDEN_CONTEO: EstadoCelda[] = ['libre', 'se-abrio', 'sin-abrir', 'por-abrir', 'sin-datos']
   const CONTEO: Record<EstadoCelda, [string, string]> = {
@@ -192,7 +193,7 @@ const LEYENDA = [
     'se-abrio': ['se abrió y la tomaron', 'se abrieron y las tomaron'],
     'sin-abrir': ['nunca se abrió', 'nunca se abrieron'],
     'por-abrir': ['aún no se puede reservar', 'aún no se pueden reservar'],
-    'sin-datos': ['se abrió antes del monitor', 'se abrieron antes del monitor'],
+    'sin-datos': ['sin datos (antes del monitor)', 'sin datos (antes del monitor)'],
   }
   const DIA_MS = 86_400_000
   const plural = (n: number, uno: string, varios: string) => `${n} ${n === 1 ? uno : varios}`
@@ -262,7 +263,7 @@ const LEYENDA = [
     }
     if (revision) {
       revision.textContent = d.revisadoEn
-        ? `Revisado ${hace(d.revisadoEn)} · próxima revisión a las ${soloHora(proximaRevision(Date.now()))}`
+        ? `Revisado ${hace(d.revisadoEn)} · próxima revisión a las ${soloHora(proximaRevisionPublica(Date.now(), d.vigiaEn ?? null))}`
         : 'El monitor aún no ha hecho su primera revisión'
     }
   }

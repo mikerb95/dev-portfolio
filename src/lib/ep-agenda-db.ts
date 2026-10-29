@@ -7,6 +7,7 @@ import { appSettings, epAgendaEpisodios } from '../db/schema'
 import { sendPush } from './notify'
 import {
   AVISO_APRENDICES,
+  CLAVE_VIGIA,
   CONFIG_POR_DEFECTO,
   RETRASO_APRENDICES_MIN,
   URL_DISPONIBILIDAD,
@@ -53,6 +54,18 @@ export async function leerEstado(): Promise<EstadoAgenda | null> {
     const e = JSON.parse(raw) as EstadoAgenda
     return e && typeof e.libres === 'object' && e.config ? e : null
   } catch {
+    return null
+  }
+}
+
+/** Última revisión del Worker de cada minuto, o null si nunca ha corrido. */
+export async function leerVigia(): Promise<number | null> {
+  try {
+    const raw = await leerClave(CLAVE_VIGIA)
+    const en = raw ? (JSON.parse(raw) as { revisadoEn?: unknown }).revisadoEn : null
+    return typeof en === 'number' && Number.isFinite(en) ? en : null
+  } catch {
+    // Fail-open: sin el dato del Worker, /ep sigue con la hora del cron de respaldo.
     return null
   }
 }
@@ -164,6 +177,8 @@ export async function avisarAperturas(abiertas: Apertura[]): Promise<void> {
 export type AgendaPublica = {
   ok: true
   revisadoEn: number | null
+  /** Última revisión del Worker de cada minuto (las que no cambian nada no pasan por Vercel). */
+  vigiaEn: number | null
   inicio: number | null
   /** El último intento falló: la tabla puede estar desactualizada. */
   conError: boolean
@@ -180,9 +195,9 @@ const MAX_EPISODIOS = 400
 
 /** Lo que /ep publica: solo agregados y horas, nunca quién reservó (no se conoce). */
 export async function leerAgendaPublica(ahora: number): Promise<AgendaPublica> {
-  const estado = await leerEstado()
+  const [estado, vigiaEn] = await Promise.all([leerEstado(), leerVigia()])
   const vacia: AgendaPublica = {
-    ok: true, revisadoEn: null, inicio: null, conError: false, libres: [], semanas: [], calendario: [], episodios: [], urlReserva: URL_RESERVA,
+    ok: true, revisadoEn: null, vigiaEn: null, inicio: null, conError: false, libres: [], semanas: [], calendario: [], episodios: [], urlReserva: URL_RESERVA,
   }
   if (!estado) return vacia
 
@@ -205,7 +220,8 @@ export async function leerAgendaPublica(ahora: number): Promise<AgendaPublica> {
 
   return {
     ...vacia,
-    revisadoEn: estado.revisadoEn,
+    revisadoEn: Math.max(estado.revisadoEn, vigiaEn ?? 0),
+    vigiaEn,
     inicio: estado.inicio,
     conError: Boolean(estado.error),
     libres,

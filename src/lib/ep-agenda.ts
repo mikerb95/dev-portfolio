@@ -314,6 +314,38 @@ export function proximaRevision(ahora: number): number {
   return t
 }
 
+// ---------------------------------------------------------------------------
+// Vigía de cada minuto (Cloudflare Worker, workers/ep-agenda-vigia)
+// ---------------------------------------------------------------------------
+
+/**
+ * ¿Cambió el conjunto de citas libres respecto al estado guardado? Es lo único
+ * que decide el Worker: si no cambió nada no llama a Vercel, y así revisar cada
+ * minuto no gasta la cuota de CPU de Vercel. Si cambió, la corrida completa (con
+ * bitácora, avisos y estado) la hace el endpoint de siempre.
+ */
+export function cambiaronLibres(previo: Record<string, number>, libresAhora: number[]): boolean {
+  const antes = Object.keys(previo)
+  if (antes.length !== libresAhora.length) return true
+  const ahoraSet = new Set(libresAhora.map(String))
+  return antes.some((k) => !ahoraSet.has(k))
+}
+
+/** Clave de app_settings donde el Worker anota su última revisión. */
+export const CLAVE_VIGIA = 'ep_agenda_vigia'
+
+/**
+ * Hasta cuándo se da por vivo al Worker. Pasado esto, /ep vuelve a calcular la
+ * próxima revisión con el horario de cron-job.org, que sigue de respaldo.
+ */
+export const VIGIA_VIVO_MS = 3 * MIN_MS
+
+/** Próxima revisión que anuncia /ep: el minuto siguiente si el Worker está vivo. */
+export function proximaRevisionPublica(ahora: number, vigiaEn: number | null): number {
+  if (vigiaEn !== null && ahora - vigiaEn < VIGIA_VIVO_MS) return Math.floor(ahora / MIN_MS) * MIN_MS + MIN_MS
+  return proximaRevision(ahora)
+}
+
 /** Momentos en que puede abrir una cita, por cualquiera de las dos hipótesis. */
 export function momentosDeApertura(cita: number, config: ConfigServicio): number[] {
   const movil = abreEn(cita, config)
