@@ -1,5 +1,11 @@
 import type { APIRoute } from 'astro'
+import { getSession as getAuthSession } from 'auth-astro/server'
+import { isAllowedLogin } from '../../lib/auth'
 import { readDeckHtml } from '../../lib/present/decks'
+import { motivoParaLeerDeck, sesionDeConsulta } from '../../lib/present/deck-acceso'
+import { getSession as getPresentSession } from '../../lib/present/session'
+import { tienePaseCapacitacion } from '../../lib/capacitacion/pase'
+import { deckVisibleEnBanco } from '../../lib/capacitacion/repo'
 
 /**
  * Sirve el HTML del deck desde NUESTRO origen.
@@ -16,9 +22,12 @@ import { readDeckHtml } from '../../lib/present/decks'
  * mínimo que permite lo único que queremos permitir - que lo enmarquemos
  * nosotros.
  */
-export const GET: APIRoute = async ({ params }) => {
+export const GET: APIRoute = async ({ params, request, url, cookies }) => {
   const id = Number(String(params.id ?? '').replace(/\.html$/, ''))
   if (!Number.isInteger(id) || id <= 0) return new Response('Not found', { status: 404 })
+
+  // 404 y no 403 sin permiso: un 403 confirmaría qué ids tienen deck.
+  if (!(await puedeLeer(id, request, url, cookies))) return new Response('Not found', { status: 404 })
 
   const stream = await readDeckHtml(id)
   if (!stream) return new Response('Not found', { status: 404 })
@@ -38,4 +47,36 @@ export const GET: APIRoute = async ({ params }) => {
       'X-Robots-Tag': 'noindex, nofollow',
     },
   })
+}
+
+/**
+ * Las pruebas van de la más barata a la más cara (cookie, Redis, Turso) y se
+ * corta en la primera que sirve. Cada una que falla por su backend cuenta como
+ * "no": esto es autorización, así que falla cerrada.
+ */
+async function puedeLeer(
+  deckId: number,
+  request: Request,
+  url: URL,
+  cookies: Parameters<APIRoute>[0]['cookies']
+): Promise<boolean> {
+  let admin = false
+  try {
+    const sesion = await getAuthSession(request)
+    admin = Boolean(sesion) && isAllowedLogin((sesion?.user as { login?: string } | undefined)?.login)
+  } catch {
+    // Cookie corrupta o Auth.js sin configurar: se sigue con las otras pruebas.
+  }
+  if (admin) return true
+
+  let deckDeLaSesion: number | null = null
+  const sessionId = sesionDeConsulta(url.searchParams.get('s'))
+  if (sessionId) {
+    deckDeLaSesion = (await getPresentSession(sessionId).catch(() => null))?.deckId ?? null
+  }
+  if (motivoParaLeerDeck({ deckId, admin, deckDeLaSesion, enBancoVisible: false })) return true
+
+  const conPase = await tienePaseCapacitacion(cookies).catch(() => false)
+  const enBancoVisible = await deckVisibleEnBanco(deckId, { conPase }).catch(() => false)
+  return motivoParaLeerDeck({ deckId, admin, deckDeLaSesion, enBancoVisible }) !== null
 }

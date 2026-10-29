@@ -8,6 +8,7 @@ import PresentLayout from '../../layouts/PresentLayout.astro'
 import ClosingScreen from '../../components/present/ClosingScreen.astro'
 import Qr from '../../components/present/Qr.astro'
 import { getSession, toPublicSnapshot } from '../../lib/present/session'
+import { deckSrcDeSesion } from '../../lib/present/deck-acceso'
 import { busCredentials } from '../../lib/present/store'
 import { jsonEnScript } from '../../lib/json-script'
 
@@ -27,7 +28,7 @@ const bus = busCredentials()
 const snapshot = session ? toPublicSnapshot(session) : null
 const audienceUrl = session ? `${origin}/${session.pin}` : ''
 const audienceWritten = audienceUrl.replace(/^https?:\/\//, '')
-const deckSrc = session ? `/decks/${session.deckId}.html` : ''
+const deckSrc = session ? deckSrcDeSesion(session.deckId, session.id) : ''
 const feedbackUrl = `${origin}/feedback`
 ---
 
