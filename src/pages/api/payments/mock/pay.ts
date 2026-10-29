@@ -136,7 +136,9 @@ async function provesPropuesta(given: unknown, payment: { id: number; source: st
 async function ownsInvoiceOfPayment(context: APIContext, invoiceId: number | null): Promise<boolean> {
   if (invoiceId == null) return false
   const portal = await getPortalSession(context)
-  if (!portal) return false
+  // "Ver como cliente" es solo lectura. El middleware ya lo corta antes de
+  // llegar aquí; esto es la segunda capa, por si una ruta nueva se le escapa.
+  if (!portal || portal.impersonatedBy) return false
 
   const [invoice] = await db
     .select({ clientId: invoices.clientId })

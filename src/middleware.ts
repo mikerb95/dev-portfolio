@@ -632,7 +632,10 @@ export const onRequest = defineMiddleware(async (context, next) => {
   // Nunca pisa una sesión real: si ya hay sesión de portal o de admin, esta
   // ruta resuelve su propia autorización (ver mock/pay.ts) contra la base que
   // le corresponda, sin pasar por aquí.
-  if (!portalDemoMode && pathname === '/api/payments/mock/pay' && method === 'POST') {
+  // Con la ruta CANÓNICA, como todos los guardas: con `pathname` crudo, un
+  // POST a `/api/payments/mock/pay/` (barra final, que Astro sirve igual)
+  // pasaba de largo y la impersonación llegaba a la pasarela simulada.
+  if (!portalDemoMode && canonicalPath === '/api/payments/mock/pay' && method === 'POST') {
     const realPortalSession = await getPortalSession(context)
 
     // "Ver como cliente" jamás debe alcanzar la pasarela, ni siquiera la

@@ -67,8 +67,11 @@ export const POST: APIRoute = async ({ request }) => {
 
   const pagos = await historyForPhone(phone, 5)
 
-  // Respuesta idéntica en forma para un número con cobros y uno sin ellos: la
-  // lista vacía no confirma ni desmiente que ese teléfono sea cliente mío.
+  // Misma forma de respuesta con o sin cobros, pero eso NO oculta nada: una
+  // lista con filas confirma que ese número tiene cobros conmigo, y la vacía
+  // casi lo desmiente. Es el precio de dejar consultar sin el link firmado
+  // (auditoría del 20 oct 2026). Lo que lo acota es lo de arriba: datos
+  // enmascarados y 5 consultas por hora por IP, que hacen caro barrer números.
   return json(200, {
     masked: true,
     pagos: pagos.map((p) => ({

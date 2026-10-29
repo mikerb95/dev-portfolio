@@ -2,7 +2,7 @@ import type { APIRoute } from 'astro'
 import { eq } from 'drizzle-orm'
 import { db, demoAvailable, runInDemoContext } from '../../../db'
 import { clientUsers } from '../../../db/schema'
-import { createSession, setSessionCookie } from '../../../lib/portal/session'
+import { createSession, PORTAL_COOKIE, setSessionCookie } from '../../../lib/portal/session'
 import { createPortalDemoToken, PORTAL_DEMO_COOKIE, PORTAL_DEMO_EMAIL } from '../../../lib/portal/demo'
 import { crearPaseRespaldo, PORTAL_RESPALDO_COOKIE } from '../../../lib/portal/respaldo'
 import { serverEnv } from '../../../lib/env'
@@ -36,6 +36,15 @@ function entrarEnRespaldo(cookies: Parameters<APIRoute>[0]['cookies'], redirect:
 }
 
 export const GET: APIRoute = async ({ cookies, redirect }) => {
+  // Es un GET al que enlazan varias páginas, así que cualquier web puede
+  // mandar aquí a un cliente con un simple enlace. Si ese navegador ya tiene
+  // una sesión REAL del portal (cookie de sesión sin pase de demo), pisarla lo
+  // sacaría de su cuenta y lo dejaría mirando datos ficticios como si fueran
+  // suyos (auditoría del 20 oct 2026). Se le manda a su portal, sin tocar nada.
+  if (cookies.get(PORTAL_COOKIE)?.value && !cookies.get(PORTAL_DEMO_COOKIE)?.value) {
+    return redirect('/portal')
+  }
+
   // Sin base de demo configurada no hay nada vivo que intentar, pero el
   // snapshot no necesita base: es exactamente el caso para el que existe.
   if (!demoAvailable) return entrarEnRespaldo(cookies, redirect)
