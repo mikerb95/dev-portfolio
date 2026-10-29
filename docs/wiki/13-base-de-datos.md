@@ -22,7 +22,7 @@
 | **Portal** | `client_users`, `client_invitations`, `portal_sessions`, `portal_audit_log`, `project_milestones`, `invoices`, `invoice_items`, `portal_threads`, `portal_messages`, `portal_message_reads`, `portal_documents`, `portal_notifications`, `portal_notification_prefs`, `portal_activity` |
 | **Presentaciones** | `decks`, `deck_slides`, `presentation_feedback`; heredadas sin código: `presentations`, `presentation_slides` |
 | **Capacitación** | `training_programs`, `training_resources`, `training_access_codes` |
-| **SENA** | `sena_ep_recordatorios`, `ep_agenda_episodios` |
+| **SENA** | `sena_ep_recordatorios`, `ep_agenda_episodios` (estado en `app_settings`: `ep_agenda_estado` y `ep_agenda_vigia`, este último del Worker de cada minuto) |
 | **Cómputo** | `compute_usage_hourly`, `compute_batches`, `compute_rates`, `compute_terms`, `compute_periods` |
 | **Finanzas personales** | `living_costs`, `living_expenses` |
 | **IA** | `analista_ejecuciones`, `asesor_conversaciones`, `asesor_mensajes`, `asistente_conversaciones`, `vigia_corridas` |

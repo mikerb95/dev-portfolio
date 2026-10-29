@@ -5,8 +5,10 @@ import { citasLibres, compararLibres, enBogota, CADA_MIN_FONDO, CONFIG_POR_DEFEC
 import { avisarAperturas, consultarBookings, guardarEstado, leerEstado, refrescarConfig, registrarCambios } from '../../../lib/ep-agenda-db'
 
 // Vigía de la agenda del instructor de etapa productiva (ver lib/ep-agenda.ts).
-// Lo disparan dos jobs de cron-job.org: "ep-agenda" cada 10 min y
-// "ep-agenda-aperturas" cada minuto en las franjas en que se abren citas. Cada
+// Lo llaman el job "ep-agenda" de cron-job.org cada 10 min (respaldo) y el
+// Worker de Cloudflare (workers/ep-agenda-vigia), que revisa cada minuto por su
+// cuenta y solo llama aquí cuando cambian las citas libres. Antes del Worker,
+// "ep-agenda-aperturas" llamaba cada minuto en las franjas de apertura. Cada
 // llamada consulta a Bookings: no hay llamadas de "este minuto no toca", que
 // gastaban CPU activa de la cuota de Vercel sin hacer nada. Las franjas están
 // copiadas en `FRANJAS_APERTURA` (lib/ep-agenda.ts), con sus pruebas.
