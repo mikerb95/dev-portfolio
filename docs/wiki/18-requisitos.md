@@ -7,7 +7,7 @@
 > comprueba), `notas` y `relacionados`. Si esta tabla y el archivo discrepan,
 > manda el archivo.
 >
-> Totales en la foto: **175 implementados, 3 parciales, 4 planeados** (182 en total).
+> Totales en la foto: **176 implementados, 3 parciales, 4 planeados** (183 en total).
 
 **Cómo leer los IDs.** Los RF se numeran por módulo: `RF-0xx` sitio público,
 `RF-1xx` autenticación, `RF-2xx` CRM y comercial, `RF-3xx` finanzas, `RF-4xx`
@@ -217,6 +217,7 @@ Para regenerar esta tabla, ver el script descrito en
 | RF-719 | Panel retráctil del ponente en /present-admin | implementado | media | src/lib/presentacion/panel.ts (modos, índice del mazo, ritmo, salud del enlace y atajos), src/pages/present-admin.astro (la vista y el cableado), src/lib/presen |
 | RF-720 | Salida automática a la página de cierre al terminar el mazo | implementado | baja | src/lib/presentacion/cierre.ts (las reglas), src/pages/present-admin.astro (el temporizador y el aviso), src/lib/presentacion/panel.ts (el estado cerrando de la |
 | RF-718 | Página de cierre para compartir tras la sustentación | parcial | baja | src/pages/presentacion-end.astro, src/pages/en/presentacion-end.astro, src/i18n/es.ts, src/i18n/en.ts (presentacionEnd), src/i18n/routing.ts (TRANSLATED_ROUTES) |
+| RF-721 | Wiki del sistema dentro del panel | implementado | baja | src/lib/wiki.ts, colección `wiki` en src/content.config.ts, src/pages/admin/wiki/[...slug].astro |
 
 ## Requisitos no funcionales (RNF)
 

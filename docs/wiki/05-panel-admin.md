@@ -92,6 +92,7 @@ Clientes). Una página nueva del panel se da de alta ahí.
 | `/admin/settings` | Ajustes: datos del emisor, parámetros tributarios, PIN de Cotiza… (en `app_settings`). |
 | `/admin/vida`, `/admin/infra` | Ver Finanzas. |
 | `/admin/docs/*` | Redirect permanente a `/docs/*` (la documentación se hizo pública). |
+| `/admin/wiki` | Esta wiki (`docs/wiki`) leída dentro del panel: índice de páginas, anterior y siguiente, enlaces entre páginas en el panel y al código en GitHub (RF-721). |
 
 ## Redirecciones históricas
 

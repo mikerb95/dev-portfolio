@@ -41,4 +41,11 @@ const notes = defineCollection({
   }),
 })
 
-export const collections = { notes }
+// Wiki del repo (docs/wiki), servida en /admin/wiki. Los archivos no llevan
+// frontmatter porque se leen también en GitHub: sin schema, el título sale del
+// primer `#` de cada página (lib/wiki.ts).
+const wiki = defineCollection({
+  loader: glob({ pattern: '*.md', base: './docs/wiki' }),
+})
+
+export const collections = { notes, wiki }

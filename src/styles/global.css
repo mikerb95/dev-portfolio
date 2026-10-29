@@ -633,3 +633,20 @@ select {
 }
 .prose-capacitacion blockquote p { margin: 0; }
 .prose-capacitacion hr { border: none; border-top: 1px solid rgba(255, 255, 255, 0.06); margin: 2.2em 0; }
+
+/* La wiki del panel (/admin/wiki) reutiliza el cuerpo de arriba y suma lo que
+   el banco no usa: tablas (casi todas las páginas son tablas) y h1 de sección.
+   La tabla se desplaza por su cuenta en móvil en vez de empujar la página. */
+.prose-wiki { font-size: 14.5px; }
+.prose-wiki h2:first-child { margin-top: 0; }
+.prose-wiki table {
+  display: block; overflow-x: auto; max-width: 100%;
+  border-collapse: collapse; margin: 0 0 1.4em; font-size: 13px; line-height: 1.55;
+}
+.prose-wiki th, .prose-wiki td {
+  padding: 0.5em 0.8em; text-align: left; vertical-align: top;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+.prose-wiki th { color: #e7e7ec; font-weight: 600; background: rgba(255, 255, 255, 0.03); white-space: nowrap; }
+.prose-wiki tr:hover td { background: rgba(0, 242, 255, 0.03); }
+.prose-wiki :is(h2, h3, h4) { scroll-margin-top: 1.5rem; }

@@ -1,0 +1,100 @@
+---
+// Wiki del repo dentro del panel. Los archivos viven en docs/wiki y se leen
+// también en GitHub (el repo es público): esta página solo los muestra cómodos
+// detrás de la sesión, con el índice al lado y los enlaces reescritos.
+//
+// NO se prerenderiza aunque el contenido sea fijo: una página prerenderizada la
+// sirve el CDN sin pasar por el middleware, y el gate de /admin vive ahí.
+import AdminLayout from '../../../layouts/AdminLayout.astro'
+import { getCollection } from 'astro:content'
+import {
+  WIKI_BASE,
+  WIKI_PORTADA,
+  REPO_URL,
+  ordenarIds,
+  reescribirEnlaces,
+  separarTitulo,
+  tituloDesdeMarkdown,
+} from '../../../lib/wiki'
+
+const entradas = await getCollection('wiki')
+const porId = new Map(entradas.map((e) => [e.id, e]))
+const ids = ordenarIds([...porId.keys()])
+const paginas = ids.map((id) => ({
+  id,
+  href: id === WIKI_PORTADA ? WIKI_BASE : `${WIKI_BASE}/${id}`,
+  titulo: tituloDesdeMarkdown(porId.get(id)?.body, id),
+}))
+
+const id = (Astro.params.slug ?? WIKI_PORTADA).toLowerCase()
+const entrada = porId.get(id)
+if (!entrada) {
+  return new Response(null, { status: 404 })
+}
+
+const { titulo, cuerpo } = separarTitulo(reescribirEnlaces(entrada.rendered?.html ?? ''))
+const pos = ids.indexOf(id)
+const anterior = pos > 0 ? paginas[pos - 1] : null
+const siguiente = pos < paginas.length - 1 ? paginas[pos + 1] : null
+const archivo = entrada.filePath ?? `docs/wiki/${id}.md`
+---
+
+<AdminLayout title={titulo ?? 'Wiki'}>
+  <div class="grid gap-8 lg:grid-cols-[220px_minmax(0,1fr)]">
+    <nav aria-label="Páginas de la wiki" class="lg:sticky lg:top-6 lg:self-start">
+      <details class="group lg:hidden rounded-xl bg-white/[.03] px-4 py-3">
+        <summary class="cursor-pointer text-[12px] font-mono uppercase tracking-[.16em] text-ink-200">
+          Páginas ({paginas.length})
+        </summary>
+        <ol class="mt-3 space-y-1">
+          {paginas.map((p) => (
+            <li>
+              <a
+                href={p.href}
+                aria-current={p.id === id ? 'page' : undefined}
+                class:list={[
+                  'block rounded-md px-2 py-1 text-[13px]',
+                  p.id === id ? 'bg-cyan/10 text-cyan' : 'text-ink-200 hover:text-ink-50',
+                ]}
+              >{p.titulo}</a>
+            </li>
+          ))}
+        </ol>
+      </details>
+      <ol class="hidden lg:block space-y-0.5">
+        {paginas.map((p) => (
+          <li>
+            <a
+              href={p.href}
+              aria-current={p.id === id ? 'page' : undefined}
+              class:list={[
+                'flex items-center gap-2 rounded-md px-2 py-1.5 text-[12.5px] leading-snug transition-colors',
+                p.id === id ? 'bg-cyan/10 text-cyan' : 'text-ink-200 hover:bg-white/[.04] hover:text-ink-50',
+              ]}
+            >
+              <span class:list={['h-1.5 w-1.5 shrink-0 rounded-full', p.id === id ? 'bg-cyan' : 'bg-white/15']}></span>
+              {p.titulo}
+            </a>
+          </li>
+        ))}
+      </ol>
+    </nav>
+
+    <article class="min-w-0 max-w-3xl">
+      <div class="prose-capacitacion prose-wiki" set:html={cuerpo} />
+
+      <footer class="mt-12 pt-6 border-t border-white/5 flex flex-wrap items-center justify-between gap-4 text-[13px]">
+        <div class="flex gap-4">
+          {anterior && <a href={anterior.href} class="text-ink-200 hover:text-cyan">← {anterior.titulo}</a>}
+          {siguiente && <a href={siguiente.href} class="text-ink-200 hover:text-cyan">{siguiente.titulo} →</a>}
+        </div>
+        <a
+          href={`${REPO_URL}/blob/main/${archivo}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          class="font-mono text-[11px] text-ink-300 hover:text-ink-50"
+        >{archivo}</a>
+      </footer>
+    </article>
+  </div>
+</AdminLayout>

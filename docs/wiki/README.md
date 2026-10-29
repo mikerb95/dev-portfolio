@@ -69,3 +69,11 @@ seguridad a nivel de diseño, pero a propósito **no** lista las rutas señuelo,
 los identificadores de reglas de detección ni valores de variables de entorno.
 Quien necesite ese detalle lo encuentra en el código; la wiki no lo convierte en
 un manual. Al editarla, mantén ese criterio (ver [17](17-convenciones.md#opsec)).
+
+## Dónde se lee
+
+- **En GitHub**, en `docs/wiki/` del repo (público).
+- **En el panel**, en `/admin/wiki`, detrás de la sesión admin. Es la misma
+  fuente: los enlaces entre páginas se quedan en el panel y los que apuntan al
+  código abren el archivo en GitHub. Estar detrás del login no la vuelve
+  privada; los archivos siguen en el repo público.
