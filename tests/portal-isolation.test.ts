@@ -312,6 +312,35 @@ describe('portal · aislamiento entre clientes', () => {
       expect(conBuena).toMatchObject({ ok: false, reason: 'locked' })
     }, 30_000)
 
+    it('un correo que no existe también se bloquea a los 10 intentos', async () => {
+      // Si solo las cuentas reales llegaran a "demasiados intentos", diez
+      // intentos bastarían para saber quién es cliente.
+      const email = `fantasma-${Date.now()}@ejemplo.com`
+      for (let i = 0; i < 9; i++) {
+        expect(await attemptLogin({ email, password: 'mala12345' })).toMatchObject({ reason: 'invalid' })
+      }
+      const fantasma = await attemptLogin({ email, password: 'mala12345' })
+
+      for (let i = 0; i < 10; i++) await attemptLogin({ email: 'ana@acme.com', password: 'mala12345' })
+      const real = await attemptLogin({ email: 'ana@acme.com', password: 'mala12345' })
+      expect(fantasma).toEqual(real)
+      expect(real).toMatchObject({ reason: 'locked' })
+    }, 60_000)
+
+    it('una ráfaga en paralelo no prueba más de 10 contraseñas', async () => {
+      // Antes se leía el contador, se verificaba y se escribía después: los
+      // veinte intentos veían el contador en cero y todos llegaban a scrypt.
+      const passwords = await import('../src/lib/portal/passwords')
+      const espia = vi.spyOn(passwords, 'verifyPassword')
+      espia.mockClear()
+      await Promise.all(
+        Array.from({ length: 20 }, () => attemptLogin({ email: 'ana@acme.com', password: 'mala12345' }))
+      )
+      expect(espia.mock.calls.length).toBeGreaterThan(0)
+      expect(espia.mock.calls.length).toBeLessThanOrEqual(10)
+      espia.mockRestore()
+    }, 60_000)
+
     it('un login correcto limpia el contador de fallos', async () => {
       await attemptLogin({ email: 'ana@acme.com', password: 'mala12345' })
       await attemptLogin({ email: 'ana@acme.com', password: 'contrasena123' })
