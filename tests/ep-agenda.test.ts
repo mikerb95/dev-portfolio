@@ -202,7 +202,9 @@ describe('calendario de /ep', () => {
     const cal = calendario(episodios, libres, CFG, inicio, ahora)
     const estado = (iso: string) => cal.flatMap((s) => s.citas).find((c) => c.cita === B(iso))!.estado
     expect(estado('2026-11-03T08:00:00')).toBe('sin-datos') // abrió el 26 oct, sin monitor
-    expect(estado('2026-11-05T11:30:00')).toBe('sin-abrir') // abrió el 28 a las 11:30, con monitor
+    // Con "8 días exactos" abría el 28 a las 11:30, ya con monitor; con la de
+    // medianoche, a las 0:00 sin nadie mirando. No hay con qué acusarla.
+    expect(estado('2026-11-05T11:30:00')).toBe('sin-datos')
     expect(estado('2026-11-03T08:30:00')).toBe('se-abrio')
     expect(estado('2026-11-04T08:00:00')).toBe('libre')
     expect(estado('2026-11-05T09:00:00')).toBe('sin-datos')
@@ -210,13 +212,24 @@ describe('calendario de /ep', () => {
     expect(s2.abiertas).toBe(2)
   })
 
-  it('lo que aún no entra en la ventana sale como por abrir y no cuenta', () => {
-    const cal = calendario([], [], CFG, inicio, B('2026-10-28T12:00:00'))
+  it('nunca abierta solo si abrió con monitor por las dos hipótesis', () => {
+    // Monitor desde antes de la medianoche del 28: el jueves 5 entra entero vigilado.
+    const cal = calendario([], [], CFG, B('2026-10-27T23:00:00'), B('2026-10-30T09:00:00'))
     const s = cal.find((x) => x.lunes === B('2026-11-02T00:00:00'))!
-    expect(s.citas.find((c) => c.cita === B('2026-11-05T11:30:00'))!.estado).toBe('sin-abrir')
-    expect(s.citas.filter((c) => c.estado === 'por-abrir')).toHaveLength(0)
-    const s1 = calendario([], [], CFG, inicio, B('2026-10-28T12:00:00')).at(-1)!
-    expect(s1.vigiladas).toBe(1)
+    const estado = (iso: string) => s.citas.find((c) => c.cita === B(iso))!.estado
+    expect(estado('2026-11-05T08:00:00')).toBe('sin-abrir')
+    expect(estado('2026-11-05T11:30:00')).toBe('sin-abrir')
+    expect(estado('2026-11-04T11:30:00')).toBe('sin-datos') // medianoche del 27, antes del arranque
+    expect(s.vigiladas).toBe(6)
+  })
+
+  it('lo que aún no entra en la ventana sale como por abrir y no cuenta', () => {
+    const cal = calendario([], [], CFG, B('2026-10-27T23:00:00'), B('2026-10-28T10:00:00'))
+    const s = cal.find((x) => x.lunes === B('2026-11-02T00:00:00'))!
+    expect(s.citas.find((c) => c.cita === B('2026-11-05T09:00:00'))!.estado).toBe('sin-abrir')
+    expect(s.citas.find((c) => c.cita === B('2026-11-05T10:30:00'))!.estado).toBe('por-abrir')
+    expect(s.citas.filter((c) => c.estado === 'por-abrir')).toHaveLength(3)
+    expect(s.vigiladas).toBe(3)
   })
 })
 
@@ -255,14 +268,10 @@ describe('resumen semanal', () => {
 
   it('solo cuenta citas que entraron en la ventana con el monitor ya corriendo', () => {
     const semanas = resumenSemanas([], CFG, inicio, ahora)
-    // Semana del 2 nov: martes 3 y miércoles 4 abrieron el 26 y el 27, antes del
-    // arranque; del jueves 5 solo cuentan las de las 10:30 en adelante (las de
-    // la mañana abrieron el 28 antes de las 10).
-    const s2 = semanas.find((s) => s.lunes === B('2026-11-02T00:00:00'))!
-    expect(s2.delHorario).toBe(3)
-    expect(s2.total).toBe(22)
-    expect(s2.sinAbrirse).toBe(3)
-    expect(s2.medianaLibreMin).toBeNull()
+    // Semana del 2 nov: martes 3 y miércoles 4 abrieron el 26 y el 27, y el
+    // jueves 5 pudo abrir a la medianoche del 28, todo antes del arranque. No
+    // queda ninguna cita vigilada, así que la semana no aparece.
+    expect(semanas.find((s) => s.lunes === B('2026-11-02T00:00:00'))).toBeUndefined()
     // La semana siguiente ya entró entera en la ventana con el monitor corriendo.
     expect(semanas.find((s) => s.lunes === B('2026-11-09T00:00:00'))!.delHorario).toBe(22)
   })
@@ -280,7 +289,8 @@ describe('resumen semanal', () => {
   })
 
   it('más reciente primero', () => {
-    const s = resumenSemanas([], CFG, inicio, ahora)
+    const s = resumenSemanas([], CFG, inicio, B('2026-11-10T12:00:00'))
+    expect(s).toHaveLength(2)
     expect(s[0].lunes).toBeGreaterThan(s.at(-1)!.lunes)
   })
 })
