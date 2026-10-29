@@ -2,6 +2,7 @@ import type { APIRoute } from 'astro'
 import { db } from '../../db'
 import { messages } from '../../db/schema'
 import { validarEntrada, type Entrada } from '../../lib/asesor/bucle'
+import { firmarRespuesta, marcarNoVerificados } from '../../lib/asesor/firma'
 import { AsesorNoDisponible, disponible, responder } from '../../lib/asesor/motor'
 import {
   avisoVivo,
@@ -16,6 +17,7 @@ import {
 import { abrirConversacion, anexar, guardarTelefono, porToken, purgar, type Conversacion } from '../../lib/asesor/vivo-db'
 import { sendPush } from '../../lib/notify'
 import { formatPhone } from '../../lib/phone'
+import { serverEnv } from '../../lib/env'
 
 // Asesor público de la burbuja de WhatsApp (docs/plan-asistente.md, capacidad
 // 3). El límite por IP lo pone el middleware (isAsesorPath); el tope de gasto
@@ -39,8 +41,12 @@ export const POST: APIRoute = async ({ request }) => {
   } catch {
     return json(400, { error: 'formato' })
   }
-  const entrada = validarEntrada(cuerpo)
-  if ('error' in entrada) return json(400, entrada)
+  const validada = validarEntrada(cuerpo)
+  if ('error' in validada) return json(400, validada)
+  // Desde aquí, un turno del asesor que el servidor no firmó lleva su marca:
+  // la ve el modelo y la ve Mike si la conversación se guarda.
+  const secreto = serverEnv('AUTH_SECRET') || undefined
+  const entrada: Entrada = { ...validada, mensajes: marcarNoVerificados(validada.mensajes, secreto) }
 
   // Si Mike ya entró, el asesor no contesta. El navegador normalmente ya lo
   // sabe por el sondeo; esto cubre la pregunta que salió justo antes de
@@ -68,6 +74,7 @@ export const POST: APIRoute = async ({ request }) => {
     const vivo = await guardarVivo(entrada, conv, r)
     return json(200, {
       texto: vivo.texto,
+      ...(secreto ? { firma: firmarRespuesta(vivo.texto, secreto) } : {}),
       whatsapp: r.whatsapp,
       contacto: r.contacto,
       calculos: r.calculos,

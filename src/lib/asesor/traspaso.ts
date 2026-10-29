@@ -13,6 +13,8 @@
 /** Lo que devuelve POST /api/asesor y el hero necesita conservar. */
 export type RespuestaAsesor = {
   texto: string
+  /** Firma del servidor sobre `texto` (firma.ts); viaja de vuelta con el turno. */
+  firma?: string
   whatsapp?: string | null
   contacto?: boolean
   calculos?: unknown[]
@@ -22,7 +24,7 @@ export type RespuestaAsesor = {
 
 /** Estado que la burbuja guarda en sessionStorage (WhatsappFab.astro). */
 export type EstadoTraspaso = {
-  mensajes: { rol: 'usuario' | 'asesor'; texto: string }[]
+  mensajes: { rol: 'usuario' | 'asesor'; texto: string; firma?: string }[]
   calculos: unknown[]
   whatsapp: string | null
   marcas: Record<string, string[]>
@@ -43,7 +45,7 @@ export function armarTraspaso(pregunta: string, r: RespuestaAsesor): EstadoTrasp
   const estado: EstadoTraspaso = {
     mensajes: [
       { rol: 'usuario', texto: pregunta },
-      { rol: 'asesor', texto: r.texto },
+      r.firma ? { rol: 'asesor', texto: r.texto, firma: r.firma } : { rol: 'asesor', texto: r.texto },
     ],
     calculos: Array.isArray(r.calculos) ? r.calculos : [],
     whatsapp: r.whatsapp ?? null,

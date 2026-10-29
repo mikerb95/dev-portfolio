@@ -48,6 +48,9 @@ const EsquemaEntrada = z
           .object({
             rol: z.enum(['usuario', 'asesor']),
             texto: z.string().trim().min(1),
+            // Firma de una respuesta del asesor (firma.ts). Opcional: un turno
+            // sin ella se acepta, pero se marca como no verificado.
+            firma: z.string().max(64).optional(),
           })
           .strict()
       )
@@ -63,7 +66,7 @@ const EsquemaEntrada = z
 export type Entrada = {
   locale: Locale
   pagina?: Pagina
-  mensajes: { rol: 'usuario' | 'asesor'; texto: string }[]
+  mensajes: { rol: 'usuario' | 'asesor'; texto: string; firma?: string }[]
   calculos: PedidoCalculo[]
   /** La persona ya dejó sus datos en el formulario: no hay que volver a pedirlos. */
   contactoDado?: boolean

@@ -824,7 +824,9 @@ const textos = JSON.stringify({
   // 'mike' y 'sistema' solo existen en el navegador (asesor en vivo,
   // lib/asesor/vivo.ts): nunca se le reenvían al modelo.
   type Rol = 'usuario' | 'asesor' | 'mike' | 'sistema'
-  type Mensaje = { rol: Rol; texto: string }
+  // `firma`: la que el servidor puso a su respuesta; se le devuelve tal cual
+  // para que sepa que ese turno lo escribió él (lib/asesor/firma.ts).
+  type Mensaje = { rol: Rol; texto: string; firma?: string }
   type Estado = {
     mensajes: Mensaje[]
     calculos: unknown[]
@@ -1173,13 +1175,14 @@ const textos = JSON.stringify({
             cifras?: string[]
             conversacion?: string
             mike?: boolean
+            firma?: string
           }
           if (d.mike) {
             // Mike entró justo antes de esta pregunta: le llegó a él.
             entroMike()
           } else {
             if (d.contacto && estado.contacto === 'no') estado.contacto = 'visible'
-            estado.mensajes.push({ rol: 'asesor', texto: d.texto ?? '' })
+            estado.mensajes.push({ rol: 'asesor', texto: d.texto ?? '', ...(d.firma ? { firma: d.firma } : {}) })
             respuesta = estado.mensajes.length - 1
             estado.calculos = d.calculos ?? []
             if (d.cifras?.length) estado.marcas[respuesta] = d.cifras
