@@ -16,6 +16,8 @@ import {
   parseDisponibilidad,
   resumenSemanas,
   hayRevision,
+  cambiaronLibres,
+  proximaRevisionPublica,
   proximaRevision,
   momentosDeApertura,
   calendario,
@@ -333,5 +335,25 @@ describe('el endpoint del cron', () => {
   // minuto de Bookings caído lo apagaría en media hora.
   it('no responde 5xx por un fallo de Bookings', () => {
     expect(src).not.toMatch(/status:\s*5\d\d|,\s*5\d\d\)/)
+  })
+})
+
+describe('vigía de cada minuto (Worker)', () => {
+  const a = B('2026-11-10T08:00:00')
+  const b = B('2026-11-10T08:30:00')
+
+  it('solo llama a Vercel si cambia el conjunto de libres', () => {
+    expect(cambiaronLibres({}, [])).toBe(false)
+    expect(cambiaronLibres({ [a]: 1 }, [a])).toBe(false)
+    expect(cambiaronLibres({}, [a])).toBe(true) // se abrió
+    expect(cambiaronLibres({ [a]: 1 }, [])).toBe(true) // la tomaron
+    expect(cambiaronLibres({ [a]: 1 }, [b])).toBe(true) // misma cantidad, otra cita
+  })
+
+  it('/ep anuncia el minuto siguiente si el Worker está vivo, y el horario de respaldo si no', () => {
+    const ahora = B('2026-10-30T15:43:20')
+    expect(proximaRevisionPublica(ahora, ahora - 50_000)).toBe(B('2026-10-30T15:44:00'))
+    expect(proximaRevisionPublica(ahora, ahora - 10 * 60_000)).toBe(B('2026-10-30T15:50:00'))
+    expect(proximaRevisionPublica(ahora, null)).toBe(B('2026-10-30T15:50:00'))
   })
 })

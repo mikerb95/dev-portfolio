@@ -1,0 +1,12 @@
+# Vigía de cada minuto de la agenda del instructor (ver src/index.ts).
+# Secretos (wrangler secret put): TURSO_URL, TURSO_TOKEN, CRON_SECRET.
+name = "ep-agenda-vigia"
+main = "src/index.ts"
+compatibility_date = "2026-10-01"
+workers_dev = false
+
+[triggers]
+crons = ["* * * * *"]
+
+[vars]
+ENDPOINT_VERCEL = "https://codebymike.net/api/cron/ep-agenda"
