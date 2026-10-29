@@ -320,6 +320,16 @@ export function momentosDeApertura(cita: number, config: ConfigServicio): number
   return [movil, medianocheBogota(movil)]
 }
 
+/**
+ * ¿Pudo abrirse esta cita antes de que arrancara el monitor? Se mira la apertura
+ * más temprana de las dos hipótesis: con solo la de "8 días exactos", la última
+ * cita del jueves 5 nov (abría el 28 a las 11:30, minutos después del arranque)
+ * salía en /ep como "nunca se abrió", cuando con la de medianoche abrió a las
+ * 0:00 de ese día sin nadie mirando. Acusar exige que ambas caigan después.
+ */
+export const abrioSinMonitor = (cita: number, config: ConfigServicio, inicio: number) =>
+  Math.min(...momentosDeApertura(cita, config)) < inicio
+
 // ---------------------------------------------------------------------------
 // Cambios entre dos consultas
 // ---------------------------------------------------------------------------
@@ -431,7 +441,7 @@ const mediana = (xs: number[]): number | null => {
  */
 export function resumenSemanas(episodios: Episodio[], config: ConfigServicio, inicio: number, ahora: number): Semana[] {
   const hasta = ahora + config.anticipacionMaxMin * MIN_MS
-  const vigiladas = citasTeoricas(config, inicio, hasta).filter((c) => abreEn(c, config) >= inicio)
+  const vigiladas = citasTeoricas(config, inicio, hasta).filter((c) => !abrioSinMonitor(c, config, inicio))
   const abiertas = new Set(episodios.map((e) => e.cita))
   const porSemana = new Map<number, Semana & { libres: number[] }>()
 
@@ -556,7 +566,7 @@ export function calendario(
           ? 'se-abrio'
           : abre > ahora
             ? 'por-abrir'
-            : abre < inicio
+            : abrioSinMonitor(c, config, inicio)
               ? 'sin-datos'
               : 'sin-abrir'
       return { cita: c, estado }
