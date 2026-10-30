@@ -13,6 +13,10 @@ const locale = getLocaleFromUrl(Astro.url.pathname)
 const t = getDictionary(locale)
 const l = t.log
 const L = (path: string) => localizedHref(path, locale)
+
+// Interruptor temporal: con true la página publica solo el aviso de
+// mantenimiento y no pide nada a GitHub. Volver a false para reabrirla.
+const enMantenimiento = true
 ---
 
 <BaseLayout title={l.title} description={l.description} image="/og-log.png" noindex>
@@ -30,18 +34,20 @@ const L = (path: string) => localizedHref(path, locale)
           <span class="h-px flex-1 bg-gradient-to-r from-white/15 to-transparent max-w-[80px]"></span>
           <span class="flex items-center gap-2" id="feed-status">
             <span class="w-1.5 h-1.5 rounded-full bg-cyan pulse-dot"></span>
-            <span id="feed-status-text">{l.loadingStatus}</span>
+            <span id="feed-status-text">{enMantenimiento ? l.maintenance.status : l.loadingStatus}</span>
           </span>
         </div>
         <h1 class="text-[42px] sm:text-5xl xl:text-[56px] font-medium tracking-[-.035em] leading-[1] mb-0">
           <span data-hero-linea class="block text-ink-50 lg-balance">{l.h1}</span>{' '}
-          <span data-hero-linea class="block text-cyan lg-balance">{l.h1Linea2}</span>
+          <span data-hero-linea class="block text-cyan lg-balance">{enMantenimiento ? l.maintenance.title : l.h1Linea2}</span>
         </h1>
       </div>
       <p class="text-[15.5px] text-ink-100 max-w-xl leading-relaxed" data-hero-sigue>
-        {l.intro}
+        {enMantenimiento ? l.maintenance.body : l.intro}
       </p>
     </header>
+
+    {!enMantenimiento && <>
 
     <div class="mb-24" data-hero-pieza>
       <RelojSesiones locale={locale} />
@@ -52,9 +58,10 @@ const L = (path: string) => localizedHref(path, locale)
     <noscript>
       <p class="mt-6 text-[12px] font-mono text-ink-300">{l.loadError}</p>
     </noscript>
+    </>}
   </div>
 
-  <script
+  {!enMantenimiento && <script
     id="log-i18n"
     type="application/json"
     set:html={jsonEnScript({
@@ -66,7 +73,7 @@ const L = (path: string) => localizedHref(path, locale)
       loadError: l.loadError,
       motion: l.motion,
     })}
-  />
+  />}
 </BaseLayout>
 
 <script>
@@ -76,7 +83,9 @@ const L = (path: string) => localizedHref(path, locale)
   import { montarLog } from '../lib/motion/log'
 
   const reducido = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-  montarLog({ reducido })
+  // Sin los datos de i18n la página está en mantenimiento: no hay reloj ni
+  // bitácora que montar, solo el hero.
+  if (document.getElementById('log-i18n')) montarLog({ reducido })
   montarLanding()
 </script>
 

@@ -1447,6 +1447,11 @@ const es = {
     h1: 'Engineering Log.',
     h1Linea2: 'Cada commit, en su hora.',
     intro: 'La actividad de GitHub de los últimos 30 días, commit por commit. Las horas de trabajo profundo no se declaran: se calculan con la hora de cada commit, y aquí abajo se ve cómo.',
+    maintenance: {
+      status: 'En mantenimiento',
+      title: 'En mantenimiento.',
+      body: 'Estoy ajustando esta página. Vuelve en unos días para ver la bitácora de commits completa.',
+    },
     stats: {
       week: 'Deep Work · 7 días',
       month: 'Deep Work · 30 días',

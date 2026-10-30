@@ -1411,6 +1411,11 @@ const en = {
     h1: 'Engineering Log.',
     h1Linea2: 'Every commit, on the clock.',
     intro: "The last 30 days of GitHub activity, commit by commit. Deep-work hours aren't claimed: they're computed from the time of each commit, and you can see how right below.",
+    maintenance: {
+      status: 'Under maintenance',
+      title: 'Under maintenance.',
+      body: "I'm reworking this page. Check back in a few days for the full commit log.",
+    },
     stats: {
       week: 'Deep Work · 7 days',
       month: 'Deep Work · 30 days',
