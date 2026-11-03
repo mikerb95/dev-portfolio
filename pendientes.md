@@ -1,6 +1,9 @@
 # Pendientes - CodeByMike
 
-> Estado al **29 jul 2026**, con lo añadido el **17 sep 2026** en §4 (tres e2e en
+> **Última revisión: 2 nov 2026** (rotación de `ANTHROPIC_API_KEY` del 29 oct y
+> vencimientos de llaves en §1, migración `0048` comprobada en las dos bases).
+>
+> Historia: estado al **29 jul 2026**, con lo añadido el **17 sep 2026** en §4 (tres e2e en
 > rojo heredados y los límites del simulador de infra) y la revisión del
 > **6 oct 2026** (variables de Vercel y monitores consultados de verdad, ítems
 > ya resueltos cerrados, pendientes del Plano y del hero), más el vigía del repo
@@ -27,12 +30,25 @@ degrada en silencio** - ese es el diseño, pero conviene saber qué está apagad
 | Variable | Qué pasa sin ella | Prioridad |
 |---|---|---|
 | `PSI_API_KEY` | El analizador de sitios (`/lab/site-check`) pierde los datos de PageSpeed Insights. | Baja |
-| `ANTHROPIC_WEBHOOK_SIGNING_KEY` | El webhook del vigía (`/api/managed/webhook`) responde 503 y las corridas no llegan al panel ni a `cron_runs`. Es el `whsec_` que da la Console al registrar el endpoint. | Media (cuando se mergee #4) |
+| `ANTHROPIC_WEBHOOK_SIGNING_KEY` | El webhook del vigía (`/api/managed/webhook`) responde 503 y las corridas no llegan al panel ni a `cron_runs`. Es el `whsec_` que da la Console al registrar el endpoint. Sigue sin estar (comprobado el 2 nov 2026). | Media (el vigía ya está en `main`) |
 
 Ya están puestas y verificadas: `ENCRYPTION_KEY`, `CRON_SECRET`, `NTFY_TOPIC`,
 `LAB_INGEST_TOKEN`, `COBRO_HISTORY_SECRET`, `SECURITY_IP_SALT`,
 `TRAINING_ACCESS_SECRET`, `ANTHROPIC_API_KEY`, las tres de Wompi, las de GitHub
 OAuth y las de Turso (principal y demo).
+
+### Llaves de la API de Claude: vencimientos
+
+La llave del sitio venció el 29 oct 2026 y tumbó todo lo que usa IA (asesor,
+analista, Plano, asistente, resumen semanal, vigía) hasta rotarla. Ese mismo
+día se creó la nueva (`analista-siem`, vence el **29 oct 2027**), se puso en
+`.env` y en Vercel Production, y se comprobó con una pregunta real al asesor
+en `codebymike.net`. La Console propone 30 días por defecto: elegir siempre
+"Custom" a un año.
+
+- [ ] **Antes del 21 nov 2026**: rotar `antidoto-web` y `GTI-Smartsoft`
+      (llaves de otros proyectos, vencen ese día).
+- [ ] **Antes del 29 oct 2027**: rotar `analista-siem` (la de este sitio).
 
 ### ✅ Correo con Resend (6 oct 2026)
 
@@ -103,7 +119,8 @@ disparó). Detalle y orden exacto en `docs/plan-managed-agents.md`.
 
 - [x] Revisar y mergear **#5 primero** (arreglos) y luego #4 (vigía): los dos
       están en `main` desde el 8 oct 2026.
-- [ ] Aplicar la migración `0048` (tabla `vigia_corridas`) en las dos bases Turso.
+- [x] Aplicar la migración `0048` (tabla `vigia_corridas`) en las dos bases Turso
+      (comprobado el 2 nov 2026: la tabla existe en principal y demo).
 - [ ] Console → Manage → Webhooks: `https://codebymike.net/api/managed/webhook`,
       eventos `session.status_idled` y `session.status_terminated`; el `whsec_`
       va a Vercel como `ANTHROPIC_WEBHOOK_SIGNING_KEY` (ver §1).
@@ -122,8 +139,9 @@ disparó). Detalle y orden exacto en `docs/plan-managed-agents.md`.
 
 ### 🟠 Workshop de Managed Agents (sábado 24 oct 2026)
 
-> La fecha ya pasó (revisión del 28 oct): marcar lo que se hizo y quitar lo que
-> ya no aplica. Desde el repo solo se puede comprobar el último punto: no hay
+> **Falta que Mike confirme** (sigue igual en la revisión del 2 nov): la fecha
+> ya pasó y no se sabe qué se hizo. Marcar lo hecho y quitar lo que ya no
+> aplica. Desde el repo solo se puede comprobar el último punto: no hay
 > artículo del taller en `/notes`.
 
 - [ ] **Antes del domingo 11 oct:** mandar la propuesta al organizador por
