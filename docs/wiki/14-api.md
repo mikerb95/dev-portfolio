@@ -79,7 +79,7 @@ profundidad). Formas de respuesta de los endpoints clave congeladas con Zod en
 | `/api/marketing/{suscribir,confirmar,baja}` | Doble opt-in y baja. |
 | `/api/capacitacion/acceso` | Canje del código de grupo. |
 | `/api/aeo/referido` | Conteo de referidos desde asistentes. |
-| `/api/ep-agenda` | Bitácora pública del vigía de agenda (con retraso de 10 min). |
+| `/api/ep-agenda` | Bitácora pública del vigía de agenda, sin retraso, con el resumen de vigilancia de cada semana terminada. |
 | `/api/certs/[name]` | Imágenes de certificaciones. |
 | `/api/security/csp-report` | Reportes de violación de CSP. |
 | `/api/present/[sessionId]/snapshot`, `/api/presentacion` | Presentaciones (sistemas A y B). |

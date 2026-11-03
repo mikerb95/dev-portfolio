@@ -100,7 +100,7 @@ const items = MARCAS.map((m, i) => {
     </div>
   </div>
 
-  <div class="px-6 md:px-12 lg:px-20 pb-20 md:pb-24">
+  <div class="marcas-pie px-6 md:px-12 lg:px-20 pb-20 md:pb-24">
     <div class="max-w-[1280px] mx-auto">
       <div id="marcas-ficha" class="marcas-ficha">
         <div class="marcas-pista" data-marcas-pista>
@@ -380,15 +380,27 @@ const items = MARCAS.map((m, i) => {
     grid-template-columns: minmax(0, 1fr);
   }
 
-  /* Móvil: pista y ficha pegadas abajo mientras se ve el mapa. */
-  :global(.marcas-vivo) .marcas-ficha {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr);
+  /* Móvil: pista y ficha pegadas abajo mientras se ve el mapa. El sticky va
+     en el pie y no en la ficha: un sticky solo se mueve dentro de su
+     contenedor, y el de la ficha mide lo mismo que ella (no se despegaba
+     nunca). El del pie es la sección entera. Su padding inferior deja la
+     tarjeta por encima del botón de WhatsApp. */
+  :global(.marcas-vivo) .marcas-pie {
     position: sticky;
     bottom: 0;
     z-index: 25;
+    pointer-events: none;
+  }
+  :global(.marcas-vivo) .marcas-ficha {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
     border-top: 0;
     padding: 0.75rem 0;
+  }
+  :global(.marcas-vivo) .marcas-pista,
+  :global(.marcas-vivo) .marcas-ficha-item[data-activa],
+  :global(.marcas-vivo) .marcas-cerrar {
+    pointer-events: auto;
   }
   :global(.marcas-vivo) .marcas-pista {
     display: flex;
@@ -445,6 +457,10 @@ const items = MARCAS.map((m, i) => {
      sección (el contenedor .marcas-ficha deja de estar posicionado) con las
      coordenadas que calcula el script para la cumbre activa. */
   @media (min-width: 768px) {
+    :global(.marcas-vivo) .marcas-pie {
+      position: static;
+      pointer-events: auto;
+    }
     :global(.marcas-vivo) .marcas-ficha {
       position: static;
       display: block;
