@@ -99,8 +99,13 @@ export async function attemptLogin(params: {
     return bloqueada()
   }
 
-  // Sin hash = invitación pendiente: no es una cuenta usable todavía.
-  const valid = row.passwordHash ? await verifyPassword(params.password ?? '', row.passwordHash) : false
+  // Sin hash = invitación pendiente: no es una cuenta usable todavía. Aun así
+  // se gasta un scrypt contra el hash de relleno: responder sin derivar nada
+  // salía ~100 ms antes que una cuenta inexistente, y esa diferencia decía qué
+  // correos tienen una invitación abierta. El resultado se descarta.
+  const valid = row.passwordHash
+    ? await verifyPassword(params.password ?? '', row.passwordHash)
+    : (await verifyPassword(params.password ?? '', await dummyHash()), false)
 
   if (!valid) {
     if (intentos < MAX_ATTEMPTS) return { ok: false, reason: 'invalid' }

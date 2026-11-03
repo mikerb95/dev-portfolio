@@ -40,6 +40,10 @@ export function isAuthPath(pathname: string): boolean {
     // frenos propios del endpoint, que son los que de verdad cuentan fallos.
     pathname === '/cotiza/entrar' ||
     pathname.startsWith('/api/cotiza/') ||
+    // La clave de la sustentación: su freno propio vive en Redis y deja pasar
+    // si Redis cae, y entonces solo quedaba el paraguas global (600/min) frente
+    // a una contraseña compartida. Este no depende de Redis.
+    pathname === '/api/sustentacion/acceso' ||
     // Portal de clientes: mismo tratamiento que el login del admin. El bloqueo
     // por cuenta (lib/portal/login.ts) es la otra capa; esta acota el volumen
     // por IP antes de que llegue a tocar la base.
