@@ -177,10 +177,19 @@ Astro.response.headers.set('Cache-Control', 'private, no-store')
     {loggedIn && (
       <script>
         import { signOut } from 'auth-astro/client'
-        // Destruye el JWT y vuelve a esta misma página (ya sin sesión), que
-        // renderiza el estado "Sesión cerrada". Sin redirección a /login no hay
-        // signIn automático y por tanto no hay bucle de re-login con GitHub.
-        signOut().catch(() => window.location.reload())
+        // Primero se revoca la sesión en el servidor, para que una copia de la
+        // cookie deje de valer; después se destruye el JWT y se vuelve a esta
+        // misma página (ya sin sesión), que renderiza "Sesión cerrada". Sin
+        // redirección a /login no hay signIn automático ni bucle de re-login.
+        // Si la revocación falla se cierra igual: quedarse dentro por un error
+        // de red sería peor que cerrar solo en este navegador.
+        fetch('/api/admin/sessions', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ self: true }),
+        })
+          .catch(() => {})
+          .finally(() => signOut().catch(() => window.location.reload()))
       </script>
     )}
   </body>
