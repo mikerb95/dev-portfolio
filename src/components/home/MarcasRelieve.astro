@@ -615,7 +615,10 @@ const items = MARCAS.map((m, i) => {
     }
 
     const mostrarFicha = (i: number | null) => {
+      // Lo que depende de `fijada` va antes del corte: apuntar una marca y
+      // luego hacer clic en ella no cambia la ficha mostrada, pero sí la fija.
       lista?.toggleAttribute('data-interactiva', i !== null && i === fijada)
+      if (cerrar) cerrar.hidden = fijada === null || i !== fijada
       if (i === mostrada) return
       mostrada = i
       colocar(i)
@@ -627,14 +630,23 @@ const items = MARCAS.map((m, i) => {
         f.inert = !activa
       })
       pista?.toggleAttribute('data-activa', i === null)
-      if (cerrar) cerrar.hidden = fijada === null || i !== fijada
       const visible = i === null ? pista : fichas[i]
       if (visible && !reducido) {
+        // La tarjeta sale de la línea que la une a la cumbre (hacia abajo o
+        // hacia arriba según el lado) y su contenido llega escalonado.
+        const desde = lista?.dataset.lado === 'arriba' ? 8 : -8
         gsap.fromTo(
-          Array.from(visible.children),
-          { opacity: 0, y: 10 },
-          { opacity: 1, y: 0, duration: 0.45, stagger: 0.05, ease: 'power3.out', clearProps: 'opacity,transform' },
+          visible,
+          { opacity: 0, y: i === null ? 6 : desde },
+          { opacity: 1, y: 0, duration: 0.4, ease: 'power3.out', clearProps: 'opacity,transform' },
         )
+        if (i !== null) {
+          gsap.fromTo(
+            Array.from(visible.children),
+            { opacity: 0, y: 6 },
+            { opacity: 1, y: 0, duration: 0.4, delay: 0.06, stagger: 0.045, ease: 'power3.out', clearProps: 'opacity,transform' },
+          )
+        }
       }
     }
 
