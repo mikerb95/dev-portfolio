@@ -71,7 +71,9 @@ void main() {
   vec2 alabeo = vec2(ruido(q + vec2(1.7, 9.2) + uTiempo * 0.03), ruido(q + vec2(8.3, 2.8) - uTiempo * 0.025));
   vec2 pw = px + alabeo * uU * 34.0;
 
-  float h = fbm(px / (uU * 460.0) + vec2(uTiempo * 0.012, 0.0)) * 1.25;
+  // Ruido de fondo bajo a propósito: con más amplitud, sus curvas vagaban por
+  // el mapa con el mismo peso que los anillos y las cumbres no se leían.
+  float h = fbm(px / (uU * 460.0) + vec2(uTiempo * 0.012, 0.0)) * 0.7;
   float mascara = 1.0;     // 0 sobre los logos
   float tinte = 0.0;
   vec3 colorMarca = vec3(0.0);
@@ -85,10 +87,10 @@ void main() {
     // que los anillos exteriores se separen como en una ladera que se suaviza.
     float t = max(s - 16.0, 0.0) / 150.0;
     float f = exp(-pow(t, 1.25) * 1.35);
-    h += uAltura[i] * 2.35 * f;
+    h += uAltura[i] * 2.7 * f;
     mascara *= smoothstep(6.0, 26.0, sReal);
 
-    float w = pow(f, 0.7) * (0.28 + 0.72 * uElev[i]) * min(uAltura[i], 1.0);
+    float w = pow(f, 0.7) * (0.38 + 0.62 * uElev[i]) * min(uAltura[i], 1.0);
     colorMarca += uColor[i] * w;
     tinte += w;
     brillo += uElev[i] * exp(-pow(max(sReal, 0.0) / 120.0, 2.0));
@@ -125,7 +127,7 @@ void main() {
   vec3 c = mix(base, marca, clamp(tinte * 1.15, 0.0, 1.0));
   c = mix(c, vec3(0.86, 1.0, 1.0), clamp(pulso * 0.5, 0.0, 0.6));
 
-  float a = (menor * 0.15 + mayor * 0.32) * separables;
+  float a = (menor * 0.24 + mayor * 0.38) * separables;
   a *= 1.0 + clamp(tinte, 0.0, 1.0) * 0.9 + brillo * 1.1 + pulso * 1.8;
   a *= mascara;
   // Bordes: el mapa se funde arriba y abajo con la página y a los lados.
