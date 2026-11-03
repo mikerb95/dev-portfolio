@@ -121,7 +121,7 @@ const items = MARCAS.map((m, i) => {
               <p class="marcas-ficha-texto">{m.ficha}</p>
               <a class="marcas-ficha-enlace" href={m.url} target="_blank" rel="noopener">
                 <span>{t.verSitio}</span>
-                <span class="font-mono text-ink-300">{m.dominio}</span>
+                <span class="marcas-ficha-dominio font-mono text-ink-300">{m.dominio}</span>
                 <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17 17 7" /><path d="M7 7h10v10" /></svg>
               </a>
             </li>
@@ -512,6 +512,14 @@ const items = MARCAS.map((m, i) => {
       grid-row: 1;
       grid-column: 2;
       margin-top: 0;
+    }
+    /* En la etiqueta no cabe el dominio junto a la cota sin partirla en tres
+       renglones ("toledoproducciones.org"); el enlace dice adónde va. */
+    :global(.marcas-vivo) .marcas-ficha-dominio {
+      display: none;
+    }
+    :global(.marcas-vivo) .marcas-ficha-cab {
+      white-space: nowrap;
     }
   }
 

@@ -531,7 +531,7 @@ export type SemanaVigilada = {
   desde: number
   /** Revisiones fallidas porque Bookings no respondió a tiempo o dio error. */
   fallosBookings: number
-  /** Revisiones fallidas por otra cosa (la BD, casi siempre). */
+  /** Revisiones fallidas sin culpa clara de Bookings: la BD o un error de red sin más detalle. */
   otrosFallos: number
   /** Ratos de más de CORTE_MIN sin ninguna revisión anotada. */
   cortes: { desde: number; hasta: number }[]
@@ -610,7 +610,7 @@ export function fraseVigilancia(s: SemanaVigilada): string {
     )
   }
   if (s.otrosFallos > 0) {
-    partes.push(`${s.otrosFallos === 1 ? 'Otra revisión falló' : `Otras ${s.otrosFallos} revisiones fallaron`} por un problema del propio monitor.`)
+    partes.push(`${s.otrosFallos === 1 ? 'Otra revisión falló' : `Otras ${s.otrosFallos} revisiones fallaron`} por un error de red o de la base de datos.`)
   }
   return partes.join(' ')
 }

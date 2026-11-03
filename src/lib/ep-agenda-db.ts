@@ -115,7 +115,9 @@ export async function consultarBookings(
     const tramos = parseDisponibilidad(await res.json())
     return tramos ? { tramos } : { error: 'respuesta sin tramos' }
   } catch (e) {
-    return { error: e instanceof Error ? e.name === 'TimeoutError' ? 'Bookings tardó más de 20 s' : e.message : 'error' }
+    // Con el prefijo, /ep sabe que el fallo fue de Microsoft: un "fetch failed"
+    // pelado (28 oct 2026) no deja saber si falló Bookings o la base.
+    return { error: e instanceof Error && e.name === 'TimeoutError' ? 'Bookings tardó más de 20 s' : `Bookings: ${e instanceof Error ? e.message : 'error'}` }
   }
 }
 

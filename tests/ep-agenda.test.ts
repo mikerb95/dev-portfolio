@@ -355,7 +355,7 @@ describe('lo que vio el monitor', () => {
     expect(s.seVieronLibres).toBe(1)
     expect(s.otrosFallos).toBe(1)
     expect(fraseVigilancia(s)).toContain('Apareció 1 cita libre')
-    expect(fraseVigilancia(s)).toContain('Otra revisión falló por un problema del propio monitor.')
+    expect(fraseVigilancia(s)).toContain('Otra revisión falló por un error de red o de la base de datos.')
   })
 })
 
