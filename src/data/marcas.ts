@@ -11,8 +11,9 @@
 //                     a crema y el marrón de "doble yo" sube de luz (mismo
 //                     tono), porque sobre negro no se leían.
 //   · gorillaz.webp - el gorila de 512 px de gorillaz-motorbikes, en blanco
-//                     (calado). El wordmark "GORILLA'Z" solo existe a 224 px y
-//                     se veía borroso: el nombre va en la ficha.
+//                     (calado), a 360 px (el doble de lo que se muestra). El
+//                     wordmark "GORILLA'Z" solo existe a 224 px y se veía
+//                     borroso: el nombre va en la ficha.
 //   · toledo.svg    - el logo lo arma el código del sitio (ecualizador +
 //                     Space Grotesk); aquí en trazos y apilado, porque la tira
 //                     horizontal dejaba el texto diminuto junto a los demás.
@@ -79,7 +80,7 @@ export const MARCAS: readonly Marca[] = [
     slug: 'gorillaz',
     nombre: 'Gorillaz Motorbikes',
     logo: '/assets/marcas/gorillaz.webp',
-    proporcion: 440 / 431,
+    proporcion: 360 / 353,
     tono: '#ea580c',
     ...enVitrina('Gorillaz Motorbikes'),
   },
