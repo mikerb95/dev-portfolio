@@ -144,6 +144,7 @@ const en = {
     hud: {
       title: 'sys.monitor',
       boot: 'boot',
+      marcas: 'clients',
       sistema: 'system',
       build: 'build',
       pipeline: 'pipeline',
@@ -278,6 +279,27 @@ const en = {
           fuente: "measured in the visitor's browser, not in a lab",
           resumen: ['p50', 'p95', 'samples'],
         },
+      },
+    },
+    marcas: {
+      sectionLabel: 'Brands',
+      titleLine1: 'Brands I have',
+      titleLine2: 'worked for.',
+      intro:
+        'Websites, dashboards and systems built for real businesses. Each brand is a peak on the map: hover or tap it to see what I did for them.',
+      pista: 'Pick a peak',
+      pistaDetalle: 'Hover or tap a logo to see what I did for that brand.',
+      cumbre: 'peak {n} of {total}',
+      verSitio: 'Visit site',
+      cerrar: 'Close card',
+      grupo: 'Brands I have worked for',
+      fichas: {
+        antidoto: 'Website and brand platform for companies.',
+        ekosolv: 'Website and internal dashboard with CRM, compliance and an AI assistant.',
+        dobleyo: 'Online store with customer accounts.',
+        gorillaz: 'Website for the workshop and its club.',
+        toledo: 'Events website with packages and drone coverage.',
+        joxe: 'Complete salon system: scheduling, bookings, check-in and payments.',
       },
     },
     bento: {
