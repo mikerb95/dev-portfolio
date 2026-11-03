@@ -35,8 +35,13 @@ describe('isAuthPath', () => {
     expect(isAuthPath('/login')).toBe(true)
     expect(isAuthPath('/entrar')).toBe(true)
   })
+  it('frena la clave de la sustentación aunque Redis no responda', () => {
+    expect(isAuthPath('/api/sustentacion/acceso')).toBe(true)
+  })
   it('no marca rutas normales', () => {
     expect(isAuthPath('/projects')).toBe(false)
     expect(isAuthPath('/api/contact')).toBe(false)
+    // Solo la puerta de la clave: el bus y la vista del público no son login.
+    expect(isAuthPath('/sustentacion/seguir/1234')).toBe(false)
   })
 })
