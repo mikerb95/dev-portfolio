@@ -704,6 +704,22 @@ const items = MARCAS.map((m, i) => {
       mostrarFicha(apuntada ?? fijada)
     }
 
+    // Móvil: la hoja pegada abajo puede tapar justo la cumbre que se acaba de
+    // tocar (las de la mitad inferior de la pantalla), y entonces el segundo
+    // toque para soltarla cae en la hoja. Como un mapa que se centra en lo
+    // elegido, la página sube lo justo para dejar la cumbre y su cota encima.
+    // Si la hoja está asentada bajo el escenario, no tapa nada y no se mueve.
+    const despejar = (i: number) => {
+      if (escritorio.matches) return
+      const tarjeta = fichas[i].getBoundingClientRect()
+      if (tarjeta.top >= window.innerHeight) return
+      const logo = marcas[i].getBoundingClientRect()
+      const sobra = logo.bottom + 34 - (tarjeta.top - 14)
+      if (sobra > 0 && logo.top < tarjeta.top) {
+        window.scrollBy({ top: sobra, behavior: reducido ? 'auto' : 'smooth' })
+      }
+    }
+
     const fijar = (i: number | null) => {
       fijada = i
       if (i !== null) {
@@ -714,6 +730,7 @@ const items = MARCAS.map((m, i) => {
         if (anuncio) anuncio.textContent = `${nombre}. ${texto}`
       }
       pintar()
+      if (i !== null) despejar(i)
     }
 
     botones.forEach((b, i) => {

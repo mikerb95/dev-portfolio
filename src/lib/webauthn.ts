@@ -238,9 +238,15 @@ export async function buildRegistrationOptions(login: string, cookies: AstroCook
       id: c.id,
       transports: c.transports ? (JSON.parse(c.transports) as AuthenticatorTransportFuture[]) : undefined,
     })),
+    // `required` en las dos: el login con llave entra sin GitHub ni contraseña,
+    // así que la llave sola (sin PIN) sería un único factor que cualquiera que
+    // la tome puede usar. Con `preferred`, una llave sin PIN se registraba
+    // igual y luego el servidor la rechazaba en el login con un error confuso;
+    // con `required` el navegador pide el PIN, o crearlo, en el momento. Y la
+    // credencial tiene que ser discoverable: el login no manda allowCredentials.
     authenticatorSelection: {
-      residentKey: 'preferred',
-      userVerification: 'preferred',
+      residentKey: 'required',
+      userVerification: 'required',
     },
   })
   await setChallenge(cookies, { challenge: options.challenge, login, kind: 'reg' })
@@ -265,6 +271,10 @@ export async function finishRegistration(
       expectedChallenge,
       expectedOrigin: origin,
       expectedRPID: rpID,
+      // Es el valor por defecto de @simplewebauthn/server 13, pero va explícito:
+      // que la llave sola no baste no puede depender de lo que decida una
+      // versión futura de la librería.
+      requireUserVerification: true,
     })
   } catch (err) {
     return { ok: false, error: err instanceof Error ? err.message : 'verificación fallida' }
@@ -299,7 +309,7 @@ export async function buildPrimaryAuthenticationOptions(cookies: AstroCookies, r
   const { rpID } = rpConfig(requestUrl)
   const options = await generateAuthenticationOptions({
     rpID,
-    userVerification: 'preferred',
+    userVerification: 'required',
     // Sin allowCredentials: el autenticador ofrece sus llaves discoverable
     // para este rpID (flujo usernameless/passwordless).
   })
@@ -331,6 +341,8 @@ export async function finishPrimaryAuthentication(
       expectedOrigin: origin,
       expectedRPID: rpID,
       credential: toWebAuthnCredential(row),
+      // Explícito por la misma razón que en el registro.
+      requireUserVerification: true,
     })
   } catch (err) {
     return { ok: false, error: err instanceof Error ? err.message : 'verificación fallida' }
