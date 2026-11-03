@@ -454,16 +454,24 @@ const items = MARCAS.map((m, i) => {
     :global(.marcas-vivo) .marcas-cerrar:not([hidden]) {
       display: none;
     }
+    /* La lista es solo el ancla (alto 0 en el punto calculado); cada tarjeta
+       cuelga de ella con su altura natural, hacia abajo o hacia arriba. En
+       una sola celda de rejilla todas se estiraban a la altura de la mayor. */
     :global(.marcas-vivo) .marcas-fichas {
+      display: block;
       position: absolute;
       left: var(--fx, 0);
       top: var(--fy, 0);
       width: 23.5rem;
+      height: 0;
       z-index: 5;
       pointer-events: none;
     }
-    :global(.marcas-vivo) .marcas-fichas[data-lado='arriba'] {
-      transform: translateY(-100%);
+    :global(.marcas-vivo) .marcas-fichas[data-lado='abajo'] .marcas-ficha-item {
+      top: 0;
+    }
+    :global(.marcas-vivo) .marcas-fichas[data-lado='arriba'] .marcas-ficha-item {
+      bottom: 0;
     }
     /* Solo la ficha fijada recibe el cursor (para poder ir al enlace); la de
        vista previa no, o pasar por encima de ella apagaría el hover del logo. */
@@ -486,7 +494,19 @@ const items = MARCAS.map((m, i) => {
       background: linear-gradient(to bottom, var(--tono), transparent);
     }
     :global(.marcas-vivo) .marcas-ficha-item {
-      position: relative;
+      position: absolute;
+      left: 0;
+      right: 0;
+      padding: 0.8rem 1rem 0.9rem;
+    }
+    :global(.marcas-vivo) .marcas-ficha-nombre {
+      margin-top: 0.35rem;
+      font-size: 1.15rem;
+    }
+    :global(.marcas-vivo) .marcas-ficha-texto {
+      margin-top: 0.15rem;
+      font-size: 14px;
+      line-height: 1.5;
     }
     :global(.marcas-vivo) .marcas-ficha-enlace {
       grid-row: 1;

@@ -12,13 +12,15 @@ export type Tam = { ancho: number; alto: number }
  *   · Ancha (escritorio, escenario ~2.4:1): 3 arriba y 3 abajo, corridas.
  *   · Alta (móvil, ~0.55:1): zigzag de dos columnas.
  */
+// Entre las dos hileras queda una franja libre: ahí cae la etiqueta de la
+// cumbre apuntada (debajo de las de arriba, encima de las de abajo).
 export const DISPOSICION_ANCHA: readonly Punto[] = [
-  { x: 0.17, y: 0.3 },
-  { x: 0.5, y: 0.22 },
-  { x: 0.83, y: 0.32 },
-  { x: 0.27, y: 0.74 },
-  { x: 0.57, y: 0.79 },
-  { x: 0.85, y: 0.72 },
+  { x: 0.17, y: 0.26 },
+  { x: 0.5, y: 0.19 },
+  { x: 0.83, y: 0.28 },
+  { x: 0.27, y: 0.77 },
+  { x: 0.57, y: 0.82 },
+  { x: 0.85, y: 0.75 },
 ]
 
 export const DISPOSICION_ALTA: readonly Punto[] = [

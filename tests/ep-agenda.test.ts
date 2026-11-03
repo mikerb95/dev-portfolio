@@ -15,6 +15,10 @@ import {
   parseConfig,
   parseDisponibilidad,
   resumenSemanas,
+  resumenVigilancia,
+  semanasTerminadas,
+  fraseVigilancia,
+  fmtSemanaCompleta,
   hayRevision,
   cambiaronLibres,
   proximaRevisionPublica,
@@ -26,6 +30,7 @@ import {
   RETRASO_PUBLICO_MIN,
   RETRASO_APRENDICES_MIN,
   type Episodio,
+  type Revision,
   type Tramo,
 } from '../src/lib/ep-agenda'
 
@@ -294,6 +299,63 @@ describe('resumen semanal', () => {
     const s = resumenSemanas([], CFG, inicio, B('2026-11-10T12:00:00'))
     expect(s).toHaveLength(2)
     expect(s[0].lunes).toBeGreaterThan(s.at(-1)!.lunes)
+  })
+})
+
+describe('lo que vio el monitor', () => {
+  const inicio = B('2026-10-28T11:15:31')
+  const lunes = B('2026-10-26T00:00:00')
+  // Una revisión anotada cada 10 min, como el cron, de `desde` a `hasta`.
+  const cada10 = (desde: string, hasta: string): Revision[] => {
+    const out: Revision[] = []
+    for (let t = B(desde); t < B(hasta); t += 10 * MIN) out.push({ en: t, ok: true, detalle: 'libres 0, abiertas 0, cerradas 0' })
+    return out
+  }
+
+  it('solo las semanas ya terminadas, desde la del arranque', () => {
+    expect(semanasTerminadas(inicio, B('2026-11-01T23:59:00'))).toEqual([])
+    expect(semanasTerminadas(inicio, B('2026-11-02T22:10:00'))).toEqual([lunes])
+    expect(semanasTerminadas(inicio, B('2026-11-09T00:00:00'))).toEqual([lunes, B('2026-11-02T00:00:00')])
+  })
+
+  it('la semana del arranque: desde el miércoles, sin cortes ni citas', () => {
+    const revisiones = [
+      ...cada10('2026-10-28T11:20:00', '2026-11-02T00:00:00'),
+      { en: B('2026-10-29T09:50:24'), ok: false, detalle: 'Bookings tardó más de 20 s' },
+      { en: B('2026-10-30T09:06:04'), ok: false, detalle: 'Bookings HTTP 500' },
+    ]
+    const s = resumenVigilancia(lunes, inicio, revisiones, [])
+    expect(s).toMatchObject({ desde: inicio, fallosBookings: 2, otrosFallos: 0, cortes: [], seVieronLibres: 0 })
+    expect(fmtSemanaCompleta(s.lunes)).toBe('26 oct al 1 nov')
+    expect(fraseVigilancia(s)).toBe(
+      'El monitor revisó la agenda desde el mié 28 oct a las 11:15, cuando arrancó, hasta el domingo, sin cortes de más de media hora. ' +
+        'No apareció ninguna cita libre. Bookings no respondió a tiempo o dio error en 2 revisiones; el monitor siguió con la siguiente.'
+    )
+  })
+
+  it('no dice "sin cortes" si hubo un rato sin revisiones, tampoco al final de la semana', () => {
+    const l = B('2026-11-02T00:00:00')
+    const conHueco = [...cada10('2026-11-02T00:00:00', '2026-11-04T03:00:00'), ...cada10('2026-11-04T05:00:00', '2026-11-09T00:00:00')]
+    const s = resumenVigilancia(l, inicio, conHueco, [])
+    expect(s.cortes).toHaveLength(1)
+    expect(fraseVigilancia(s)).toContain('toda la semana, con un corte de 2 h 10 min el mié 4 nov a las 2:50')
+
+    const muere = resumenVigilancia(l, inicio, cada10('2026-11-02T00:00:00', '2026-11-07T00:00:00'), [])
+    expect(muere.cortes.at(-1)!.hasta).toBe(B('2026-11-09T00:00:00'))
+  })
+
+  it('cuenta citas distintas abiertas en la semana y separa los fallos propios', () => {
+    const c = B('2026-11-17T08:00:00')
+    const ep: Episodio[] = [
+      { cita: c, abiertaEn: B('2026-11-09T08:00:00'), como: 'apertura', cerradaEn: B('2026-11-09T08:03:00'), cierre: 'ocupada' },
+      { cita: c, abiertaEn: B('2026-11-11T15:00:00'), como: 'liberada', cerradaEn: null, cierre: null },
+      { cita: B('2026-11-17T08:30:00'), abiertaEn: B('2026-11-16T00:00:00'), como: 'apertura', cerradaEn: null, cierre: null },
+    ]
+    const s = resumenVigilancia(B('2026-11-09T00:00:00'), inicio, [{ en: B('2026-11-10T10:00:00'), ok: false, detalle: 'no se pudo leer el estado' }], ep)
+    expect(s.seVieronLibres).toBe(1)
+    expect(s.otrosFallos).toBe(1)
+    expect(fraseVigilancia(s)).toContain('Apareció 1 cita libre')
+    expect(fraseVigilancia(s)).toContain('Otra revisión falló por un problema del propio monitor.')
   })
 })
 

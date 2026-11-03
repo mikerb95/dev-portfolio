@@ -1,9 +1,9 @@
 // Parte con red y BD del monitor de la agenda de etapa productiva. Las
 // decisiones (qué está libre, qué cambió, cuándo consultar) son puras y viven
 // en `ep-agenda.ts`. Solo servidor.
-import { and, desc, eq, gte, isNull } from 'drizzle-orm'
+import { and, desc, eq, gte, isNull, lt } from 'drizzle-orm'
 import { db } from '../db'
-import { appSettings, epAgendaEpisodios } from '../db/schema'
+import { appSettings, cronRuns, epAgendaEpisodios } from '../db/schema'
 import { sendPush } from './notify'
 import {
   AVISO_APRENDICES,
@@ -19,6 +19,8 @@ import {
   parseDisponibilidad,
   calendario,
   resumenSemanas,
+  resumenVigilancia,
+  semanasTerminadas,
   vistaPublica,
   type Apertura,
   type Cierre,
@@ -27,10 +29,12 @@ import {
   type EstadoAgenda,
   type Semana,
   type SemanaCalendario,
+  type SemanaVigilada,
   type Tramo,
 } from './ep-agenda'
 
 const CLAVE_ESTADO = 'ep_agenda_estado'
+const CLAVE_VIGILADAS = 'ep_agenda_semanas_vigiladas'
 
 
 /** El horario del instructor cambia rara vez: releerlo en cada consulta sería otra llamada lenta por minuto. */
@@ -184,6 +188,8 @@ export type AgendaPublica = {
   conError: boolean
   libres: number[]
   semanas: Semana[]
+  /** Qué vio el monitor en cada semana terminada, más reciente primero. */
+  vigiladas: SemanaVigilada[]
   /** Las semanas de la ventana de reserva, cita por cita, para el calendario. */
   calendario: SemanaCalendario[]
   episodios: Episodio[]
@@ -193,11 +199,49 @@ export type AgendaPublica = {
 /** Tope de filas: aun en los seis meses de etapa son unos cientos; esto acota el peor caso de lectura. */
 const MAX_EPISODIOS = 400
 
+/**
+ * Resumen de vigilancia de las semanas terminadas. Una semana cerrada ya no
+ * cambia, así que se calcula una sola vez y queda en app_settings: leer las
+ * ~650 filas semanales de cron_runs en cada carga de /ep (una por minuto con
+ * el CDN) multiplicaría las filas escaneadas por nada. Fail-open: si algo
+ * falla, /ep sale sin este bloque y lo reintenta en la siguiente carga.
+ */
+async function leerVigiladas(inicio: number, episodios: Episodio[], ahora: number): Promise<SemanaVigilada[]> {
+  try {
+    const raw = await leerClave(CLAVE_VIGILADAS)
+    const guardadas: SemanaVigilada[] = raw ? JSON.parse(raw) : []
+    const hechas = new Set(guardadas.map((s) => s.lunes))
+    const faltan = semanasTerminadas(inicio, ahora).filter((l) => !hechas.has(l))
+
+    for (const lunes of faltan) {
+      const filas = await db
+        .select({ en: cronRuns.createdAt, ok: cronRuns.ok, detalle: cronRuns.detail })
+        .from(cronRuns)
+        .where(and(gte(cronRuns.createdAt, new Date(lunes)), lt(cronRuns.createdAt, new Date(lunes + 7 * 86_400_000)), eq(cronRuns.job, 'ep-agenda')))
+      const revisiones = filas.flatMap((f) => (f.en ? [{ en: f.en.getTime(), ok: f.ok, detalle: f.detalle }] : []))
+      guardadas.push(resumenVigilancia(lunes, inicio, revisiones, episodios))
+    }
+
+    if (faltan.length > 0) {
+      const value = JSON.stringify(guardadas)
+      const en = new Date()
+      await db
+        .insert(appSettings)
+        .values({ key: CLAVE_VIGILADAS, value, updatedAt: en })
+        .onConflictDoUpdate({ target: appSettings.key, set: { value, updatedAt: en } })
+    }
+    return [...guardadas].sort((a, b) => b.lunes - a.lunes)
+  } catch (e) {
+    console.error('[ep-agenda] semanas vigiladas', e)
+    return []
+  }
+}
+
 /** Lo que /ep publica: solo agregados y horas, nunca quién reservó (no se conoce). */
 export async function leerAgendaPublica(ahora: number): Promise<AgendaPublica> {
   const [estado, vigiaEn] = await Promise.all([leerEstado(), leerVigia()])
   const vacia: AgendaPublica = {
-    ok: true, revisadoEn: null, vigiaEn: null, inicio: null, conError: false, libres: [], semanas: [], calendario: [], episodios: [], urlReserva: URL_RESERVA,
+    ok: true, revisadoEn: null, vigiaEn: null, inicio: null, conError: false, libres: [], semanas: [], vigiladas: [], calendario: [], episodios: [], urlReserva: URL_RESERVA,
   }
   if (!estado) return vacia
 
@@ -226,6 +270,9 @@ export async function leerAgendaPublica(ahora: number): Promise<AgendaPublica> {
     conError: Boolean(estado.error),
     libres,
     semanas: resumenSemanas(episodios, estado.config, estado.inicio, ahora),
+    // Con todos los episodios y no los de la vista pública: lo que se guarda es
+    // de semanas ya cerradas, que el retraso público nunca alcanza.
+    vigiladas: await leerVigiladas(estado.inicio, todos, ahora),
     calendario: calendario(episodios, libres, estado.config, estado.inicio, ahora),
     episodios,
   }

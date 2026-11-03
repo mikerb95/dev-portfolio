@@ -510,6 +510,111 @@ export function resumenSemanas(episodios: Episodio[], config: ConfigServicio, in
     .map(({ libres, ...s }) => ({ ...s, medianaLibreMin: mediana(libres) }))
 }
 
+// ---------------------------------------------------------------------------
+// Lo que vio el monitor, semana por semana
+// ---------------------------------------------------------------------------
+
+// `resumenSemanas` agrupa por la semana de la CITA y solo cuenta las que
+// entraron en la ventana con el monitor corriendo; las primeras semanas no
+// tienen ninguna, así que no dice nada. Esto cuenta la otra mitad: qué vio el
+// monitor DURANTE cada semana, aunque no se haya abierto nada. "Estuvo mirando
+// toda la semana y no apareció ninguna" también es evidencia, siempre que se
+// pueda demostrar que de verdad estuvo mirando: por eso van los cortes.
+
+/** Una fila de cron_runs del vigía. */
+export type Revision = { en: number; ok: boolean; detalle: string | null }
+
+export type SemanaVigilada = {
+  /** Lunes 00:00 de Bogotá. */
+  lunes: number
+  /** Desde cuándo miró el monitor: el lunes, o el arranque si fue a mitad de semana. */
+  desde: number
+  /** Revisiones fallidas porque Bookings no respondió a tiempo o dio error. */
+  fallosBookings: number
+  /** Revisiones fallidas por otra cosa (la BD, casi siempre). */
+  otrosFallos: number
+  /** Ratos de más de CORTE_MIN sin ninguna revisión anotada. */
+  cortes: { desde: number; hasta: number }[]
+  /** Citas distintas que se vieron libres por primera vez durante la semana. */
+  seVieronLibres: number
+}
+
+/**
+ * cron_runs solo anota la consulta de cada múltiplo de 10 min, los cambios y
+ * los fallos (ver el cron). Media hora sin filas son al menos dos consultas de
+ * fondo perdidas seguidas: ahí sí hubo un rato sin nadie mirando.
+ */
+export const CORTE_MIN = 30
+
+/** Lunes de las semanas ya terminadas desde el arranque del monitor, más antigua primero. */
+export function semanasTerminadas(inicio: number, ahora: number): number[] {
+  const lunes: number[] = []
+  for (let l = lunesBogota(inicio); l + 7 * DIA_MS <= ahora; l += 7 * DIA_MS) lunes.push(l)
+  return lunes
+}
+
+export function resumenVigilancia(lunes: number, inicio: number, revisiones: Revision[], episodios: Episodio[]): SemanaVigilada {
+  const fin = lunes + 7 * DIA_MS
+  const desde = Math.max(lunes, inicio)
+  const dentro = revisiones.filter((r) => r.en >= desde && r.en < fin).sort((a, b) => a.en - b.en)
+  const fallidas = dentro.filter((r) => !r.ok)
+  const fallosBookings = fallidas.filter((r) => r.detalle?.startsWith('Bookings')).length
+
+  // Los bordes cuentan: una semana que arranca con tres horas sin filas tuvo
+  // un corte aunque después todo fuera normal.
+  const cortes: SemanaVigilada['cortes'] = []
+  const marcas = [desde, ...dentro.map((r) => r.en), fin]
+  for (let i = 1; i < marcas.length; i++) {
+    if (marcas[i] - marcas[i - 1] > CORTE_MIN * MIN_MS) cortes.push({ desde: marcas[i - 1], hasta: marcas[i] })
+  }
+
+  const libres = new Set(episodios.filter((e) => e.abiertaEn >= desde && e.abiertaEn < fin).map((e) => e.cita))
+  return { lunes, desde, fallosBookings, otrosFallos: fallidas.length - fallosBookings, cortes, seVieronLibres: libres.size }
+}
+
+/** "26 oct al 1 nov": la semana entera, porque el monitor también mira el fin de semana. */
+export function fmtSemanaCompleta(lunes: number): string {
+  const [, d1, m1] = fmtCita(lunes).split(',')[0].split(' ')
+  const [, d2, m2] = fmtCita(lunes + 6 * DIA_MS).split(',')[0].split(' ')
+  return m1 === m2 ? `${d1} al ${d2} ${m2}` : `${d1} ${m1} al ${d2} ${m2}`
+}
+
+/** "mié 28 oct a las 11:15". */
+const fmtMomento = (ms: number) => fmtCita(ms).replace(', ', ' a las ')
+
+/** El párrafo de /ep para una semana terminada. */
+export function fraseVigilancia(s: SemanaVigilada): string {
+  const partes: string[] = []
+  const arranque = s.desde > s.lunes ? `desde el ${fmtMomento(s.desde)}, cuando arrancó, hasta el domingo` : 'toda la semana'
+  const continuidad =
+    s.cortes.length === 0
+      ? 'sin cortes de más de media hora'
+      : s.cortes.length === 1
+        ? `con un corte de ${fmtDuracion((s.cortes[0].hasta - s.cortes[0].desde) / MIN_MS)} el ${fmtMomento(s.cortes[0].desde)}`
+        : `con ${s.cortes.length} cortes de más de media hora (el más largo, de ${fmtDuracion(
+            Math.max(...s.cortes.map((c) => c.hasta - c.desde)) / MIN_MS
+          )})`
+  partes.push(`El monitor revisó la agenda ${arranque}, ${continuidad}.`)
+
+  partes.push(
+    s.seVieronLibres === 0
+      ? 'No apareció ninguna cita libre.'
+      : s.seVieronLibres === 1
+        ? 'Apareció 1 cita libre; el detalle está en el historial cita por cita.'
+        : `Aparecieron ${s.seVieronLibres} citas libres; el detalle está en el historial cita por cita.`
+  )
+
+  if (s.fallosBookings > 0) {
+    partes.push(
+      `Bookings no respondió a tiempo o dio error en ${s.fallosBookings === 1 ? '1 revisión' : `${s.fallosBookings} revisiones`}; el monitor siguió con la siguiente.`
+    )
+  }
+  if (s.otrosFallos > 0) {
+    partes.push(`${s.otrosFallos === 1 ? 'Otra revisión falló' : `Otras ${s.otrosFallos} revisiones fallaron`} por un problema del propio monitor.`)
+  }
+  return partes.join(' ')
+}
+
 /**
  * Retraso de la página pública: ninguno. Hasta el 28 oct 2026 /ep iba con los
  * mismos 10 min que el aviso de los aprendices, para que mirar la página no

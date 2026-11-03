@@ -126,6 +126,13 @@ const LEYENDA = [
       </div>
     </details>
   </div>
+
+  <!-- Lo que vio el monitor cada semana, aunque no se abriera nada: a la vista,
+       no plegado, porque es la evidencia que la página existe para guardar. -->
+  <div data-agenda-vigiladas class="hidden mt-8 pt-6 border-t border-white/[.06]">
+    <p class="text-[11px] font-mono uppercase tracking-[.15em] text-ink-100 mb-3">Lo que vio el monitor</p>
+    <ul data-agenda-vigiladas-lista class="grid gap-3 text-[13px] text-ink-200 leading-relaxed max-w-3xl"></ul>
+  </div>
 </section>
 
 <!-- Global a propósito: el script crea las casillas del calendario, y un
@@ -160,11 +167,14 @@ const LEYENDA = [
   import {
     fmtCita,
     fmtDuracion,
+    fmtSemanaCompleta,
+    fraseVigilancia,
     proximaRevisionPublica,
     type EstadoCelda,
     type Episodio,
     type Semana,
     type SemanaCalendario,
+    type SemanaVigilada,
   } from '../../lib/ep-agenda'
 
   type Datos = {
@@ -174,6 +184,7 @@ const LEYENDA = [
     conError: boolean
     libres: number[]
     semanas: Semana[]
+    vigiladas?: SemanaVigilada[]
     calendario: SemanaCalendario[]
     episodios: Episodio[]
   }
@@ -386,6 +397,22 @@ const LEYENDA = [
     }
   }
 
+  // Sin semanas terminadas el bloque entero se esconde: un "todavía nada" más
+  // al pie de la sección no le dice nada a quien viene a buscar cita.
+  function pintarVigiladas(vigiladas: SemanaVigilada[]) {
+    const bloque = $('[data-agenda-vigiladas]')
+    const lista = $('[data-agenda-vigiladas-lista]')
+    if (!bloque || !lista) return
+    bloque.classList.toggle('hidden', vigiladas.length === 0)
+    lista.replaceChildren(
+      ...vigiladas.map((s) => {
+        const li = el('li')
+        li.append(el('span', 'font-mono text-ink-50', `Semana del ${fmtSemanaCompleta(s.lunes)}. `), fraseVigilancia(s))
+        return li
+      })
+    )
+  }
+
   async function cargar() {
     try {
       const res = await fetch('/api/ep-agenda')
@@ -394,6 +421,7 @@ const LEYENDA = [
       pintarTitular(d)
       pintarCalendario(d.calendario ?? [])
       pintarTablas(d)
+      pintarVigiladas(d.vigiladas ?? [])
     } catch {
       const titular = $('[data-agenda-titular]')
       if (titular) titular.textContent = 'No se pudo leer la agenda'

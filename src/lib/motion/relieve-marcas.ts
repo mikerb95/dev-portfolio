@@ -71,9 +71,8 @@ void main() {
   vec2 alabeo = vec2(ruido(q + vec2(1.7, 9.2) + uTiempo * 0.03), ruido(q + vec2(8.3, 2.8) - uTiempo * 0.025));
   vec2 pw = px + alabeo * uU * 34.0;
 
-  // Ruido de fondo bajo a propósito: con más amplitud, sus curvas vagaban por
-  // el mapa con el mismo peso que los anillos y las cumbres no se leían.
-  float h = fbm(px / (uU * 460.0) + vec2(uTiempo * 0.012, 0.0)) * 0.7;
+  float h = 0.0;
+  float cercania = 0.0;    // 1 sobre la meseta de alguna cumbre
   float mascara = 1.0;     // 0 sobre los logos
   float tinte = 0.0;
   vec3 colorMarca = vec3(0.0);
@@ -88,6 +87,7 @@ void main() {
     float t = max(s - 16.0, 0.0) / 150.0;
     float f = exp(-pow(t, 1.25) * 1.35);
     h += uAltura[i] * 2.7 * f;
+    cercania = max(cercania, f * min(uAltura[i], 1.0));
     mascara *= smoothstep(6.0, 26.0, sReal);
 
     float w = pow(f, 0.7) * (0.38 + 0.62 * uElev[i]) * min(uAltura[i], 1.0);
@@ -95,6 +95,12 @@ void main() {
     tinte += w;
     brillo += uElev[i] * exp(-pow(max(sReal, 0.0) / 120.0, 2.0));
   }
+
+  // Ruido de fondo: bajo, y apagado cerca de cada cumbre. Con más amplitud sus
+  // curvas vagaban con el mismo peso que los anillos; sin apagarlo, alguna
+  // entraba en la meseta y se cortaba en seco junto al logo. Así, alrededor
+  // de una marca solo quedan sus propios anillos.
+  h += fbm(px / (uU * 460.0) + vec2(uTiempo * 0.012, 0.0)) * 0.7 * (1.0 - 0.92 * cercania);
 
   // Pico del cursor: el mismo gesto del hero, más suave.
   vec2 dc = (px - uCursor.xy) / (uU * 80.0);
