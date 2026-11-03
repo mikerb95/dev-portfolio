@@ -31,14 +31,14 @@ export const DISPOSICION_ALTA: readonly Punto[] = [
 ]
 
 /** Exponente de compensación óptica: 0 = mismo alto, 0.5 = misma área. */
-export const COMPENSACION = 0.55
+export const COMPENSACION = 0.4
 
 /**
  * Tamaño en px de un logo de proporción `p` (ancho/alto) para que todos pesen
- * lo mismo a la vista. Con el mismo alto, el wordmark de Antídoto (4.9:1)
- * ocuparía cinco veces la superficie del gorila de Gorillaz (1:1); con la
- * misma área, los alargados quedan con letra de nota al pie. 0.55 es el punto
- * intermedio que se ve parejo.
+ * lo mismo a la vista. El área queda en base² · p^(1 − 2k). Con el mismo alto
+ * (k = 0), el wordmark de Antídoto (4.9:1) ocuparía cinco veces la superficie
+ * del gorila de Gorillaz (1:1); con la misma área (k = 0.5), los alargados
+ * quedan con letra de nota al pie. 0.4 es el punto intermedio que se ve parejo.
  */
 export function tamOptico(p: number, base: number, k = COMPENSACION): Tam {
   const alto = base * Math.pow(p, -k)
@@ -96,6 +96,12 @@ export function fuera(
  */
 export function acercar(actual: number, objetivo: number, dt: number, tasa: number): number {
   return objetivo + (actual - objetivo) * Math.exp(-dt * tasa)
+}
+
+/** '#rrggbb' → [r, g, b] en 0..1, que es lo que recibe el shader. */
+export function hexARgb(hex: string): [number, number, number] {
+  const n = Number.parseInt(hex.replace('#', ''), 16)
+  return [((n >> 16) & 255) / 255, ((n >> 8) & 255) / 255, (n & 255) / 255]
 }
 
 /** Índice siguiente/anterior con vuelta, para recorrer las cumbres con flechas. */

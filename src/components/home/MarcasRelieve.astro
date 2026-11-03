@@ -1,0 +1,672 @@
+---
+// Sección "/00 Marcas" de la portada: las marcas para las que he trabajado,
+// como cumbres de un mapa topográfico.
+//
+// Va justo después de la cinta del pulso: el terreno del hero se aplana en esa
+// cinta y aquí vuelve a levantarse, ahora visto desde arriba. Es la primera
+// prueba de confianza para un cliente, antes de entrar en lo técnico. Por eso
+// lleva /00 y no renumera las secciones de abajo.
+//
+// Solo logos: el nombre y lo que hice con cada marca aparecen en la ficha al
+// apuntar o tocar una cumbre. Sin JS (o sin WebGL2) la página queda completa:
+// los logos en su sitio y las seis fichas listadas debajo; el script cambia a
+// ficha única con la clase `marcas-vivo`.
+import { getDictionary, getLocaleFromUrl } from '../../i18n'
+import { interpolate } from '../../i18n/format'
+import { MARCAS } from '../../data/marcas'
+import { DISPOSICION_ALTA, DISPOSICION_ANCHA, tamOptico } from '../../lib/marcas-relieve'
+
+// Mismos valores que tests/marcas-relieve.test.ts, que comprueba que con
+// ellos ningún logo pisa a otro ni se sale del escenario.
+const BASE_ANCHA = 92
+const BASE_ALTA = 66
+
+const locale = getLocaleFromUrl(Astro.url.pathname)
+const t = getDictionary(locale).home.marcas
+const total = MARCAS.length
+
+const items = MARCAS.map((m, i) => {
+  const a = tamOptico(m.proporcion, BASE_ANCHA)
+  const b = tamOptico(m.proporcion, BASE_ALTA)
+  const pa = DISPOSICION_ANCHA[i]
+  const pb = DISPOSICION_ALTA[i]
+  const pct = (v: number) => `${(v * 100).toFixed(1)}%`
+  const px = (v: number) => `${v.toFixed(1)}px`
+  return {
+    ...m,
+    n: String(i + 1).padStart(2, '0'),
+    ficha: t.fichas[m.slug],
+    estilo: [
+      `--x:${pct(pa.x)}`,
+      `--y:${pct(pa.y)}`,
+      `--w:${px(a.ancho)}`,
+      `--h:${px(a.alto)}`,
+      `--xm:${pct(pb.x)}`,
+      `--ym:${pct(pb.y)}`,
+      `--wm:${px(b.ancho)}`,
+      `--hm:${px(b.alto)}`,
+      `--tono:${m.tono}`,
+    ].join(';'),
+  }
+})
+---
+
+<section id="marcas" class="relative pt-16 md:pt-24 overflow-x-clip" aria-labelledby="marcas-titulo">
+  <div class="px-6 md:px-12 lg:px-20">
+    <div class="max-w-[1280px] mx-auto">
+      <div data-etiqueta class="flex items-center gap-3 text-[11px] font-mono uppercase tracking-[.18em] text-ink-200 mb-6">
+        <span class="text-cyan">/00</span>
+        <span class="h-px flex-1 bg-gradient-to-r from-white/15 to-transparent max-w-[80px]"></span>
+        <span>{t.sectionLabel}</span>
+      </div>
+      <div class="grid grid-cols-[minmax(0,1fr)] lg:grid-cols-[minmax(0,1fr)_minmax(0,25rem)] gap-5 lg:gap-16 items-end">
+        <h2 id="marcas-titulo" data-titular class="font-sans text-4xl md:text-5xl font-medium tracking-[-.03em] text-mask leading-[1.04]">
+          {t.titleLine1}<br />{t.titleLine2}
+        </h2>
+        <p class="text-[15px] text-ink-100 leading-relaxed">{t.intro}</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- El escenario va a sangre (el mapa ocupa todo el ancho) y los logos se
+       colocan dentro de la columna de 1280: en una pantalla ancha el relieve
+       sigue más allá de los logos en vez de cortarse en una caja. -->
+  <div class="marcas-escenario relative mt-4 md:mt-6" data-marcas-escenario>
+    <canvas class="marcas-lienzo absolute inset-0 w-full h-full" aria-hidden="true"></canvas>
+    <div class="h-full px-6 md:px-12 lg:px-20">
+      <ul class="marcas-cumbres relative h-full max-w-[1280px] mx-auto" aria-label={t.grupo}>
+        {items.map((m, i) => (
+          <li class="marca" style={m.estilo} data-tono={m.tono}>
+            <button
+              type="button"
+              class="marca-boton"
+              data-marca={i}
+              aria-pressed="false"
+              aria-controls="marcas-ficha"
+              aria-label={m.nombre}
+            >
+              <span class="marca-logo">
+                <img class="marca-sombra" src={m.logo} alt="" width={Math.round(m.proporcion * 100)} height="100" decoding="async" loading="lazy" />
+                <img class="marca-color" src={m.logo} alt="" width={Math.round(m.proporcion * 100)} height="100" decoding="async" loading="lazy" />
+              </span>
+              <span class="marca-cota" aria-hidden="true">
+                <svg viewBox="0 0 10 8" width="7" height="6"><path d="M5 0 10 8H0z" fill="currentColor" /></svg>
+                {m.n}
+              </span>
+            </button>
+          </li>
+        ))}
+      </ul>
+    </div>
+  </div>
+
+  <div class="px-6 md:px-12 lg:px-20 pb-20 md:pb-24">
+    <div class="max-w-[1280px] mx-auto">
+      <div id="marcas-ficha" class="marcas-ficha">
+        <div class="marcas-pista" data-marcas-pista>
+          <span class="marcas-pista-punto" aria-hidden="true"></span>
+          <span class="font-mono text-[11px] uppercase tracking-[.18em] text-ink-100">{t.pista}</span>
+          <span class="text-[13px] text-ink-300">{t.pistaDetalle}</span>
+        </div>
+        <ul class="marcas-fichas">
+          {items.map((m, i) => (
+            <li class="marcas-ficha-item" data-ficha={i} style={`--tono:${m.tono}`}>
+              <div class="marcas-ficha-cab">
+                <span class="marcas-ficha-punto" aria-hidden="true"></span>
+                <span class="font-mono text-[10.5px] uppercase tracking-[.18em] text-ink-300">
+                  {interpolate(t.cumbre, { n: m.n, total: String(total).padStart(2, '0') })}
+                </span>
+              </div>
+              <h3 class="marcas-ficha-nombre">{m.nombre}</h3>
+              <p class="marcas-ficha-texto">{m.ficha}</p>
+              <a class="marcas-ficha-enlace" href={m.url} target="_blank" rel="noopener">
+                <span>{t.verSitio}</span>
+                <span class="font-mono text-ink-300">{m.dominio}</span>
+                <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17 17 7" /><path d="M7 7h10v10" /></svg>
+              </a>
+            </li>
+          ))}
+        </ul>
+        <button type="button" class="marcas-cerrar" data-marcas-cerrar aria-label={t.cerrar} hidden>
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg>
+        </button>
+      </div>
+      <p class="sr-only" aria-live="polite" data-marcas-anuncio></p>
+    </div>
+  </div>
+</section>
+
+<style>
+  .marcas-escenario {
+    height: 680px;
+  }
+  @media (min-width: 768px) {
+    .marcas-escenario {
+      height: 540px;
+    }
+  }
+
+  /* ── Cumbres ──
+     Posición y tamaño por variables (móvil por defecto, escritorio desde md).
+     Se centran con márgenes negativos y no con translate: el transform queda
+     libre para la entrada y el hover, y offsetLeft/offsetTop dan el centro
+     real que el lienzo necesita para levantar la meseta debajo de cada logo. */
+  .marca {
+    position: absolute;
+    left: var(--xm);
+    top: var(--ym);
+    width: var(--wm);
+    height: var(--hm);
+    margin-left: calc(var(--wm) / -2);
+    margin-top: calc(var(--hm) / -2);
+  }
+  @media (min-width: 768px) {
+    .marca {
+      left: var(--x);
+      top: var(--y);
+      width: var(--w);
+      height: var(--h);
+      margin-left: calc(var(--w) / -2);
+      margin-top: calc(var(--h) / -2);
+    }
+  }
+
+  .marca-boton {
+    position: relative;
+    display: block;
+    width: 100%;
+    height: 100%;
+    cursor: pointer;
+    border-radius: 14px;
+    transition: transform 0.7s cubic-bezier(0.2, 0.9, 0.25, 1);
+    -webkit-tap-highlight-color: transparent;
+  }
+  /* Área de toque más grande que el logo: un wordmark de 30 px de alto es un
+     blanco muy fino para un dedo. */
+  .marca-boton::before {
+    content: '';
+    position: absolute;
+    inset: -16px -14px;
+  }
+  .marca-boton:focus-visible {
+    outline: 1px solid var(--tono);
+    outline-offset: 12px;
+  }
+
+  .marca-logo {
+    position: relative;
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+  .marca-logo img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    pointer-events: none;
+    user-select: none;
+  }
+  /* Dos capas con el mismo archivo (una sola descarga): la silueta en reposo
+     y el logo en color al elevarse. Fundir dos capas se ve limpio; interpolar
+     un filtro de brightness(0) a none pasa por grises sucios a mitad. */
+  .marca-sombra {
+    filter: brightness(0) invert(1);
+    opacity: 0.4;
+    transition: opacity 0.6s ease;
+  }
+  .marca-color {
+    opacity: 0;
+    filter: drop-shadow(0 10px 26px color-mix(in srgb, var(--tono) 38%, transparent));
+    transition: opacity 0.5s ease;
+  }
+  .marca:hover .marca-sombra {
+    opacity: 0.62;
+  }
+  .marca[data-elevada] .marca-boton {
+    transform: translateY(-6px) scale(1.045);
+  }
+  .marca[data-elevada] .marca-sombra {
+    opacity: 0;
+  }
+  .marca[data-elevada] .marca-color {
+    opacity: 1;
+  }
+
+  /* Cota de la cumbre, como en un mapa: triángulo y número bajo el logo. */
+  .marca-cota {
+    position: absolute;
+    left: 50%;
+    top: calc(100% + 10px);
+    transform: translateX(-50%);
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-family: var(--font-mono, ui-monospace, monospace);
+    font-size: 10px;
+    letter-spacing: 0.16em;
+    color: rgba(161, 161, 170, 0.55);
+    transition: color 0.4s ease;
+    pointer-events: none;
+  }
+  .marca[data-elevada] .marca-cota {
+    color: var(--tono);
+  }
+
+  /* Sin WebGL2: anillos de CSS alrededor de cada logo, para que el mapa siga
+     leyéndose como mapa y no como una fila de logos sueltos. */
+  :global(.marcas-sin-gl) .marca::before {
+    content: '';
+    position: absolute;
+    inset: -70px -80px;
+    border-radius: 50%;
+    background: repeating-radial-gradient(closest-side, transparent 0 13px, rgba(0, 242, 255, 0.09) 13px 14px);
+    -webkit-mask: radial-gradient(closest-side, transparent 42%, #000 55%, transparent 100%);
+    mask: radial-gradient(closest-side, transparent 42%, #000 55%, transparent 100%);
+    pointer-events: none;
+    z-index: -1;
+  }
+  :global(.marcas-sin-gl) .marca[data-elevada]::before {
+    background: repeating-radial-gradient(
+      closest-side,
+      transparent 0 13px,
+      color-mix(in srgb, var(--tono) 30%, transparent) 13px 14px
+    );
+  }
+
+  /* ── Ficha ──
+     Sin JS: las seis fichas en rejilla, el sitio completo y legible. Con JS
+     (`marcas-vivo`): todas apiladas en la misma celda y solo una visible; la
+     celda mide lo que la más alta, así cambiar de marca no mueve la página. */
+  .marcas-ficha {
+    position: relative;
+    border-top: 1px solid rgba(255, 255, 255, 0.07);
+    padding-top: 1.5rem;
+  }
+  .marcas-pista {
+    display: none;
+  }
+  .marcas-fichas {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1.75rem 2.5rem;
+  }
+  @media (min-width: 768px) {
+    .marcas-fichas {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
+  .marcas-ficha-cab {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+  }
+  .marcas-ficha-punto {
+    width: 7px;
+    height: 7px;
+    border-radius: 999px;
+    background: var(--tono);
+    box-shadow: 0 0 12px color-mix(in srgb, var(--tono) 60%, transparent);
+  }
+  .marcas-ficha-nombre {
+    margin-top: 0.55rem;
+    font-size: 1.35rem;
+    font-weight: 500;
+    letter-spacing: -0.02em;
+    color: var(--color-ink-50, #fafafa);
+  }
+  .marcas-ficha-texto {
+    margin-top: 0.35rem;
+    font-size: 14.5px;
+    line-height: 1.6;
+    color: var(--color-ink-100, #e4e4e7);
+  }
+  .marcas-ficha-enlace {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.55rem;
+    margin-top: 0.8rem;
+    font-size: 13px;
+    color: var(--color-ink-50, #fafafa);
+    transition: color 0.25s ease;
+  }
+  .marcas-ficha-enlace:hover {
+    color: var(--tono);
+  }
+  .marcas-cerrar {
+    display: none;
+  }
+
+  :global(.marcas-vivo) .marcas-pista {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem 0.9rem;
+    grid-area: 1 / 1;
+  }
+  :global(.marcas-vivo) .marcas-pista-punto {
+    width: 7px;
+    height: 7px;
+    border-radius: 999px;
+    background: #00f2ff;
+    animation: marcas-latido 2.4s ease-in-out infinite;
+  }
+  :global(.marcas-vivo) .marcas-ficha {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    min-height: 7.5rem;
+  }
+  :global(.marcas-vivo) .marcas-fichas {
+    display: grid;
+    grid-area: 1 / 1;
+    grid-template-columns: minmax(0, 1fr);
+  }
+  :global(.marcas-vivo) .marcas-ficha-item {
+    grid-area: 1 / 1;
+    visibility: hidden;
+    opacity: 0;
+  }
+  :global(.marcas-vivo) .marcas-ficha-item[data-activa] {
+    visibility: visible;
+    opacity: 1;
+  }
+  :global(.marcas-vivo) .marcas-pista:not([data-activa]) {
+    visibility: hidden;
+  }
+  @media (min-width: 1024px) {
+    /* Escritorio: la ficha en una sola franja, cabecera y nombre a la
+       izquierda, la línea al centro y el enlace a la derecha. */
+    :global(.marcas-vivo) .marcas-ficha-item {
+      display: grid;
+      grid-template-columns: minmax(0, 18rem) minmax(0, 1fr) auto;
+      grid-template-rows: auto auto;
+      column-gap: 3rem;
+      align-items: end;
+    }
+    :global(.marcas-vivo) .marcas-ficha-cab {
+      grid-area: 1 / 1;
+    }
+    :global(.marcas-vivo) .marcas-ficha-nombre {
+      grid-area: 2 / 1;
+      font-size: 1.75rem;
+    }
+    :global(.marcas-vivo) .marcas-ficha-texto {
+      grid-area: 2 / 2;
+      font-size: 16px;
+      margin-bottom: 0.2rem;
+    }
+    :global(.marcas-vivo) .marcas-ficha-enlace {
+      grid-area: 2 / 3;
+      margin-bottom: 0.35rem;
+      padding-right: 3rem;
+    }
+  }
+  :global(.marcas-vivo) .marcas-cerrar:not([hidden]) {
+    display: grid;
+    place-items: center;
+    position: absolute;
+    top: 1.25rem;
+    right: 0;
+    width: 2rem;
+    height: 2rem;
+    border-radius: 999px;
+    color: var(--color-ink-300, #a1a1aa);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    transition:
+      color 0.2s ease,
+      border-color 0.2s ease;
+  }
+  :global(.marcas-vivo) .marcas-cerrar:hover {
+    color: #fafafa;
+    border-color: rgba(255, 255, 255, 0.25);
+  }
+
+  @keyframes marcas-latido {
+    0%,
+    100% {
+      opacity: 0.35;
+      box-shadow: 0 0 0 0 rgba(0, 242, 255, 0.35);
+    }
+    50% {
+      opacity: 1;
+      box-shadow: 0 0 0 6px rgba(0, 242, 255, 0);
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .marca-boton,
+    .marca-sombra,
+    .marca-color,
+    .marca-cota {
+      transition: none;
+    }
+    :global(.marcas-vivo) .marcas-pista-punto {
+      animation: none;
+      opacity: 1;
+    }
+  }
+</style>
+
+<script>
+  import gsap from 'gsap'
+  import { ScrollTrigger } from 'gsap/ScrollTrigger'
+  import { montarRelieve, type Relieve } from '../../lib/motion/relieve-marcas'
+  import { hexARgb, rotarIndice } from '../../lib/marcas-relieve'
+
+  gsap.registerPlugin(ScrollTrigger)
+
+  const seccion = document.getElementById('marcas')
+  const escenario = seccion?.querySelector<HTMLElement>('[data-marcas-escenario]')
+  const lienzo = escenario?.querySelector<HTMLCanvasElement>('.marcas-lienzo')
+
+  if (seccion && escenario && lienzo) {
+    const reducido = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    const marcas = Array.from(seccion.querySelectorAll<HTMLElement>('.marca'))
+    const botones = marcas.map((m) => m.querySelector<HTMLButtonElement>('.marca-boton')!)
+    const fichas = Array.from(seccion.querySelectorAll<HTMLElement>('[data-ficha]'))
+    const pista = seccion.querySelector<HTMLElement>('[data-marcas-pista]')
+    const cerrar = seccion.querySelector<HTMLButtonElement>('[data-marcas-cerrar]')
+    const anuncio = seccion.querySelector<HTMLElement>('[data-marcas-anuncio]')
+    const total = marcas.length
+
+    // Fijada = la que se tocó (queda); apuntada = cursor o foco de teclado
+    // (vista previa). La ficha muestra la apuntada si la hay, si no la fijada.
+    let fijada: number | null = null
+    let apuntada: number | null = null
+    let mostrada: number | null | undefined
+
+    let relieve: Relieve | null = null
+    try {
+      relieve = montarRelieve(lienzo, {
+        zona: escenario,
+        reducido,
+        enReposo: () => fijada === null && apuntada === null,
+      })
+    } catch (err) {
+      console.warn('[marcas] relieve deshabilitado', err)
+    }
+    if (!relieve) {
+      lienzo.hidden = true
+      seccion.classList.add('marcas-sin-gl')
+    }
+    seccion.classList.add('marcas-vivo')
+
+    // Centro y tamaño de cada logo relativos al escenario. Medidas de
+    // maquetación (offset*), no getBoundingClientRect: la entrada y el hover
+    // desplazan los logos con transform y la meseta no debe seguir ese vaivén.
+    const medir = () => {
+      if (!relieve) return
+      relieve.medir(
+        marcas.map((li) => {
+          let x = li.offsetLeft + li.offsetWidth / 2
+          let y = li.offsetTop + li.offsetHeight / 2
+          let p = li.offsetParent as HTMLElement | null
+          while (p && p !== escenario) {
+            x += p.offsetLeft
+            y += p.offsetTop
+            p = p.offsetParent as HTMLElement | null
+          }
+          return {
+            x,
+            y,
+            semiAncho: li.offsetWidth / 2,
+            semiAlto: li.offsetHeight / 2,
+            color: hexARgb(li.dataset.tono ?? '#00f2ff'),
+          }
+        }),
+      )
+    }
+
+    const mostrarFicha = (i: number | null) => {
+      if (i === mostrada) return
+      mostrada = i
+      fichas.forEach((f, k) => {
+        const activa = k === i
+        f.toggleAttribute('data-activa', activa)
+        // Las fichas ocultas siguen en el DOM (apiladas): `inert` las saca del
+        // orden de tabulación y del árbol de accesibilidad.
+        f.inert = !activa
+      })
+      pista?.toggleAttribute('data-activa', i === null)
+      if (cerrar) cerrar.hidden = fijada === null || i !== fijada
+      const visible = i === null ? pista : fichas[i]
+      if (visible && !reducido) {
+        gsap.fromTo(
+          Array.from(visible.children),
+          { opacity: 0, y: 10 },
+          { opacity: 1, y: 0, duration: 0.45, stagger: 0.05, ease: 'power3.out', clearProps: 'opacity,transform' },
+        )
+      }
+    }
+
+    const pintar = () => {
+      marcas.forEach((li, i) => {
+        li.toggleAttribute('data-elevada', i === apuntada || i === fijada)
+        li.toggleAttribute('data-fijada', i === fijada)
+        botones[i].setAttribute('aria-pressed', String(i === fijada))
+        relieve?.elevar(i, i === fijada ? 1 : i === apuntada ? 0.8 : 0)
+      })
+      mostrarFicha(apuntada ?? fijada)
+    }
+
+    const fijar = (i: number | null) => {
+      fijada = i
+      if (i !== null) {
+        relieve?.pulso(i)
+        const ficha = fichas[i]
+        const nombre = ficha.querySelector('.marcas-ficha-nombre')?.textContent ?? ''
+        const texto = ficha.querySelector('.marcas-ficha-texto')?.textContent ?? ''
+        if (anuncio) anuncio.textContent = `${nombre}. ${texto}`
+      }
+      pintar()
+    }
+
+    botones.forEach((b, i) => {
+      b.addEventListener('pointerenter', (e) => {
+        if (e.pointerType === 'touch') return
+        apuntada = i
+        pintar()
+      })
+      b.addEventListener('pointerleave', () => {
+        if (apuntada !== i) return
+        apuntada = null
+        pintar()
+      })
+      // Solo el foco de teclado cuenta como "apuntar": en Android un toque
+      // también enfoca el botón, y volver a tocarlo para soltar la ficha la
+      // dejaría abierta por el foco.
+      b.addEventListener('focus', () => {
+        if (!b.matches(':focus-visible')) return
+        apuntada = i
+        pintar()
+      })
+      b.addEventListener('blur', () => {
+        if (apuntada !== i) return
+        apuntada = null
+        pintar()
+      })
+      b.addEventListener('click', () => fijar(fijada === i ? null : i))
+      b.addEventListener('keydown', (e) => {
+        const paso = e.key === 'ArrowRight' || e.key === 'ArrowDown' ? 1 : e.key === 'ArrowLeft' || e.key === 'ArrowUp' ? -1 : 0
+        if (paso) {
+          e.preventDefault()
+          botones[rotarIndice(i, paso, total)].focus()
+        }
+      })
+    })
+
+    seccion.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && fijada !== null) {
+        const previa = fijada
+        fijar(null)
+        botones[previa].focus()
+      }
+    })
+    cerrar?.addEventListener('click', () => {
+      const previa = fijada
+      fijar(null)
+      if (previa !== null) botones[previa].focus()
+    })
+    // Un toque en el terreno (no en un logo) lanza una onda desde ese punto:
+    // el mismo gesto que el hero, para que el mapa se sienta del mismo suelo.
+    escenario.addEventListener('pointerdown', (e) => {
+      if ((e.target as HTMLElement).closest('button, a')) return
+      relieve?.pulsoLibre(e.clientX, e.clientY)
+    })
+
+    mostrarFicha(null)
+    medir()
+    new ResizeObserver(medir).observe(escenario)
+
+    if (relieve) {
+      const r = relieve
+      new IntersectionObserver(([e]) => r.activar(e.isIntersecting), { rootMargin: '60px' }).observe(escenario)
+      if (reducido) r.pintar()
+    }
+
+    // ── Entrada ──
+    // El suelo está plano (la cinta de arriba) y se levanta: primero el
+    // terreno, luego cada cumbre de izquierda a derecha, y cada logo aparece
+    // cuando su cumbre ya tiene forma, con una onda que lo confirma.
+    if (!reducido) {
+      const orden = marcas
+        .map((li, i) => ({ i, x: li.offsetLeft }))
+        .sort((a, b) => a.x - b.x)
+        .map((o) => o.i)
+      try {
+        gsap.set(marcas, { opacity: 0, y: 16 })
+        let hecho = false
+        const entrar = () => {
+          if (hecho) return
+          hecho = true
+          const tl = gsap.timeline()
+          if (relieve) tl.to(relieve.estado, { entrada: 1, duration: 1.8, ease: 'power2.out' }, 0)
+          orden.forEach((i, k) => {
+            const en = 0.2 + k * 0.14
+            if (relieve) {
+              const est = relieve.estado
+              const proxy = { v: 0 }
+              tl.to(proxy, { v: 1, duration: 1.4, ease: 'power3.out', onUpdate: () => void (est.base[i] = proxy.v) }, en)
+              tl.call(() => relieve?.pulso(i, 0.55), [], en + 0.35)
+            }
+            tl.fromTo(
+              marcas[i],
+              { opacity: 0, y: 16, filter: 'blur(6px)' },
+              { opacity: 1, y: 0, filter: 'blur(0px)', duration: 0.9, ease: 'power3.out', clearProps: 'opacity,transform,filter' },
+              en + 0.3,
+            )
+          })
+        }
+        // Bandera propia y no `once: true` (ver tropiezos de la skill).
+        ScrollTrigger.create({ trigger: escenario, start: 'top 82%', onEnter: entrar })
+      } catch (err) {
+        console.warn('[marcas] entrada deshabilitada', err)
+        gsap.set(marcas, { clearProps: 'opacity,transform,filter' })
+        if (relieve) {
+          relieve.estado.entrada = 1
+          relieve.estado.base.fill(1)
+        }
+      }
+    }
+  }
+</script>
