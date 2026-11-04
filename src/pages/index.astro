@@ -20,6 +20,7 @@ import { jsonEnScript } from '../lib/json-script'
 import { NEGOCIO_ID, PERSONA_ID, negocioJsonLd } from '../lib/aeo/jsonld'
 import { TRABAJOS_REALES } from '../data/trabajos-reales'
 import { serviciosHero } from '../lib/hero-servicios'
+import { serviciosPortada } from '../lib/servicios-portada'
 
 // Mismo número que la burbuja (WhatsappFab.astro) y /contact: el botón
 // "Enviarle esto a Mike" del estimado abre WhatsApp con el resumen escrito.
@@ -68,6 +69,8 @@ const visibleProjects = await safeQuery(
 // Cuadros del titular rotativo (RF-038), con las cifras ya puestas desde el
 // tarifario.
 const servicios = serviciosHero(locale, L, visibleProjects.length > 0)
+// Tarjetas de "Qué te resuelvo": mismos precios y destinos que el hero.
+const resuelvo = serviciosPortada(locale, L, visibleProjects.length > 0)
 
 // Cinta del hero: cifras del propio sitio en lugar de la lista de tecnologías
 // que había antes. La lista era decorativa (los números /01../21 eran el índice
@@ -439,162 +442,101 @@ const senales = construirSenales(await leerPulso(), t.pulso, locale, L)
   <!-- Franja compacta de logos de clientes (RF-041). -->
   <MarcasFranja />
 
-  <!-- ── Bento ── -->
-  <section id="bento" class="px-6 md:px-12 lg:px-20 pt-20 pb-24">
+  <!-- ── Qué te resuelvo (RF-042) ──
+       Antes era un bento técnico (uptime, presupuesto de error, tRPC,
+       coordenadas) que le hablaba a un CTO justo después de un hero que le
+       habla al dueño de un negocio. Ahora cada tarjeta es un servicio: el
+       problema con las palabras del cliente, lo que se hace, el precio del
+       tarifario y la marca real para la que se hizo (si la hay; no se inventa).
+       El id se queda en "bento" porque de él cuelgan el HUD y las entradas. -->
+  <section id="bento" class="px-6 md:px-12 lg:px-20 pt-16 pb-20" aria-labelledby="resuelvo-titulo">
     <div class="max-w-[1280px] mx-auto">
-      <div data-etiqueta class="flex items-center gap-3 text-[11px] font-mono uppercase tracking-[.18em] text-ink-200 mb-6">
-        <span class="text-cyan">/01</span>
-        <span class="h-px flex-1 bg-gradient-to-r from-white/15 to-transparent max-w-[80px]"></span>
-        <span>{t.bento.sectionLabel}</span>
+      <div data-etiqueta class="flex items-center gap-3 text-[11px] font-mono uppercase tracking-[.18em] text-ink-200">
+        <span class="w-1.5 h-1.5 rounded-full bg-cyan"></span>
+        <span>{t.resuelvo.sectionLabel}</span>
       </div>
+      <h2 id="resuelvo-titulo" class="mt-4 text-2xl md:text-3xl font-medium tracking-[-.02em] text-ink-50 leading-tight">
+        {t.resuelvo.titulo}
+      </h2>
 
       <!-- `data-foco`: una sola linterna para toda la rejilla (ver foco() en
-           src/lib/motion/efectos.ts). Las tarjetas no llevan `lift`: el
-           desplazamiento del hover y la inclinación 3D pelearían por el mismo
-           transform. -->
-      <div data-foco class="grid grid-cols-12 md:grid-rows-[180px_180px_180px] gap-4 mt-6">
-
-        <!-- About - span 2 rows -->
-        <div class="col-span-12 md:col-span-7 row-span-2 min-h-[340px] rounded-2xl glass foco overflow-hidden p-7 flex flex-col justify-between relative">
-          <div class="absolute -right-12 -bottom-12 w-72 h-72 rounded-full bg-cyan/10 blur-3xl pointer-events-none"></div>
-          <div>
-            <span class="inline-flex items-center gap-1.5 text-[11px] font-mono uppercase tracking-wider text-cyan">
-              <span class="w-1.5 h-1.5 rounded-full pulse-dot bg-cyan"></span>
-              {t.bento.about.badge}
-            </span>
-            <h3 class="mt-5 text-3xl md:text-4xl font-medium tracking-[-.02em] text-ink-50 leading-[1.1] max-w-lg">
-              {t.bento.about.title}
+           src/lib/motion/efectos.ts). -->
+      <div data-foco class="grid grid-cols-1 md:grid-cols-6 gap-4 mt-8">
+        {resuelvo.tarjetas.map((s, i) => (
+          <article class:list={['rounded-2xl glass foco overflow-hidden p-6 flex flex-col', i < 2 ? 'md:col-span-3' : 'md:col-span-2']}>
+            <span class="text-[11px] font-mono uppercase tracking-wider text-cyan">{s.etiqueta}</span>
+            <p class="mt-4 text-[14px] text-ink-300 leading-snug">“{s.problema}”</p>
+            <h3 class:list={['mt-2 font-medium text-ink-50 leading-snug tracking-[-.01em]', i < 2 ? 'text-xl' : 'text-[17px]']}>
+              {s.solucion}
             </h3>
-          </div>
-          <div class="grid grid-cols-3 gap-6 mt-6">
-            <div>
-              <div class="text-2xl font-medium text-cyan tabular-nums" data-odometro>5+</div>
-              <div class="text-[11px] font-mono uppercase tracking-wider text-ink-200 mt-1">{t.bento.about.statYears}</div>
-            </div>
-            <div>
-              <div class="text-2xl font-medium text-cyan tabular-nums" data-odometro>20+</div>
-              <div class="text-[11px] font-mono uppercase tracking-wider text-ink-200 mt-1">{t.bento.about.statProjects}</div>
-            </div>
-            <div>
-              <div class="text-2xl font-medium text-cyan tabular-nums" data-odometro>8+</div>
-              <div class="text-[11px] font-mono uppercase tracking-wider text-ink-200 mt-1">{t.bento.about.statIndustries}</div>
-            </div>
-          </div>
-        </div>
 
-        <!-- Now - única card viva del bento. El SSR pinta el texto de respaldo
-             y el script la reemplaza por hechos reales (deploy, uptime, SIEM)
-             que rotan. Ver src/pages/api/now.ts. -->
-        <div
-          id="now-card"
-          class="col-span-12 sm:col-span-6 md:col-span-5 row-span-1 min-h-[180px] rounded-2xl glass foco overflow-hidden p-5 flex flex-col"
-          data-locale={locale}
-          data-labels={JSON.stringify(t.bento.now.labels)}
-          data-meta={JSON.stringify(t.bento.now.meta)}
-          data-conclusion={JSON.stringify(t.bento.now.conclusion)}
-          data-budget-label={t.bento.now.budgetLabel}
-        >
-          <div class="flex items-center justify-between">
-            <span class="inline-flex items-center gap-1.5 text-[11px] font-mono uppercase tracking-wider text-lime">
-              <span class="w-1.5 h-1.5 rounded-full pulse-dot bg-lime"></span>
-              {t.bento.now.badge}
-            </span>
-            <span id="now-age" class="text-[10px] font-mono text-ink-300 tabular-nums"></span>
-          </div>
-          <div class="mt-3 min-h-[3.25rem]">
-            <div id="now-body">
-              <div id="now-label" class="text-[14px] text-ink-50 leading-snug">
-                {t.bento.now.body}
+            <div class="mt-auto pt-6 flex flex-col gap-4">
+              {s.marcas.length > 0 ? (
+                <div class="flex flex-wrap items-center gap-x-5 gap-y-3">
+                  <span class="text-[10px] font-mono uppercase tracking-[.16em] text-ink-300">{t.resuelvo.hechoPara}</span>
+                  {s.marcas.map((m) => (
+                    <img
+                      src={m.logo}
+                      alt={m.nombre}
+                      title={m.ficha}
+                      class="resuelvo-logo"
+                      style={`--w:${(m.proporcion * 22).toFixed(1)}px`}
+                      width={Math.round(m.proporcion * 100)}
+                      height="100"
+                      decoding="async"
+                      loading="lazy"
+                    />
+                  ))}
+                </div>
+              ) : (
+                s.prueba && <p class="text-[13px] text-ink-200 leading-snug">{s.prueba}</p>
+              )}
+              <div class="flex flex-wrap items-center justify-between gap-3 pt-4 border-t border-white/[.06]">
+                {s.dato ? <span class="text-[12px] font-mono text-ink-100">{s.dato}</span> : <span></span>}
+                <a
+                  href={s.destino.href}
+                  data-accion={s.destino.tipo === 'accion' ? s.destino.accion : undefined}
+                  class="inline-flex items-center gap-1 text-[13px] font-medium text-cyan hover:underline underline-offset-4"
+                >
+                  {s.enlace}
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+                </a>
               </div>
-              <div id="now-meta" class="text-[11px] font-mono text-ink-300 mt-0.5"></div>
             </div>
-          </div>
-          <div id="now-budget" class="mt-auto hidden">
-            <div id="now-budget-label" class="text-[10px] font-mono text-ink-300 mb-1"></div>
-            <div class="flex items-center gap-2">
-              <div class="h-1.5 flex-1 rounded-full bg-white/5 overflow-hidden">
-                <div id="now-budget-bar" class="h-full w-0 bg-gradient-to-r from-lime to-cyan transition-[width] duration-700 motion-reduce:transition-none"></div>
-              </div>
-              <span id="now-budget-pct" class="text-[10px] font-mono text-ink-200 tabular-nums"></span>
-            </div>
-          </div>
-        </div>
+          </article>
+        ))}
 
-        <!-- Capabilities -->
-        <div class="col-span-12 sm:col-span-6 md:col-span-5 row-span-1 min-h-[180px] rounded-2xl glass foco overflow-hidden p-5">
-          <span class="inline-flex items-center gap-1.5 text-[11px] font-mono uppercase tracking-wider text-violet">
-            {t.bento.capabilities.badge}
-          </span>
-          <ul class="mt-3 space-y-1.5 text-[13px] text-ink-100">
-            {t.bento.capabilities.items.map((item) => (
-              <li class="flex items-center gap-2">
-                <svg class="w-3.5 h-3.5 text-cyan" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-                {item}
-              </li>
-            ))}
-          </ul>
-        </div>
-
-        <!-- Location: con la hora de Bogotá en vivo. Es el dato que de verdad
-             importa a quien escribe desde otro huso: si estoy en horario. -->
-        <div class="col-span-12 sm:col-span-6 md:col-span-3 row-span-1 min-h-[180px] rounded-2xl glass foco overflow-hidden p-5 flex flex-col justify-between">
-          <div class="flex items-start justify-between gap-3">
-            <span class="inline-flex items-center gap-1.5 text-[11px] font-mono uppercase tracking-wider text-ink-200">
-              {t.bento.location.badge}
-            </span>
-            <span class="text-right">
-              <span data-reloj data-locale={locale} class="block text-[13px] font-mono text-ink-50 tabular-nums">--:--:--</span>
-              <span class="block text-[9.5px] font-mono uppercase tracking-[.16em] text-ink-300 mt-0.5">{t.bento.location.hora}</span>
-            </span>
-          </div>
-          <div>
-            <div class="text-2xl text-ink-50 tracking-tight">{t.bento.location.country}</div>
-            <div class="text-[11px] font-mono text-ink-200 mt-0.5">{t.bento.location.tz}</div>
-            <div class="flex items-center gap-2 text-[10px] font-mono text-ink-300 mt-1.5">
-              <span class="relative flex w-2 h-2"><span class="absolute inset-0 rounded-full bg-cyan/60 animate-ping motion-reduce:animate-none"></span><span class="relative w-2 h-2 rounded-full bg-cyan"></span></span>
-              {t.bento.location.coords}
-            </div>
-          </div>
-        </div>
-
-        <!-- Contact micro -->
-        <div class="col-span-12 sm:col-span-6 md:col-span-4 row-span-1 min-h-[180px] rounded-2xl glass foco overflow-hidden p-5 flex items-center justify-between gap-4">
-          <div>
-            <span class="inline-flex items-center gap-1.5 text-[11px] font-mono uppercase tracking-wider text-cyan">
-              {t.bento.contactMicro.badge}
-            </span>
-            <div class="mt-2 text-[14px] text-ink-50">{t.bento.contactMicro.body}</div>
-            <div class="text-[11px] font-mono text-ink-200">{t.bento.contactMicro.note}</div>
-          </div>
-          <a
-            href={L('/contact')}
-            class="inline-flex items-center gap-2 h-10 px-4 text-[13px] font-medium rounded-full border border-cyan/40 text-cyan hover:bg-cyan/10 transition-all"
-          >
-            {t.bento.contactMicro.cta}
-          </a>
-        </div>
-
-        <!-- GitHub -->
-        <div class="col-span-12 md:col-span-5 row-span-1 min-h-[120px] rounded-2xl glass foco overflow-hidden p-5 flex items-center gap-5">
-          <div class="w-11 h-11 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-ink-100">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4"/>
-              <path d="M9 18c-4.51 2-5-2-7-2"/>
-            </svg>
-          </div>
+        <!-- Cierre: para quien no se reconoce en ninguna tarjeta. Las
+             condiciones salen del tarifario (anticipo, garantía). -->
+        <div class="md:col-span-6 rounded-2xl glass foco overflow-hidden p-6 md:p-7 flex flex-col lg:flex-row lg:items-center gap-6 lg:gap-10">
           <div class="flex-1 min-w-0">
-            <div class="text-[13px] text-ink-50 font-medium">{t.bento.github.user}</div>
-            <div class="text-[11px] font-mono text-ink-300">{t.bento.github.note}</div>
+            <p class="text-lg md:text-xl font-medium text-ink-50 tracking-[-.01em]">{resuelvo.cierre.titulo}</p>
+            <ul class="mt-4 flex flex-wrap gap-x-6 gap-y-2 text-[13px] text-ink-200">
+              {resuelvo.cierre.garantias.map((g) => (
+                <li class="inline-flex items-center gap-2">
+                  <svg class="w-3.5 h-3.5 text-lime shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+                  {g}
+                </li>
+              ))}
+            </ul>
           </div>
-          <a
-            href="https://github.com/mikerb95"
-            target="_blank"
-            rel="noopener"
-            class="inline-flex items-center gap-1 text-[11px] font-mono text-cyan hover:underline"
-          >
-            {t.bento.github.cta}
-            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 7h10v10"/><path d="M7 17 17 7"/></svg>
-          </a>
+          <div class="flex flex-wrap gap-3 shrink-0">
+            <a
+              href="#cotizador"
+              data-accion="cotizador"
+              class="inline-flex items-center h-11 px-5 text-[14px] font-medium rounded-full bg-cyan text-ink-950 hover:bg-cyan/90 transition-colors"
+            >
+              {resuelvo.cierre.cta}
+            </a>
+            <a
+              href={`${WA_BASE}?text=${encodeURIComponent(resuelvo.cierre.waTexto)}`}
+              target="_blank"
+              rel="noopener"
+              class="inline-flex items-center h-11 px-5 text-[14px] font-medium rounded-full border border-white/15 text-ink-50 hover:bg-white/5 transition-colors"
+            >
+              {resuelvo.cierre.ctaWhatsapp}
+            </a>
+          </div>
         </div>
       </div>
     </div>
@@ -625,7 +567,7 @@ const senales = construirSenales(await leerPulso(), t.pulso, locale, L)
   //   · Terreno de isolíneas del hero, que se aplana al hacer scroll.
   //   · Titular: boot por carácter y, con ratón, peso variable por cercanía.
   //   · Botones magnéticos, etiquetas de sección, titulares por líneas,
-  //     odómetros y la luz que sigue al cursor en el bento.
+  //     y la luz que sigue al cursor en las tarjetas de servicios.
   //   · HUD fijo que marca "ok" sección por sección.
   // Con movimiento reducido la página queda quieta y completa: el terreno se
   // pinta en un fotograma fijo y todo lo demás se muestra sin animar.
@@ -656,27 +598,6 @@ const senales = construirSenales(await leerPulso(), t.pulso, locale, L)
   // Tiempo de cada cuadro: dos líneas, un dato y una frase se leen en unos
   // cinco segundos; el resto es margen para que no se sienta apurado.
   const DURACION_CUADRO = 7000
-
-  // Hora de Bogotá en la tarjeta de ubicación. Es un dato, no decoración: se
-  // actualiza también con movimiento reducido. Un segundo exacto de desfase no
-  // importa; un reloj que se congela con la pestaña en segundo plano sí, por
-  // eso se repinta al volver.
-  {
-    const reloj = document.querySelector<HTMLElement>('[data-reloj]')
-    if (reloj) {
-      const fmt = new Intl.DateTimeFormat(reloj.dataset.locale === 'en' ? 'en-GB' : 'es-CO', {
-        timeZone: 'America/Bogota',
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit',
-        hour12: false,
-      })
-      const pintar = () => (reloj.textContent = fmt.format(new Date()))
-      pintar()
-      window.setInterval(pintar, 1000)
-      document.addEventListener('visibilitychange', () => !document.hidden && pintar())
-    }
-  }
 
   // ── Terreno ──
   // Queda a mano del cotizador: cuando llega el estimado, el terreno emite un
@@ -1238,175 +1159,6 @@ const senales = construirSenales(await leerPulso(), t.pulso, locale, L)
     } catch (err) {
       console.warn('[motion] HUD deshabilitado tras un fallo de init', err)
     }
-  }
-</script>
-
-<script>
-  // Card "Ahora" del bento: la rellena /api/now con hechos reales (último
-  // deploy, último check de uptime, tráfico clasificado por el SIEM) que van
-  // rotando, más el presupuesto de error del SLO en la barra.
-  //
-  // Va en su propio script, fuera del bloque de prefers-reduced-motion: esto
-  // es contenido, no decoración - quien pide menos animación igual merece el
-  // dato fresco, solo sin el descifrado (con movimiento reducido el texto
-  // cambia directamente).
-  import { formatNumber, formatTimeAgo, interpolate } from '../i18n/format'
-  import type { Locale } from '../i18n/config'
-  import gsap from 'gsap'
-  import { ScrambleTextPlugin } from 'gsap/ScrambleTextPlugin'
-
-  gsap.registerPlugin(ScrambleTextPlugin)
-  const reducido = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-
-  type NowItem =
-    | { kind: 'deploy'; at: number; sha: string; branch: string; conclusion: string }
-    | { kind: 'uptime'; at: number; name: string; ok: boolean; statusCode: number | null; responseMs: number | null }
-    | { kind: 'siem'; at: number; events: number }
-
-  type NowPayload = {
-    ts: number
-    items: NowItem[]
-    budget: { remainingPct: number; health: string; objectivePct: number; windowDays: number } | null
-  }
-
-  const card = document.getElementById('now-card')
-  const bodyEl = document.getElementById('now-body')
-  const labelEl = document.getElementById('now-label')
-  const metaEl = document.getElementById('now-meta')
-  const ageEl = document.getElementById('now-age')
-
-  const ROTATE_MS = 6000
-  const AGE_REFRESH_MS = 30_000
-
-  if (card && bodyEl && labelEl && metaEl && ageEl) {
-    const locale = (card.dataset.locale ?? 'es') as Locale
-    const labels = JSON.parse(card.dataset.labels ?? '{}') as Record<string, string>
-    const metaTpl = JSON.parse(card.dataset.meta ?? '{}') as Record<string, string>
-    const conclusions = JSON.parse(card.dataset.conclusion ?? '{}') as Record<string, string>
-
-    // Cada item se traduce a "título + línea técnica". La conclusión del CI o
-    // el código HTTP viajan como dato, no como frase, para que el endpoint no
-    // tenga que saber en qué idioma está el visitante.
-    const describe = (item: NowItem): string => {
-      if (item.kind === 'deploy') {
-        return interpolate(metaTpl.deploy ?? '', {
-          branch: item.branch,
-          sha: item.sha,
-          conclusion: conclusions[item.conclusion] ?? item.conclusion,
-        })
-      }
-      if (item.kind === 'uptime') {
-        return interpolate(metaTpl.uptime ?? '', {
-          name: item.name,
-          status: item.statusCode ?? (item.ok ? 'ok' : 'error'),
-          ms: item.responseMs ?? '-',
-        })
-      }
-      return interpolate(metaTpl.siem ?? '', { events: formatNumber(item.events, locale) })
-    }
-
-    let items: NowItem[] = []
-    let index = 0
-    let rotateTimer: number | undefined
-    let ageTimer: number | undefined
-
-    const paint = () => {
-      const item = items[index]
-      if (!item) return
-      labelEl.textContent = labels[item.kind] ?? ''
-      metaEl.textContent = describe(item)
-      ageEl.textContent = formatTimeAgo(item.at, locale)
-    }
-
-    const advance = () => {
-      index = (index + 1) % items.length
-      const item = items[index]
-      if (reducido || !item) {
-        paint()
-        return
-      }
-      // El dato nuevo se descifra sobre el anterior, como una lectura que se
-      // estabiliza: es el mismo gesto de "boot" del titular del hero y de las
-      // cifras de la cinta, y dice que el dato llegó, no que se cambió de slide.
-      ageEl.textContent = formatTimeAgo(item.at, locale)
-      gsap.to(labelEl, {
-        duration: 0.9,
-        scrambleText: { text: labels[item.kind] ?? '', chars: 'lowerCase', speed: 0.55, revealDelay: 0.15 },
-      })
-      gsap.to(metaEl, {
-        duration: 1.1,
-        scrambleText: { text: describe(item), chars: '0123456789abcdef', speed: 0.6, revealDelay: 0.25 },
-      })
-    }
-
-    const startRotation = () => {
-      if (rotateTimer || items.length < 2) return
-      rotateTimer = window.setInterval(advance, ROTATE_MS)
-    }
-    const stopRotation = () => {
-      if (rotateTimer) window.clearInterval(rotateTimer)
-      rotateTimer = undefined
-    }
-
-    const applyBudget = (budget: NowPayload['budget']) => {
-      if (!budget) return
-      const wrap = document.getElementById('now-budget')
-      const bar = document.getElementById('now-budget-bar')
-      const pct = document.getElementById('now-budget-pct')
-      const label = document.getElementById('now-budget-label')
-      if (!wrap || !bar || !pct || !label) return
-
-      label.textContent = interpolate(card.dataset.budgetLabel ?? '', { days: budget.windowDays })
-      pct.textContent = `${budget.remainingPct}%`
-      // El color sale de budgetHealth (src/lib/slo.ts), no de un umbral
-      // inventado aquí: la barra dice lo mismo que /status.
-      const gradient =
-        budget.health === 'healthy'
-          ? 'from-lime to-cyan'
-          : budget.health === 'warning'
-            ? 'from-lime to-ember'
-            : 'from-ember to-ember'
-      bar.className = `h-full bg-gradient-to-r ${gradient} transition-[width] duration-700 motion-reduce:transition-none`
-      wrap.classList.remove('hidden')
-      // En el siguiente frame para que la transición de ancho se vea.
-      requestAnimationFrame(() => {
-        bar.style.width = `${budget.remainingPct}%`
-      })
-    }
-
-    // Fail-open: cualquier error deja el texto de respaldo que ya pintó el SSR.
-    fetch('/api/now')
-      .then((r) => (r.ok ? r.json() : null))
-      .then((data: NowPayload | null) => {
-        if (!data || !Array.isArray(data.items) || data.items.length === 0) return
-        items = data.items
-        paint()
-        applyBudget(data.budget)
-
-        // Solo rota mientras la card está a la vista y la pestaña está activa:
-        // un timer corriendo en una pestaña de fondo no le sirve a nadie.
-        const io = new IntersectionObserver((entries) => {
-          for (const entry of entries) {
-            if (entry.isIntersecting && !document.hidden) startRotation()
-            else stopRotation()
-          }
-        })
-        io.observe(card)
-
-        document.addEventListener('visibilitychange', () => {
-          if (document.hidden) stopRotation()
-          else startRotation()
-        })
-
-        // "hace 4 min" tiene que envejecer solo en sesiones largas.
-        ageTimer = window.setInterval(() => {
-          const item = items[index]
-          if (item) ageEl.textContent = formatTimeAgo(item.at, locale)
-        }, AGE_REFRESH_MS)
-      })
-      .catch(() => {
-        if (ageTimer) window.clearInterval(ageTimer)
-      })
   }
 </script>
 
