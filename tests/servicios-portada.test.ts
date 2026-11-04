@@ -54,7 +54,8 @@ describe('sección Qué te resuelvo', () => {
   })
 
   it('no vuelve la jerga técnica que espantaba clientes', () => {
-    const jerga = /\b(tRPC|GraphQL|REST|uptime|SLO|presupuesto de error|error budget|inbound|brief|fit|timing|full-stack|Core Web Vitals)\b/i
+    const siglas = /\b(tRPC|GraphQL|REST|API|SLO)\b/
+    const jerga = /\b(uptime|presupuesto de error|error budget|inbound|brief|fit|timing|full-stack|Core Web Vitals)\b/i
     for (const { tarjetas, cierre } of [es, en]) {
       const textos = [
         ...tarjetas.flatMap((s) => [s.etiqueta, s.problema, s.solucion, s.dato, s.prueba, s.enlace]),
@@ -62,7 +63,10 @@ describe('sección Qué te resuelvo', () => {
         ...cierre.garantias,
         cierre.cta,
       ]
-      for (const texto of textos) expect(texto).not.toMatch(jerga)
+      for (const texto of textos) {
+        expect(texto).not.toMatch(jerga)
+        expect(texto).not.toMatch(siglas)
+      }
     }
   })
 })

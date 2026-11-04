@@ -189,6 +189,12 @@ describe('paridad del diccionario es/en', () => {
         'home.hero.servicios[2].id',
         'home.hero.servicios[3].id',
         'home.hero.servicios[4].id',
+        // Lo mismo en "Qué te resuelvo" (src/lib/servicios-portada.ts).
+        'home.resuelvo.items[0].id',
+        'home.resuelvo.items[1].id',
+        'home.resuelvo.items[2].id',
+        'home.resuelvo.items[3].id',
+        'home.resuelvo.items[4].id',
       ])
       if (ALLOWED_IDENTICAL.has(p)) return false
       return esVal === enVal
