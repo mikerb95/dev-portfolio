@@ -6,7 +6,10 @@
 // Los logos están en public/assets/marcas/, preparados para fondo oscuro a
 // partir de los originales de cada repo:
 //   · antidoto.svg  - logo cian de antidoto-web, sin el manifiesto C2PA.
-//   · ekosolv.svg   - ekosolv-horizontal.svg de eko, tal cual.
+//   · ekosolv.webp  - ekosolv-horizontal-full.png de eko (el que usa su sitio
+//                     en nav, login y certificados; el .svg de su carpeta brand
+//                     es una versión vieja que ya no se usa). El eslogan casi
+//                     negro pasa a crema porque sobre negro no se leía.
 //   · dobleyo.webp  - logo2.png de dobleyo; el marrón casi negro de "café" pasa
 //                     a crema y el marrón de "doble yo" sube de luz (mismo
 //                     tono), porque sobre negro no se leían.
@@ -62,8 +65,8 @@ export const MARCAS: readonly Marca[] = [
   {
     slug: 'ekosolv',
     nombre: 'Ekosolv',
-    logo: '/assets/marcas/ekosolv.svg',
-    proporcion: 524 / 152,
+    logo: '/assets/marcas/ekosolv.webp',
+    proporcion: 492 / 142,
     tono: '#3fb8a0',
     dominio: 'ekosolv.com',
     url: 'https://ekosolv.com/',
