@@ -67,7 +67,7 @@ profundidad). Formas de respuesta de los endpoints clave congeladas con Zod en
 | `/api/contact`, `/api/feedback` | Formularios. |
 | `/api/asesor` (+ `/conversacion`, `/contacto`, `/enviado`) | Asesor público con IA y asesor en vivo. |
 | `/api/vitals` | Ingesta de Core Web Vitals (RUM). |
-| `/api/health`, `/api/now`, `/api/status/latency`, `/api/engineering/live` | Prueba de vida y datos de `/status` y `/engineering`. |
+| `/api/health`, `/api/now`, `/api/status/latency`, `/api/engineering/live` | Prueba de vida y datos de `/status` y `/engineering`. `/api/now` alimentaba la card "Ahora" de la portada, retirada con RF-042 (3 nov 2026); hoy no lo llama ninguna página. |
 | `/api/github/activity`, `/api/github/public-repos` | Datos de `/log` y del portafolio. |
 | `/api/lab/site-check` | Analizador público de dominios (SSRF guard). |
 | `/api/lab/fp/*` | Salas de fingerprinting. |

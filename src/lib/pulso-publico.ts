@@ -20,9 +20,9 @@ import { safeQuery } from './safe-query'
 // consulta trae el desglose y el total se suma en memoria: es la misma lectura,
 // no una consulta más.
 //
-// Reparto con la card "Ahora" del bento (`/api/now`), que está a media pantalla
-// de distancia: esa card cuenta lo ÚLTIMO que pasó (este deploy, este sondeo),
-// esto cuenta la MAGNITUD acumulada y su evolución. Ninguna cifra se repite.
+// Desde RF-042 (3 nov 2026) es la única cifra técnica de la portada: la card
+// "Ahora" del bento que contaba el último deploy y el último sondeo se quitó
+// porque le hablaba a un CTO en una página para dueños de negocio.
 //
 // Coste: Turso factura filas ESCANEADAS. Ninguna consulta de aquí toca
 // `monitor_checks` (el uptime sale del resumen diario ya calculado por el cron)
