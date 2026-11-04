@@ -8,7 +8,7 @@ para las rutas de `TRANSLATED_ROUTES`. Columna **Render**: `SSR` = por request
 
 | Ruta | Render | Qué es / qué demuestra |
 |---|---|---|
-| `/` | SSR | Portada. Hero con **cotizador de IA** ("Cuéntame qué necesitas": primera vuelta del asesor y traspaso a la burbuja de WhatsApp), titular rotativo por servicios con cifras del tarifario, terreno de isolíneas WebGL, índice cinético de proyectos, pipeline "Cómo trabajo", huella generativa del Lab, cinta del pulso bajo el hero (no se quita, RF-022). Justo después, `/00 Marcas` (RF-041): los logos de los clientes como cumbres de un mapa topográfico visto desde arriba, con ficha por marca. En octubre, fantasmas de Halloween (capa CSS aparte, RF-031). |
+| `/` | SSR | Portada. Hero con **cotizador de IA** ("Cuéntame qué necesitas": primera vuelta del asesor y traspaso a la burbuja de WhatsApp), titular rotativo por servicios con cifras del tarifario, terreno de isolíneas WebGL, índice cinético de proyectos, pipeline "Cómo trabajo", huella generativa del Lab, cinta del pulso bajo el hero (no se quita, RF-022). Justo después, la franja de marcas (RF-041): los logos de los clientes en una fila compacta, en gris y a color al pasar el cursor, cada uno enlazado a su sitio. En octubre, fantasmas de Halloween (capa CSS aparte, RF-031). |
 | `/paginas-web` | build | Landing para clientes **no técnicos**: planes Presencia/Negocio/A medida, vitrina de 3 clientes reales, FAQ, CTA a WhatsApp. Precios desde `tarifario.ts`. |
 | `/capacitacion-ia` | SSR | Landing de capacitación en IA. Precio desde `training_programs`. |
 | `/capacitacion`, `/capacitacion/<slug>`, `/capacitacion/acceso` | SSR | Banco de recursos: lo público se indexa; lo restringido se abre con un **código de grupo** (pase firmado). |
