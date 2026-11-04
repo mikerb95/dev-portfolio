@@ -306,60 +306,72 @@ const es = {
         joxe: 'Sistema completo del salón: agenda, reservas, check-in y pagos.',
       },
     },
-    bento: {
-      sectionLabel: 'Qué hago',
-      about: {
-        badge: 'Práctica',
-        title: 'Diseño la arquitectura que escala tu producto. Y la construyo.',
-        statYears: 'Años exp.',
-        statProjects: 'Proyectos',
-        statIndustries: 'Industrias',
-      },
-      now: {
-        badge: 'Ahora',
-        // Respaldo en SSR: lo que ve el visitante si /api/now no responde o si
-        // la base todavía no tiene datos. Nunca debe quedar la card vacía.
-        body: 'Construyendo productos full-stack con Astro + Next.js y arquitectura serverless.',
-        labels: {
-          deploy: 'Último deploy',
-          uptime: 'Último check de uptime',
-          siem: 'Tráfico clasificado por el micro-SIEM',
+    // Sección "Qué te resuelvo" (RF-042), en el lugar del bento técnico. Los
+    // {marcadores} los rellena src/lib/servicios-portada.ts desde el tarifario:
+    // aquí no se escribe ningún precio ni plazo a mano.
+    resuelvo: {
+      sectionLabel: 'Qué te resuelvo',
+      titulo: 'Lo que puedo hacer por tu negocio.',
+      hechoPara: 'Lo hice para',
+      items: [
+        {
+          id: 'web',
+          etiqueta: 'Páginas web',
+          problema: 'Te buscan en Google y no te encuentran.',
+          solucion: 'Una página que sale en Google y te trae clientes por WhatsApp.',
+          dato: 'Desde {presencia} · {tiempoPresencia}',
+          prueba: '',
+          enlace: 'Ver planes y precios',
         },
-        meta: {
-          deploy: '{branch}@{sha} · {conclusion}',
-          uptime: '{name} · {status} en {ms} ms',
-          siem: '{events} eventos · últimas 24 h',
+        {
+          id: 'software',
+          etiqueta: 'Software a la medida',
+          problema: 'Llevas el negocio en hojas de cálculo, cuadernos y chats.',
+          solucion: 'Un sistema hecho a cómo trabajas tú: inventario, citas, cobros o un portal para tus clientes.',
+          dato: 'Precio cerrado antes de empezar · desde {minimo}',
+          prueba: '',
+          enlace: 'Ver proyectos',
         },
-        conclusion: {
-          success: 'verde',
-          failure: 'en rojo',
-          rolled_back: 'revertido',
+        {
+          id: 'asesor',
+          etiqueta: 'IA que atiende clientes',
+          problema: 'Respondes las mismas preguntas en WhatsApp todo el día.',
+          solucion: 'Una IA que contesta con tus precios reales y te pasa el cliente listo para cerrar.',
+          dato: '',
+          prueba: 'Pruébala ahora: es el chat de la esquina de esta página.',
+          enlace: 'Probar el asesor',
         },
-        budgetLabel: 'presupuesto de error · {days} d',
-      },
-      capabilities: {
-        badge: 'Capacidades',
-        items: [
-          'Arquitectura escalable · Full-stack',
-          'APIs REST · GraphQL · tRPC',
-          'Performance · Core Web Vitals',
-          'Testing · Unit · E2E · TypeScript',
+        {
+          id: 'capacitacion',
+          etiqueta: 'Capacitación en IA',
+          problema: 'Tu equipo oye hablar de IA y no sabe por dónde empezar.',
+          solucion: 'Un día de práctica con los procesos reales de tu empresa.',
+          dato: '{horas} horas · hasta {cupo} personas · {sesion}',
+          prueba: 'Primero tus procesos, después las herramientas.',
+          enlace: 'Ver la capacitación',
+        },
+        {
+          id: 'apps',
+          etiqueta: 'Apps móviles',
+          problema: 'Tus clientes te piden una app para reservar o comprar.',
+          solucion: 'Tu app en Android y iPhone, publicada a nombre de tu negocio.',
+          dato: 'Lista en {semanasApp} semanas',
+          prueba: 'Con un panel para que la administres tú.',
+          enlace: 'Cotizar mi app',
+        },
+      ],
+      cierre: {
+        titulo: '¿No sabes cuál necesitas? Cuéntamelo con tus palabras.',
+        garantias: [
+          'Te respondo el mismo día',
+          'Precio cerrado antes de empezar',
+          '{anticipo} % al empezar, el resto al entregar',
+          '{dias} días arreglando errores sin costo',
         ],
+        cta: 'Cuéntame qué necesitas',
+        ctaWhatsapp: 'Escribir por WhatsApp',
+        waTexto: 'Hola Mike, vi tu página y quiero contarte lo que necesito.',
       },
-      location: {
-        badge: 'Base',
-        country: 'Colombia',
-        tz: 'GMT−5 · Remoto global',
-        hora: 'hora local',
-        coords: '4,71° N · 74,07° O · Bogotá',
-      },
-      contactMicro: {
-        badge: 'Inbound',
-        body: 'Primera respuesta en 24 h · L–V.',
-        note: 'Proyectos evaluados por fit y timing.',
-        cta: 'Brief',
-      },
-      github: { user: 'mikerb95', note: 'Open source · commits diarios', cta: 'Ver perfil' },
     },
     proyectos: {
       sectionLabel: 'Trabajo seleccionado',

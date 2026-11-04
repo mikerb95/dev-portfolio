@@ -42,6 +42,39 @@ function primeraMinuscula(s: string): string {
 }
 
 /**
+ * Cifras del tarifario ya formateadas para los {marcadores} del diccionario.
+ * Las comparten el hero y la sección "Qué te resuelvo" (servicios-portada.ts):
+ * las dos dicen el mismo precio porque lo leen del mismo sitio.
+ */
+export function valoresTarifario(locale: Locale): Record<string, string> {
+  const t = getDictionary(locale)
+  // Planes web y mínimo de software en la moneda de la página; la capacitación
+  // va siempre en pesos (es para empresas en Colombia, decisión de Mike).
+  const moneda: Moneda = locale === 'es' ? 'COP' : 'USD'
+  const presencia = PAQUETES_WEB[0]!
+  return {
+    minimo: formatearMonto(REGLAS.minimo[moneda], moneda),
+    horas: String(CAPACITACION.horas),
+    cupo: String(CAPACITACION.cupo),
+    sesion: formatearMonto(CAPACITACION.sesionCOP, 'COP'),
+    presencia: formatearMonto(presencia.desde[moneda], moneda),
+    tiempoPresencia: primeraMinuscula(t.paginasWeb.planes[0]!.tiempo),
+    semanasApp: `${APP_NATIVA_SEMANAS[0]} ${locale === 'es' ? 'a' : 'to'} ${APP_NATIVA_SEMANAS[1]}`,
+  }
+}
+
+/** A dónde lleva cada servicio, igual desde el hero que desde la sección de servicios. */
+export function destinosServicio(L: (ruta: string) => string, hayProyectos: boolean): Record<ServicioId, Destino> {
+  return {
+    software: { tipo: 'ruta', href: hayProyectos ? '#proyectos' : L('/contact') },
+    capacitacion: { tipo: 'ruta', href: L('/capacitacion-ia') },
+    asesor: { tipo: 'accion', accion: 'asesor', href: L('/contact') },
+    web: { tipo: 'ruta', href: L('/paginas-web') },
+    apps: { tipo: 'accion', accion: 'cotizador', href: '#cotizador' },
+  }
+}
+
+/**
  * Cuadros listos para pintar. `L` localiza rutas (localizedHref) y
  * `hayProyectos` decide si "Ver proyectos" puede apuntar a la sección de la
  * propia portada.
@@ -52,27 +85,8 @@ export function serviciosHero(
   hayProyectos = true,
 ): ServicioHero[] {
   const t = getDictionary(locale)
-  // Planes web y mínimo de software en la moneda de la página; la capacitación
-  // va siempre en pesos (es para empresas en Colombia, decisión de Mike).
-  const moneda: Moneda = locale === 'es' ? 'COP' : 'USD'
-  const presencia = PAQUETES_WEB[0]!
-  const valores: Record<string, string> = {
-    minimo: formatearMonto(REGLAS.minimo[moneda], moneda),
-    horas: String(CAPACITACION.horas),
-    cupo: String(CAPACITACION.cupo),
-    sesion: formatearMonto(CAPACITACION.sesionCOP, 'COP'),
-    presencia: formatearMonto(presencia.desde[moneda], moneda),
-    tiempoPresencia: primeraMinuscula(t.paginasWeb.planes[0]!.tiempo),
-    semanasApp: `${APP_NATIVA_SEMANAS[0]} ${locale === 'es' ? 'a' : 'to'} ${APP_NATIVA_SEMANAS[1]}`,
-  }
-
-  const destinos: Record<ServicioId, Destino> = {
-    software: { tipo: 'ruta', href: hayProyectos ? '#proyectos' : L('/contact') },
-    capacitacion: { tipo: 'ruta', href: L('/capacitacion-ia') },
-    asesor: { tipo: 'accion', accion: 'asesor', href: L('/contact') },
-    web: { tipo: 'ruta', href: L('/paginas-web') },
-    apps: { tipo: 'accion', accion: 'cotizador', href: '#cotizador' },
-  }
+  const valores = valoresTarifario(locale)
+  const destinos = destinosServicio(L, hayProyectos)
 
   return t.home.hero.servicios.map((s) => {
     const id = s.id as ServicioId
