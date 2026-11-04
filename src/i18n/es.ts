@@ -296,17 +296,7 @@ const es = {
       },
     },
     marcas: {
-      sectionLabel: 'Marcas',
-      titleLine1: 'Marcas para las que',
-      titleLine2: 'he trabajado.',
-      intro:
-        'Sitios, paneles y sistemas hechos para negocios reales. Cada marca es una cumbre del mapa: acércate o tócala para ver qué hice con ella.',
-      pista: 'Elige una cumbre',
-      pistaDetalle: 'Pasa el cursor o toca un logo para ver qué hice con esa marca.',
-      cumbre: 'cumbre {n} de {total}',
-      verSitio: 'Ver sitio',
-      cerrar: 'Cerrar ficha',
-      grupo: 'Marcas para las que he trabajado',
+      titulo: 'Marcas para las que he trabajado',
       fichas: {
         antidoto: 'Sitio web y plataforma de marca para empresas.',
         ekosolv: 'Sitio web y panel interno con CRM, cumplimiento y asistente con IA.',

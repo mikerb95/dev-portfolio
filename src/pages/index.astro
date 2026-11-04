@@ -4,7 +4,7 @@ import ProyectosIndice from '../components/home/ProyectosIndice.astro'
 import ProcesoPipeline from '../components/home/ProcesoPipeline.astro'
 import ExpertiseVivo from '../components/home/ExpertiseVivo.astro'
 import LabHuella from '../components/home/LabHuella.astro'
-import MarcasRelieve from '../components/home/MarcasRelieve.astro'
+import MarcasFranja from '../components/home/MarcasFranja.astro'
 import GithubProjects from '../components/GithubProjects.astro'
 import { db } from '../db'
 import { projects } from '../db/schema'
@@ -436,9 +436,8 @@ const senales = construirSenales(await leerPulso(), t.pulso, locale, L)
   )}
 
   <!-- ── Marcas ── -->
-  <!-- El terreno que el hero aplanó en la cinta vuelve a levantarse aquí como
-       mapa visto desde arriba, con cada marca como cumbre (RF-041). -->
-  <MarcasRelieve />
+  <!-- Franja compacta de logos de clientes (RF-041). -->
+  <MarcasFranja />
 
   <!-- ── Bento ── -->
   <section id="bento" class="px-6 md:px-12 lg:px-20 pt-20 pb-24">

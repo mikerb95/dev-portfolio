@@ -282,17 +282,7 @@ const en = {
       },
     },
     marcas: {
-      sectionLabel: 'Brands',
-      titleLine1: 'Brands I have',
-      titleLine2: 'worked for.',
-      intro:
-        'Websites, dashboards and systems built for real businesses. Each brand is a peak on the map: hover or tap it to see what I did for them.',
-      pista: 'Pick a peak',
-      pistaDetalle: 'Hover or tap a logo to see what I did for that brand.',
-      cumbre: 'peak {n} of {total}',
-      verSitio: 'Visit site',
-      cerrar: 'Close card',
-      grupo: 'Brands I have worked for',
+      titulo: 'Brands I have worked for',
       fichas: {
         antidoto: 'Website and brand platform for companies.',
         ekosolv: 'Website and internal dashboard with CRM, compliance and an AI assistant.',
