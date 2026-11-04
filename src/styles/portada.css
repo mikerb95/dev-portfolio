@@ -281,12 +281,11 @@ section[data-en-pausa] *::after {
 }
 
 /* Logos de "Qué te resuelvo": el ancho sale de la proporción de cada marca
-   (--w) para que todos tengan el mismo alto óptico. Atenuados en reposo para
+   con tamOptico (--w/--h), igual que la franja de marcas. Atenuados en reposo para
    no competir con el texto; a color pleno al pasar por la tarjeta. */
 .resuelvo-logo {
-  height: 22px;
+  height: var(--h);
   width: var(--w);
-  max-width: 120px;
   object-fit: contain;
   opacity: .62;
   transition: opacity .25s ease;

@@ -15,7 +15,11 @@
 import { getDictionary, type Locale } from '../i18n'
 import { MARCAS, type Marca } from '../data/marcas'
 import { ENTREGA, REGLAS } from '../data/tarifario'
+import { tamOptico } from './marcas-logos'
 import { destinosServicio, rellenar, valoresTarifario, type Destino, type ServicioId } from './hero-servicios'
+
+/** Alto base del logo cuadrado dentro de una tarjeta (la franja usa 46). */
+const BASE_LOGO = 30
 
 /** Qué marcas prueban cada servicio. Solo trabajos entregados de verdad. */
 export const MARCAS_POR_SERVICIO: Record<ServicioId, readonly Marca['slug'][]> = {
@@ -36,7 +40,7 @@ export type TarjetaServicio = {
   prueba: string
   enlace: string
   destino: Destino
-  marcas: { nombre: string; logo: string; proporcion: number; ficha: string }[]
+  marcas: { nombre: string; logo: string; proporcion: number; ficha: string; tam: { ancho: number; alto: number } }[]
 }
 
 export type CierreServicios = {
@@ -71,7 +75,9 @@ export function serviciosPortada(
       marcas: MARCAS_POR_SERVICIO[id].map((slug) => {
         const m = MARCAS.find((x) => x.slug === slug)
         if (!m) throw new Error(`servicios-portada: la marca "${slug}" no está en MARCAS`)
-        return { nombre: m.nombre, logo: m.logo, proporcion: m.proporcion, ficha: d.marcas.fichas[slug] }
+        // Mismo tamaño óptico que la franja de logos: un gorila cuadrado y un
+        // wordmark alargado pesan igual a la vista.
+        return { nombre: m.nombre, logo: m.logo, proporcion: m.proporcion, ficha: d.marcas.fichas[slug], tam: tamOptico(m.proporcion, BASE_LOGO) }
       }),
     }
   })
