@@ -279,3 +279,19 @@ section[data-en-pausa] *::before,
 section[data-en-pausa] *::after {
   animation-play-state: paused !important;
 }
+
+/* Logos de "Qué te resuelvo": el ancho sale de la proporción de cada marca
+   (--w) para que todos tengan el mismo alto óptico. Atenuados en reposo para
+   no competir con el texto; a color pleno al pasar por la tarjeta. */
+.resuelvo-logo {
+  height: 22px;
+  width: var(--w);
+  max-width: 120px;
+  object-fit: contain;
+  opacity: .62;
+  transition: opacity .25s ease;
+}
+#bento article:hover .resuelvo-logo { opacity: 1; }
+@media (prefers-reduced-motion: reduce) {
+  .resuelvo-logo { transition: none; }
+}
