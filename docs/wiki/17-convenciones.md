@@ -93,6 +93,17 @@ de manual de ataque.
 - No tocar hero, navbar ni footer para decoraciones de temporada.
 - La cinta del pulso bajo el hero de la portada no se quita.
 
+### Color y tema (RF-043)
+
+- El sitio tiene modo claro. **Ningún color nuevo se escribe a mano**: clases de
+  Tailwind (`text-ink-*`, `bg-white/5`, `text-cyan`) o las variables de
+  `global.css` (`rgb(var(--rgb-luz) / .06)`, `var(--sombra-fuerte)`).
+- `white` es tinta en claro. Texto sobre un relleno de acento: `text-ink-950`.
+- Cian como relleno o resplandor: `--rgb-cian` / `bg-cyan`. Como borde o línea
+  fina: `--rgb-cian-linea` / `border-cyan`.
+- Una página solo se enciende en claro (`temaClaro` en su layout) después de
+  verla en capturas reales en los dos temas. Tandas en `docs/plan-modo-claro.md`.
+
 ## Forma de trabajar con Mike
 
 - **Avisar el plan y esperar un sí** antes de crear o editar archivos o gastar

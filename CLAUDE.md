@@ -165,6 +165,13 @@ cookies ni lógica:
   enlaces se pintan con `localizedHref`, nunca con `localizePath`: el primero
   cae al español cuando no hay traducción, el segundo publica un 404. Plan en
   `docs/plan-i18n-en.md`.
+- **Color y modo claro (RF-043)**: ningún color nuevo se escribe a mano. Clases
+  de Tailwind o las variables de `global.css` (`rgb(var(--rgb-luz) / .06)`,
+  `var(--sombra-fuerte)`); `white` es tinta en claro, y el texto sobre un
+  relleno de acento es `text-ink-950`. El tema lo pone un script en línea del
+  `<head>`, nunca el servidor (las páginas públicas salen de caché iguales para
+  todos). Una página solo recibe `temaClaro` en su layout después de verla en
+  capturas en los dos temas. Tandas en `docs/plan-modo-claro.md`.
 - **Rutas privadas nuevas**: si necesitan la sesión admin, añadirlas al
   matcher `isAdmin` en `src/middleware.ts` (no crear un gate paralelo). Si
   son públicas pero sensibles (links firmados, tokens), usar
