@@ -53,3 +53,12 @@ export function alCambiarTema(fn: (t: Tema) => void): () => void {
   window.addEventListener(EVENTO_TEMA, oyente)
   return () => window.removeEventListener(EVENTO_TEMA, oyente)
 }
+
+/**
+ * Valor actual de una variable de color (`--color-ink-300`). Para animaciones
+ * que necesitan el color como cadena (GSAP no interpola `var()`). Se lee al
+ * armar la animación: si el tema cambia después, vale el del momento.
+ */
+export function colorDeTema(variable: string): string {
+  return getComputedStyle(document.documentElement).getPropertyValue(variable).trim()
+}

@@ -142,7 +142,7 @@ const COLORES = ['#c2410c', '#0f766e', '#7c3aed', '#be123c', '#0369a1']
     top: 76px;
     z-index: 2;
     padding-bottom: 1rem;
-    background: linear-gradient(180deg, var(--color-ink-950) 88%, rgba(18, 18, 22, 0));
+    background: linear-gradient(180deg, var(--color-ink-950) 88%, rgb(var(--rgb-fondo) / 0));
   }
   @media (min-width: 1024px) {
     .tp-fijo {
@@ -154,11 +154,11 @@ const COLORES = ['#c2410c', '#0f766e', '#7c3aed', '#be123c', '#0369a1']
   .tp-ventana {
     border-radius: 20px;
     overflow: hidden;
-    background: #0d0d11;
+    background: var(--color-ink-900);
     box-shadow:
-      0 0 0 1px rgba(255, 255, 255, 0.08),
-      0 40px 90px -40px rgba(0, 0, 0, 0.9),
-      0 0 80px -30px rgba(255, 107, 61, 0.3);
+      0 0 0 1px rgb(var(--rgb-luz) / 0.08),
+      0 40px 90px -40px var(--sombra-profunda),
+      0 0 80px -30px rgb(var(--rgb-ember) / 0.3);
   }
   .tp-barra {
     position: relative;
@@ -167,8 +167,8 @@ const COLORES = ['#c2410c', '#0f766e', '#7c3aed', '#be123c', '#0369a1']
     gap: 12px;
     height: 38px;
     padding: 0 14px;
-    background: #16161c;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    background: var(--color-ink-800);
+    border-bottom: 1px solid rgb(var(--rgb-luz) / 0.06);
   }
   .tp-puntos {
     display: flex;
@@ -178,7 +178,7 @@ const COLORES = ['#c2410c', '#0f766e', '#7c3aed', '#be123c', '#0369a1']
     width: 9px;
     height: 9px;
     border-radius: 999px;
-    background: rgba(255, 255, 255, 0.14);
+    background: rgb(var(--rgb-luz) / 0.14);
   }
   .tp-barra-txt {
     font-family: var(--font-mono);
@@ -196,7 +196,7 @@ const COLORES = ['#c2410c', '#0f766e', '#7c3aed', '#be123c', '#0369a1']
     width: 26px;
     height: 3px;
     border-radius: 3px;
-    background: rgba(255, 255, 255, 0.12);
+    background: rgb(var(--rgb-luz) / 0.12);
     overflow: hidden;
     position: relative;
   }
@@ -235,7 +235,7 @@ const COLORES = ['#c2410c', '#0f766e', '#7c3aed', '#be123c', '#0369a1']
     display: flex;
     flex-direction: column;
     background:
-      radial-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1px) 0 0 / 12px 12px,
+      radial-gradient(rgb(var(--rgb-luz) / 0.035) 1px, transparent 1px) 0 0 / 12px 12px,
       #0b141a;
   }
   .tp-chat-cab {
@@ -309,8 +309,8 @@ const COLORES = ['#c2410c', '#0f766e', '#7c3aed', '#be123c', '#0369a1']
     gap: 14px;
     padding: 18px;
     background:
-      radial-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px) 0 0 / 14px 14px,
-      #0d0d11;
+      radial-gradient(rgb(var(--rgb-luz) / 0.05) 1px, transparent 1px) 0 0 / 14px 14px,
+      var(--color-ink-900);
   }
   .tp-lienzo {
     position: relative;
@@ -377,8 +377,8 @@ const COLORES = ['#c2410c', '#0f766e', '#7c3aed', '#be123c', '#0369a1']
     gap: 8px;
     padding: 12px;
     border-radius: 12px;
-    background: #16161c;
-    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+    background: var(--color-ink-800);
+    box-shadow: inset 0 0 0 1px rgb(var(--rgb-luz) / 0.06);
   }
   .tp-panel-tit {
     font-family: var(--font-mono);
@@ -401,8 +401,8 @@ const COLORES = ['#c2410c', '#0f766e', '#7c3aed', '#be123c', '#0369a1']
   }
   .tp-muestras i.elegido {
     box-shadow:
-      0 0 0 2px #16161c,
-      0 0 0 3.5px #fff;
+      0 0 0 2px var(--color-ink-800),
+      0 0 0 3.5px var(--color-white);
   }
   .tp-letras {
     display: flex;
@@ -423,10 +423,10 @@ const COLORES = ['#c2410c', '#0f766e', '#7c3aed', '#be123c', '#0369a1']
     gap: 8px;
     padding: 7px 14px;
     border-radius: 999px;
-    background: #1c1c24;
+    background: var(--color-ink-700);
     box-shadow:
-      0 0 0 1px rgba(255, 255, 255, 0.08),
-      0 14px 30px -12px rgba(0, 0, 0, 0.8);
+      0 0 0 1px rgb(var(--rgb-luz) / 0.08),
+      0 14px 30px -12px var(--sombra-profunda);
     font-size: 12px;
     color: var(--color-ink-50);
     transform: translateX(-50%);
@@ -448,7 +448,7 @@ const COLORES = ['#c2410c', '#0f766e', '#7c3aed', '#be123c', '#0369a1']
   .tp-publicado {
     display: flex;
     flex-direction: column;
-    background: #0d0d11;
+    background: var(--color-ink-900);
   }
   .tp-url {
     display: flex;
@@ -458,7 +458,7 @@ const COLORES = ['#c2410c', '#0f766e', '#7c3aed', '#be123c', '#0369a1']
     height: 30px;
     padding: 0 12px;
     border-radius: 999px;
-    background: #1c1c24;
+    background: var(--color-ink-700);
     font-size: 12px;
     color: var(--color-ink-50);
   }
@@ -521,8 +521,8 @@ const COLORES = ['#c2410c', '#0f766e', '#7c3aed', '#be123c', '#0369a1']
     border-radius: 14px;
     background: #202124;
     box-shadow:
-      0 0 0 1px rgba(255, 255, 255, 0.08),
-      0 24px 50px -16px rgba(0, 0, 0, 0.9);
+      0 0 0 1px rgb(var(--rgb-luz) / 0.08),
+      0 24px 50px -16px var(--sombra-profunda);
     transform: translateX(-50%);
     font-size: 11px;
     color: #bdc1c6;

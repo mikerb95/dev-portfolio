@@ -28,7 +28,7 @@ const restringidos = recursos.filter((r) => r.visibility === 'con_codigo').lengt
 const temas = [...new Set(recursos.flatMap((r) => r.topics))].sort().slice(0, 14)
 ---
 
-<BaseLayout
+<BaseLayout temaClaro
   title="Banco de recursos de IA"
   description="Guías, prompts, plantillas y material de las capacitaciones en inteligencia artificial: lo que se queda contigo después de la sesión."
   image="/og-default.png"

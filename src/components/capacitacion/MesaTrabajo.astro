@@ -101,11 +101,11 @@ const tareas = t.tareas.map((tarea) => {
     max-width: 540px;
     margin-inline: auto;
     border-radius: 22px;
-    background: #0e0f13;
+    background: var(--color-ink-900);
     box-shadow:
-      0 0 0 1px rgba(255, 255, 255, 0.08),
-      0 50px 110px -45px rgba(0, 0, 0, 0.95),
-      0 0 100px -35px rgba(201, 255, 91, 0.35);
+      0 0 0 1px rgb(var(--rgb-luz) / 0.08),
+      0 50px 110px -45px var(--sombra-profunda),
+      0 0 100px -35px rgb(var(--rgb-lima) / 0.35);
     overflow: hidden;
   }
   .mesa-barra {
@@ -114,8 +114,8 @@ const tareas = t.tareas.map((tarea) => {
     gap: 12px;
     height: 42px;
     padding: 0 16px;
-    background: #16171c;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    background: var(--color-ink-800);
+    border-bottom: 1px solid rgb(var(--rgb-luz) / 0.06);
   }
   .mesa-puntos {
     display: flex;
@@ -125,7 +125,7 @@ const tareas = t.tareas.map((tarea) => {
     width: 9px;
     height: 9px;
     border-radius: 999px;
-    background: rgba(255, 255, 255, 0.14);
+    background: rgb(var(--rgb-luz) / 0.14);
   }
   .mesa-proceso {
     flex: 1;
@@ -159,7 +159,7 @@ const tareas = t.tareas.map((tarea) => {
     right: calc(16px + 12.5% - 4px);
     top: 21px;
     height: 1.5px;
-    background: rgba(255, 255, 255, 0.1);
+    background: rgb(var(--rgb-luz) / 0.1);
   }
   .mesa-pasos-lleno {
     position: absolute;
@@ -182,8 +182,8 @@ const tareas = t.tareas.map((tarea) => {
     width: 11px;
     height: 11px;
     border-radius: 999px;
-    background: #0e0f13;
-    border: 1.5px solid rgba(255, 255, 255, 0.25);
+    background: var(--color-ink-900);
+    border: 1.5px solid rgb(var(--rgb-luz) / 0.25);
     transition:
       background-color 0.35s ease,
       border-color 0.35s ease,
@@ -206,9 +206,9 @@ const tareas = t.tareas.map((tarea) => {
     color: var(--color-ink-200);
   }
   .mesa-paso.activo .mesa-paso-punto {
-    background: #0e0f13;
+    background: var(--color-ink-900);
     border-color: var(--color-lime);
-    box-shadow: 0 0 0 5px rgba(201, 255, 91, 0.14);
+    box-shadow: 0 0 0 5px rgb(var(--rgb-lima) / 0.14);
   }
   .mesa-paso.activo .mesa-paso-txt {
     color: var(--color-lime);
@@ -242,8 +242,8 @@ const tareas = t.tareas.map((tarea) => {
     position: relative;
     padding: 12px 14px;
     border-radius: 14px;
-    background: rgba(255, 255, 255, 0.03);
-    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+    background: rgb(var(--rgb-luz) / 0.03);
+    box-shadow: inset 0 0 0 1px rgb(var(--rgb-luz) / 0.06);
     overflow: hidden;
   }
   .mesa-entrada-txt {
@@ -258,8 +258,8 @@ const tareas = t.tareas.map((tarea) => {
     right: 0;
     top: 0;
     height: 34px;
-    background: linear-gradient(180deg, rgba(201, 255, 91, 0), rgba(201, 255, 91, 0.16), rgba(201, 255, 91, 0));
-    border-bottom: 1px solid rgba(201, 255, 91, 0.55);
+    background: linear-gradient(180deg, rgb(var(--rgb-lima) / 0), rgb(var(--rgb-lima) / 0.16), rgb(var(--rgb-lima) / 0));
+    border-bottom: 1px solid rgb(var(--rgb-lima-linea) / 0.55);
     opacity: 0;
     pointer-events: none;
   }
@@ -274,10 +274,10 @@ const tareas = t.tareas.map((tarea) => {
     gap: 6px;
     padding: 5px 10px;
     border-radius: 999px;
-    background: rgba(167, 139, 255, 0.1);
-    box-shadow: inset 0 0 0 1px rgba(167, 139, 255, 0.3);
+    background: rgb(var(--rgb-violeta) / 0.1);
+    box-shadow: inset 0 0 0 1px rgb(var(--rgb-violeta-linea) / 0.3);
     font-size: 11px;
-    color: #d6ccff;
+    color: var(--color-violet);
   }
   .mesa-criterio svg {
     fill: none;
@@ -289,8 +289,8 @@ const tareas = t.tareas.map((tarea) => {
   .mesa-borrador {
     padding: 12px 14px;
     border-radius: 14px;
-    background: linear-gradient(180deg, rgba(201, 255, 91, 0.05), rgba(201, 255, 91, 0.015));
-    box-shadow: inset 0 0 0 1px rgba(201, 255, 91, 0.16);
+    background: linear-gradient(180deg, rgb(var(--rgb-lima) / 0.05), rgb(var(--rgb-lima) / 0.015));
+    box-shadow: inset 0 0 0 1px rgb(var(--rgb-lima-linea) / 0.16);
   }
   .mesa-borrador .mesa-rotulo {
     color: var(--color-lime);
@@ -319,8 +319,8 @@ const tareas = t.tareas.map((tarea) => {
     gap: 10px;
     padding: 10px 12px;
     border-radius: 14px;
-    background: #16171c;
-    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.07);
+    background: var(--color-ink-800);
+    box-shadow: inset 0 0 0 1px rgb(var(--rgb-luz) / 0.07);
   }
   .mesa-avatar {
     display: grid;
@@ -372,6 +372,7 @@ const tareas = t.tareas.map((tarea) => {
 
 <script>
   import gsap from 'gsap'
+  import { colorDeTema } from '../../lib/tema'
   import { GENERADO } from '../../lib/motion/texto-generado'
 
   const raiz = document.querySelector<HTMLElement>('[data-mesa]')
@@ -449,7 +450,7 @@ const tareas = t.tareas.map((tarea) => {
         .to(enOrden, { ...GENERADO.hasta, duration: GENERADO.duracion, stagger: GENERADO.paso, ease: GENERADO.ease }, 2.95)
         // 4 · Revisión humana: una persona corrige una frase y aprueba.
         .call(() => marcarPaso(3), [], '+=0.5')
-        .to(de, { '--tachado': '100%', color: '#4d4d5d', duration: 0.5, ease: 'power2.inOut' }, '<')
+        .to(de, { '--tachado': '100%', color: colorDeTema('--color-ink-300'), duration: 0.5, ease: 'power2.inOut' }, '<')
         .set(a, { display: 'inline' })
         .fromTo(nuevas, GENERADO.desde, { ...GENERADO.hasta, duration: 0.3, stagger: 0.06 })
         .to(sello, { opacity: 1, y: 0, duration: 0.5, ease: 'back.out(1.8)' }, '+=0.25')

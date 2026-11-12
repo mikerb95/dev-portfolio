@@ -56,7 +56,7 @@ const etiquetaFormato = (f: keyof typeof c.formatos) => c.formatos[f]
 const etiquetaNivel = (n: keyof typeof c.niveles) => c.niveles[n]
 ---
 
-<BaseLayout title={c.title} description={c.description} image="/og-default.png">
+<BaseLayout temaClaro title={c.title} description={c.description} image="/og-default.png">
   <script
     is:inline
     slot="head"
@@ -252,7 +252,7 @@ const etiquetaNivel = (n: keyof typeof c.niveles) => c.niveles[n]
     margin-left: -4px;
     border-radius: 999px;
     background: var(--color-lime);
-    box-shadow: 0 0 0 6px rgba(201, 255, 91, 0.12);
+    box-shadow: 0 0 0 6px rgb(var(--rgb-lima) / 0.12);
     animation: pulseDot 1.6s ease-in-out infinite;
   }
   @media (prefers-reduced-motion: reduce) {

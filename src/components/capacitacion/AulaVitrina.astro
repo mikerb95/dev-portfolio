@@ -128,13 +128,13 @@ const dominio = aula.replace(/^https?:\/\//, '')
     gap: 0.6rem;
   }
   .av-cyan {
-    --tono: #00f2ff;
+    --tono: var(--color-cyan);
   }
   .av-lime {
-    --tono: #c9ff5b;
+    --tono: var(--color-lime);
   }
   .av-violet {
-    --tono: #a78bff;
+    --tono: var(--color-violet);
   }
   .av-pestana {
     position: relative;
@@ -144,8 +144,8 @@ const dominio = aula.replace(/^https?:\/\//, '')
     padding: 16px 18px 18px;
     border-radius: 18px;
     text-align: left;
-    background: rgba(255, 255, 255, 0.02);
-    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+    background: rgb(var(--rgb-luz) / 0.02);
+    box-shadow: inset 0 0 0 1px rgb(var(--rgb-luz) / 0.06);
     cursor: pointer;
     overflow: hidden;
     transition:
@@ -153,7 +153,7 @@ const dominio = aula.replace(/^https?:\/\//, '')
       box-shadow 0.35s ease;
   }
   .av-pestana:hover {
-    background: rgba(255, 255, 255, 0.035);
+    background: rgb(var(--rgb-luz) / 0.035);
   }
   .av-pestana[aria-selected='true'] {
     background: color-mix(in srgb, var(--tono) 7%, transparent);
@@ -206,7 +206,7 @@ const dominio = aula.replace(/^https?:\/\//, '')
     bottom: 8px;
     height: 2px;
     border-radius: 2px;
-    background: rgba(255, 255, 255, 0.06);
+    background: rgb(var(--rgb-luz) / 0.06);
     overflow: hidden;
     opacity: 0;
   }
@@ -225,11 +225,11 @@ const dominio = aula.replace(/^https?:\/\//, '')
   .av-marco {
     border-radius: 18px;
     overflow: hidden;
-    background: #0b0e1a;
+    background: var(--color-ink-900);
     box-shadow:
-      0 0 0 1px rgba(255, 255, 255, 0.09),
-      0 50px 100px -45px rgba(0, 0, 0, 0.95),
-      0 0 90px -40px rgba(201, 255, 91, 0.3);
+      0 0 0 1px rgb(var(--rgb-luz) / 0.09),
+      0 50px 100px -45px var(--sombra-profunda),
+      0 0 90px -40px rgb(var(--rgb-lima) / 0.3);
   }
   .av-barra {
     display: flex;
@@ -237,7 +237,7 @@ const dominio = aula.replace(/^https?:\/\//, '')
     gap: 12px;
     height: 36px;
     padding: 0 12px;
-    background: #16171c;
+    background: var(--color-ink-800);
   }
   .av-puntos {
     display: flex;
@@ -247,7 +247,7 @@ const dominio = aula.replace(/^https?:\/\//, '')
     width: 9px;
     height: 9px;
     border-radius: 999px;
-    background: rgba(255, 255, 255, 0.16);
+    background: rgb(var(--rgb-luz) / 0.16);
   }
   .av-url {
     flex: 1;
@@ -259,7 +259,7 @@ const dominio = aula.replace(/^https?:\/\//, '')
     gap: 6px;
     height: 23px;
     border-radius: 999px;
-    background: #24252c;
+    background: var(--color-ink-600);
     font-size: 11px;
     color: var(--color-ink-100);
   }
@@ -309,10 +309,10 @@ const dominio = aula.replace(/^https?:\/\//, '')
     gap: 6px;
     padding: 8px 14px;
     border-radius: 999px;
-    background: rgba(11, 14, 26, 0.85);
+    background: rgb(var(--rgb-pozo) / 0.85);
     -webkit-backdrop-filter: blur(10px);
     backdrop-filter: blur(10px);
-    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.14);
+    box-shadow: inset 0 0 0 1px rgb(var(--rgb-luz) / 0.14);
     font-size: 12.5px;
     color: var(--color-ink-50);
     transition:
@@ -321,7 +321,7 @@ const dominio = aula.replace(/^https?:\/\//, '')
   }
   .av-ir:hover {
     color: var(--color-lime);
-    box-shadow: inset 0 0 0 1px rgba(201, 255, 91, 0.5);
+    box-shadow: inset 0 0 0 1px rgb(var(--rgb-lima-linea) / 0.5);
   }
   .av-ir svg {
     fill: none;

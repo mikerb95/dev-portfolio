@@ -118,15 +118,15 @@ const v = pw.viz
       transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
   }
   .bv-tarjeta:hover {
-    border-color: rgba(255, 107, 61, 0.25);
+    border-color: rgb(var(--rgb-ember-linea) / 0.25);
     transform: translateY(-3px);
   }
   .bv-pantalla {
     position: relative;
     height: 164px;
     padding: 16px;
-    background: linear-gradient(180deg, rgba(8, 8, 12, 0.75), rgba(8, 8, 12, 0.35));
-    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    background: linear-gradient(180deg, rgb(var(--rgb-pozo) / 0.75), rgb(var(--rgb-pozo) / 0.35));
+    border-bottom: 1px solid rgb(var(--rgb-luz) / 0.06);
     overflow: hidden;
   }
 
@@ -201,13 +201,13 @@ const v = pw.viz
   }
   .bv-lineas i.corta {
     width: 62%;
-    background: rgba(255, 255, 255, 0.1);
+    background: rgb(var(--rgb-luz) / 0.1);
   }
   .bv-r-tuyo {
     padding-right: 8px;
     border-radius: 8px;
-    background: rgba(255, 107, 61, 0.12);
-    box-shadow: inset 0 0 0 1px rgba(255, 107, 61, 0.35);
+    background: rgb(var(--rgb-ember) / 0.12);
+    box-shadow: inset 0 0 0 1px rgb(var(--rgb-ember-linea) / 0.35);
   }
   .bv-r-tuyo .bv-pos {
     color: var(--color-ember);
@@ -237,7 +237,7 @@ const v = pw.viz
     align-items: flex-start;
     gap: 6px;
     background:
-      radial-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1px) 0 0 / 12px 12px,
+      radial-gradient(rgb(var(--rgb-luz) / 0.035) 1px, transparent 1px) 0 0 / 12px 12px,
       #0b141a;
   }
   .bv-burbuja,
@@ -299,13 +299,13 @@ const v = pw.viz
     width: 190px;
     height: 104px;
     border-radius: 10px;
-    border: 1.5px solid rgba(255, 255, 255, 0.22);
-    background: rgba(255, 255, 255, 0.03);
+    border: 1.5px solid rgb(var(--rgb-luz) / 0.22);
+    background: rgb(var(--rgb-luz) / 0.03);
   }
   .bv-b {
     position: absolute;
     border-radius: 4px;
-    background: rgba(255, 255, 255, 0.14);
+    background: rgb(var(--rgb-luz) / 0.14);
   }
   .bv-b-nav {
     left: 8px;
@@ -318,7 +318,7 @@ const v = pw.viz
     top: 23px;
     width: 104px;
     height: 70px;
-    background: linear-gradient(135deg, rgba(255, 107, 61, 0.75), rgba(167, 139, 255, 0.55));
+    background: linear-gradient(135deg, rgb(var(--rgb-ember) / 0.75), rgb(var(--rgb-violeta) / 0.55));
   }
   .bv-b-c1 {
     left: 118px;
@@ -371,7 +371,7 @@ const v = pw.viz
     width: 18px;
     height: 18px;
     border-radius: 6px;
-    border: 1.5px solid rgba(255, 255, 255, 0.2);
+    border: 1.5px solid rgb(var(--rgb-luz) / 0.2);
     transition:
       background-color 0.25s ease,
       border-color 0.25s ease;
@@ -404,7 +404,7 @@ const v = pw.viz
     bottom: 16px;
     padding: 5px 11px;
     border-radius: 999px;
-    background: rgba(201, 255, 91, 0.12);
+    background: rgb(var(--rgb-lima) / 0.12);
     color: var(--color-lime);
     font-family: var(--font-mono);
     font-size: 10.5px;
@@ -415,6 +415,7 @@ const v = pw.viz
 
 <script>
   import gsap from 'gsap'
+  import { colorDeTema } from '../../lib/tema'
 
   const reducido = window.matchMedia('(prefers-reduced-motion: reduce)').matches
   const tarjetas = Array.from(document.querySelectorAll<HTMLElement>('[data-beneficios] [data-viz]'))
@@ -496,8 +497,8 @@ const v = pw.viz
       const b = t.querySelector<HTMLElement>('.bv-modo-b')!
       // Hex y no var(--color-…): GSAP interpola colores que puede leer, y una
       // variable CSS la trataría como texto.
-      const GRIS = '#4d4d5d'
-      const EMBER = '#ff6b3d'
+      const GRIS = colorDeTema('--color-ink-300')
+      const EMBER = colorDeTema('--color-ember')
       const tl = gsap.timeline({ repeat: -1, paused: true, defaults: { duration: 0.9, ease: 'expo.inOut' } })
       // Del computador al celular: el marco se estrecha y los bloques pasan de
       // dos columnas a una sola, que es exactamente lo que hace el sitio.

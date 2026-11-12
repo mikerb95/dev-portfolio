@@ -48,7 +48,7 @@ const perfiles = pw.perfiles.map((p, i) => ({ ...p, ...PERFIL_COLORS[i] }))
 const faqs = pw.faqs
 ---
 
-<BaseLayout title={pw.title} description={pw.description} image="/og-default.png">
+<BaseLayout temaClaro title={pw.title} description={pw.description} image="/og-default.png">
   <script
     is:inline
     slot="head"
@@ -326,7 +326,7 @@ const faqs = pw.faqs
 
     if (!name || !contacto) {
       status.textContent = L.errRequired
-      status.style.color = '#ff6b3d'
+      status.style.color = 'var(--color-ember)'
       return
     }
 
@@ -342,7 +342,7 @@ const faqs = pw.faqs
 
     btn.disabled = true
     status.textContent = L.sending
-    status.style.color = '#85858f'
+    status.style.color = 'var(--color-ink-200)'
 
     try {
       const res = await fetch('/api/contact', {
@@ -353,15 +353,15 @@ const faqs = pw.faqs
       if (res.ok) {
         form.reset()
         status.textContent = L.success
-        status.style.color = '#c9ff5b'
+        status.style.color = 'var(--color-lime)'
       } else {
         const data = await res.json().catch(() => ({}))
         status.textContent = data.error ?? L.errGeneric
-        status.style.color = '#ff6b3d'
+        status.style.color = 'var(--color-ember)'
       }
     } catch {
       status.textContent = L.errGeneric
-      status.style.color = '#ff6b3d'
+      status.style.color = 'var(--color-ember)'
     } finally {
       btn.disabled = false
     }
