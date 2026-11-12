@@ -48,7 +48,7 @@ const dentro = [
     <ul class="space-y-5">
       {dentro.map((item) => (
         <li class="flex gap-3.5">
-          <span class="mt-[7px] h-1.5 w-1.5 shrink-0 rounded-full bg-cyan shadow-[0_0_10px_rgba(0,242,255,.7)]"></span>
+          <span class="mt-[7px] h-1.5 w-1.5 shrink-0 rounded-full bg-cyan shadow-[0_0_10px_rgb(var(--rgb-cian)/.7)]"></span>
           <div>
             <p class="text-[14px] font-medium text-ink-50">{item.titulo}</p>
             <p class="mt-0.5 text-[13px] leading-relaxed text-ink-200 max-w-[38ch]">{item.detalle}</p>
@@ -95,7 +95,7 @@ const dentro = [
         href="/api/portal/demo"
         class="group inline-flex items-center gap-2 h-9 px-4 rounded-full bg-white/[.03] border border-white/10 text-ink-50 text-[13px] hover:bg-white/[.06] hover:border-cyan/25 transition-colors"
       >
-        <span class="h-1.5 w-1.5 rounded-full bg-lime shadow-[0_0_8px_rgba(201,255,91,.8)]"></span>
+        <span class="h-1.5 w-1.5 rounded-full bg-lime shadow-[0_0_8px_rgb(var(--rgb-lima)/.8)]"></span>
         Entrar a la demo pública
       </a>
     </div>

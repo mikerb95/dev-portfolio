@@ -44,7 +44,7 @@ const isLate = (m: Milestone) => m.status !== 'completado' && m.dueAt != null &&
               aria-hidden="true"
             >
               {m.status === 'completado' && (
-                <svg xmlns="http://www.w3.org/2000/svg" width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#c9ff5b" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+                <svg class="text-lime" xmlns="http://www.w3.org/2000/svg" width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
               )}
               {m.status === 'en_curso' && <span class="w-1.5 h-1.5 rounded-full bg-cyan pulse-dot" />}
             </span>
