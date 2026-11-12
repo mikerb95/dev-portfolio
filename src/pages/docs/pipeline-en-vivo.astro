@@ -17,7 +17,7 @@ import { jsonEnScript } from '../../lib/json-script'
 const ESCENARIO_IDLE = ESCENARIOS.find((e) => e.id === 'verde')!
 ---
 
-<BaseLayout title="Pipeline en vivo">
+<BaseLayout temaClaro title="Pipeline en vivo">
   <div class="max-w-[1280px] mx-auto px-6 md:px-12 lg:px-20 pt-32 pb-24">
   <DocsNav />
 
@@ -43,7 +43,7 @@ const ESCENARIO_IDLE = ESCENARIOS.find((e) => e.id === 'verde')!
       <div class="flex items-center justify-between px-4 py-2.5 border-b border-white/10 bg-white/[.02]">
         <div class="flex items-center gap-1.5">
           <span class="w-2.5 h-2.5 rounded-full bg-ember/70"></span>
-          <span class="w-2.5 h-2.5 rounded-full bg-[#ffcc4d]/70"></span>
+          <span class="w-2.5 h-2.5 rounded-full bg-(--color-ambar)/70"></span>
           <span class="w-2.5 h-2.5 rounded-full bg-lime/70"></span>
         </div>
         <span class="font-mono text-[11px] text-ink-300" data-log-sha>-</span>
@@ -121,7 +121,7 @@ const ESCENARIO_IDLE = ESCENARIOS.find((e) => e.id === 'verde')!
   [data-log] .t { color: var(--color-ink-300); margin-right: 0.5rem; }
   [data-log] .ok { color: var(--color-lime); }
   [data-log] .fail { color: var(--color-ember); }
-  [data-log] .warn { color: #ffcc4d; }
+  [data-log] .warn { color: var(--color-ambar); }
   [data-log] .txt { color: var(--color-ink-100); }
   [data-log] .sim-tag { color: var(--color-violet); font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.05em; margin-right: 0.4rem; }
 

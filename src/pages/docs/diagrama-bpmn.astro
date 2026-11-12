@@ -47,7 +47,7 @@ const muestras = leyendaBpmn.map((item) => ({ ...item, ...muestra(item.type, ALT
 const compuertas = COMPUERTAS_BPMN.map((c) => ({ ...c, ...muestra(c.type, sizeOf(c.type).h + 6) }))
 ---
 
-<BaseLayout title="Diagramas BPMN">
+<BaseLayout temaClaro title="Diagramas BPMN">
   <div class="max-w-[1280px] mx-auto px-6 md:px-12 lg:px-20 pt-32 pb-24">
     <DocsNav />
 

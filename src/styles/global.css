@@ -225,6 +225,7 @@ body {
    uno a uno - el lima del evento de inicio desaparece sobre blanco y el cian de
    las compuertas pierde contraste, así que ambos bajan de luminosidad hasta
    cumplir contraste sobre el papel. */
+:root[data-tema="claro"] .bpmn-scope,
 .bpmn-scope.bpmn-claro {
   --bpmn-lane-a: #ffffff;
   --bpmn-lane-b: #ffffff;
@@ -312,6 +313,27 @@ body {
   --uml-text-dim: #c4c4cc;
   --uml-accent: #00b8c4;
   --uml-estereotipo: #8f8f9c;
+}
+
+/* Tema claro (RF-043): mismo criterio que la variante sobre papel del BPMN. El
+   lima del nodo inicial y el cian de las decisiones bajan de luminosidad hasta
+   leerse sobre blanco, y el fondo de cada figura es papel, no tinta. */
+:root[data-tema="claro"] .uml-scope {
+  --uml-bg: #ffffff;
+  --uml-header: #f1f2f5;
+  --uml-border: #9aa0aa;
+  --uml-line: #3d4149;
+  --uml-node-fill: #ffffff;
+  --uml-node-stroke: #6b7079;
+  --uml-control-fill: #ffffff;
+  --uml-control-stroke: #06707a;
+  --uml-inicio: #4a7d10;
+  --uml-fin: #24262b;
+  --uml-error: #c23c10;
+  --uml-text: #16181c;
+  --uml-text-dim: #3d4149;
+  --uml-accent: #06707a;
+  --uml-estereotipo: #5a5f68;
 }
 
 .uml-scope .uml-label { font-size: 11.5px; fill: var(--uml-text); font-weight: 450; }

@@ -44,7 +44,7 @@ const paquetes = `flowchart TB
 `
 ---
 
-<BaseLayout title="Diagrama de paquetes">
+<BaseLayout temaClaro title="Diagrama de paquetes">
   <div class="max-w-[1280px] mx-auto px-6 md:px-12 lg:px-20 pt-32 pb-24">
   <DocsNav />
 
@@ -103,25 +103,8 @@ const paquetes = `flowchart TB
 </BaseLayout>
 
 <script>
-  import mermaid from 'mermaid'
-  mermaid.initialize({
-    startOnLoad: true,
-    theme: 'dark',
-    securityLevel: 'loose',
-    themeVariables: {
-      background: '#13131a',
-      primaryColor: '#1c1c26',
-      primaryTextColor: '#e7e7ec',
-      primaryBorderColor: '#6a6a7a',
-      lineColor: '#c4c4cc',
-      secondaryColor: '#171720',
-      tertiaryColor: '#0e0e12',
-      textColor: '#e7e7ec',
-      edgeLabelBackground: '#13131a',
-      clusterBkg: '#0e0e12',
-      clusterBorder: '#3a3a48',
-    },
-  })
+  import { montarMermaid } from '../../lib/mermaid-tema'
+  void montarMermaid()
 </script>
 
 <style>

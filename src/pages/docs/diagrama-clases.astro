@@ -181,7 +181,7 @@ const diagramas = [
 ]
 ---
 
-<BaseLayout title="Diagrama de clases">
+<BaseLayout temaClaro title="Diagrama de clases">
   <div class="max-w-[1280px] mx-auto px-6 md:px-12 lg:px-20 pt-32 pb-24">
   <DocsNav />
 
@@ -206,24 +206,8 @@ const diagramas = [
 </BaseLayout>
 
 <script>
-  import mermaid from 'mermaid'
-  mermaid.initialize({
-    startOnLoad: false,
-    theme: 'dark',
-    securityLevel: 'loose',
-    themeVariables: {
-      background: '#13131a',
-      primaryColor: '#1c1c26',
-      primaryTextColor: '#e7e7ec',
-      primaryBorderColor: '#6a6a7a',
-      lineColor: '#c4c4cc',
-      secondaryColor: '#171720',
-      tertiaryColor: '#0e0e12',
-      textColor: '#e7e7ec',
-      edgeLabelBackground: '#13131a',
-      classText: '#e7e7ec',
-    },
-  })
+  import { montarMermaid } from '../../lib/mermaid-tema'
+  import type { Tema } from '../../lib/tema'
 
   // Mermaid traza las relaciones con curvas suaves y pinta todas las clases
   // del mismo color. La notación de clases de manual usa segmentos rectos y
@@ -234,11 +218,21 @@ const diagramas = [
 
   // Tinte por papel estructural, deducido de las propias relaciones: quién
   // manda (solo origen), quién depende (solo destino) y quién hace de puente.
-  const TINTES = {
-    raiz: { fill: '#1b2434', stroke: '#5c7391' },
-    puente: { fill: '#241f31', stroke: '#7a6a99' },
-    hoja: { fill: '#1a2a23', stroke: '#5c8f76' },
+  // En claro, el mismo tono de cada papel pero en papel teñido: el fondo
+  // oscuro de la versión nocturna sobre blanco se leería como una mancha.
+  const TINTES_POR_TEMA = {
+    oscuro: {
+      raiz: { fill: '#1b2434', stroke: '#5c7391' },
+      puente: { fill: '#241f31', stroke: '#7a6a99' },
+      hoja: { fill: '#1a2a23', stroke: '#5c8f76' },
+    },
+    claro: {
+      raiz: { fill: '#e8eef7', stroke: '#4d6789' },
+      puente: { fill: '#efeaf7', stroke: '#6b5a8f' },
+      hoja: { fill: '#e6f2ec', stroke: '#3f7a5d' },
+    },
   }
+  let TINTES = TINTES_POR_TEMA.oscuro
 
   function rolesDe(fuente: string) {
     const origen = new Set<string>()
@@ -288,10 +282,11 @@ const diagramas = [
     path.setAttribute('d', d)
   }
 
-  const fuentes = [...document.querySelectorAll('pre.mermaid')].map((el) => el.textContent ?? '')
-  await mermaid.run()
-
-  document.querySelectorAll<SVGSVGElement>('svg[id^="mermaid"]').forEach((svg, i) => {
+  // Corre tras cada pintado: Mermaid repinta desde cero al cambiar de tema y
+  // el retoque se pierde con el SVG viejo.
+  await montarMermaid((svgs: SVGSVGElement[], fuentes: string[], tema: Tema) => {
+  TINTES = TINTES_POR_TEMA[tema]
+  svgs.forEach((svg, i) => {
     const rol = rolesDe(fuentes[i] ?? '')
 
     svg.querySelectorAll<SVGGElement>('g.node').forEach((nodo) => {
@@ -308,6 +303,7 @@ const diagramas = [
     })
 
     svg.querySelectorAll<SVGPathElement>('.edgePaths path, path.relation').forEach(ortogonalizar)
+  })
   })
 </script>
 

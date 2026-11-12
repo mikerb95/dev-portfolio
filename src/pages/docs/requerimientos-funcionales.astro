@@ -11,7 +11,7 @@ const total = REQUISITOS_FUNCIONALES.reduce((a, m) => a + m.items.length, 0)
 const impl = REQUISITOS_FUNCIONALES.flatMap((m) => m.items).filter((r) => r.estado === 'implementado').length
 ---
 
-<BaseLayout title="Requerimientos funcionales">
+<BaseLayout temaClaro title="Requerimientos funcionales">
   <div class="max-w-[1280px] mx-auto px-6 md:px-12 lg:px-20 pt-32 pb-24">
   <DocsNav />
   <RequisitosView
