@@ -27,12 +27,19 @@ muestras: espejo frío, neón sobre blanco, islas de tinta).
    de `rgba(255,255,255,.06)`. Variables: `--rgb-luz`, `--rgb-fondo`,
    `--rgb-pozo`, `--rgb-cian` (luz: rellenos y resplandores), `--rgb-cian-linea`
    (trazo: bordes y líneas finas), `--sombra-fuerte`, `--sombra-profunda`,
-   `--sombra-suave`.
+   `--sombra-suave`, `--rgb-tinta`, `--rgb-hondo` (velo de un pozo) y los
+   acentos como trazo (`--rgb-lima-linea`, `--rgb-ember-linea`,
+   `--rgb-violeta-linea`, `--rgb-ambar-linea`). Un fondo oscuro teñido de un
+   acento se escribe `color-mix(in srgb, rgb(var(--rgb-cian)) 7%, var(--color-ink-900))`.
 4. El tema lo pone un script en línea en el `<head>` (`TemaScript.astro`), antes
    del primer pintado. **No se decide en el servidor**: las páginas públicas se
    sirven de caché iguales para todos.
 5. Los lienzos WebGL reciben un uniform `uClaro` leído en cada fotograma; los
    que pintan una sola vez se suscriben con `alCambiarTema` (`src/lib/tema.ts`).
+   Canvas 2D y GSAP no entienden `var()`: piden cadenas concretas a `paleta()`.
+6. Un texto oscuro sobre un fondo claro fijo (una píldora "invertida") lleva
+   `var(--color-ink-950)` sobre `var(--color-ink-50)`: los dos se voltean
+   juntos. `--sobre-acento` es solo para texto encima de un relleno neón.
 
 ## Interruptor por página
 
@@ -62,9 +69,13 @@ Para encender una página:
   `/projects/<slug>`. Las maquetas de cosas ajenas se dejan como son: el
   celular de la demo, el chat de WhatsApp, el resultado de Google y las
   capturas del aula son imágenes de otros productos, no superficies del sitio.
-- ⬜ **3. Sitio público técnico:** `/tools`, `/engineering`, `/lab` y
-  `/lab/fingerprint`, `/notes`, `/security`, `/log`, `/status`,
-  `/automatizaciones`, `/architecture`, `/ep`, `/changelog`.
+- ✅ **3. Sitio público técnico** (11 nov 2026): `/tools`, `/engineering`,
+  `/lab`, `/lab/fingerprint`, `/lab/site-check`, `/notes` y cada nota,
+  `/security`, `/log`, `/status`, `/automatizaciones`, `/architecture`, `/ep`,
+  `/changelog` y `/certifications`. Los lienzos 2D (reloj de `/log`, filtro de
+  `/security`) y las animaciones GSAP leen el color con `paleta()` de
+  `src/lib/tema.ts`. `--color-black` pasa a ser blanco en claro: en el sitio
+  `black` se usa como fondo más hondo que la página, no como tinta.
 - ⬜ **4. `/docs`:** diagramas BPMN y UML (ya existe la variante sobre papel
   `bpmn-claro` como referencia) y Mermaid.
 - ⬜ **5. Cobros y propuestas:** `/c/[code]`, `/mis-pagos`, `/propuesta`,
@@ -89,3 +100,5 @@ tienen su propio fondo por diapositiva, y las imágenes Open Graph.
 - `/capacitacion` y `/capacitacion/acceso` tienen 144 px de desborde horizontal
   en escritorio en los dos temas: el halo no está recortado. Viene de antes y
   no es de color; queda sin tocar.
+- `EngineeringFeed.astro` y `EvolutionTimeline.astro` usan grises fijos de
+  Tailwind (`slate`, `zinc`) y no se migraron: ninguna página los monta.
