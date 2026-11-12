@@ -15,7 +15,7 @@ const mo = fp.motion
 const L = (path: string) => localizedHref(path, locale)
 ---
 
-<BaseLayout title={fp.title} description={fp.description} image="/og-default.png">
+<BaseLayout temaClaro title={fp.title} description={fp.description} image="/og-default.png">
   <div class="max-w-[1180px] mx-auto px-6 md:px-12 pt-32 pb-24">
     <a href={L('/')} data-hero-sigue class="inline-flex items-center gap-2 text-[11px] font-mono uppercase tracking-[.2em] text-ink-300 hover:text-cyan transition-colors mb-12">
       <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>
@@ -140,18 +140,18 @@ const L = (path: string) => localizedHref(path, locale)
      puesta por el script) cada línea muestra sus puntos y su estado. */
   .fl-sub { margin: 0 0 14px; font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--color-ink-300); }
   .fl-lista { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
-  .fl-fila { display: grid; gap: 6px 16px; grid-template-columns: minmax(0, 1fr); padding: 10px 0; border-top: 1px solid rgba(255, 255, 255, 0.06); font-size: 13px; line-height: 1.5; color: var(--color-ink-100); }
+  .fl-fila { display: grid; gap: 6px 16px; grid-template-columns: minmax(0, 1fr); padding: 10px 0; border-top: 1px solid rgb(var(--rgb-luz) / 0.06); font-size: 13px; line-height: 1.5; color: var(--color-ink-100); }
   .fl-fila:first-child { border-top: 0; }
   .fl-meta { display: none; align-items: center; gap: 10px; font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--color-ink-300); }
   .fl-vivo .fl-meta { display: inline-flex; }
   .fl-puntos { display: inline-flex; gap: 5px; }
-  .fl-puntos i { width: 8px; height: 8px; border-radius: 99px; border: 1.5px solid rgba(255, 255, 255, 0.28); transition: background-color 0.4s ease, border-color 0.4s ease, box-shadow 0.4s ease; }
-  .fl-puntos i[data-leida] { background: var(--color-cyan); border-color: var(--color-cyan); box-shadow: 0 0 8px -1px rgba(0, 242, 255, 0.7); }
+  .fl-puntos i { width: 8px; height: 8px; border-radius: 99px; border: 1.5px solid rgb(var(--rgb-luz) / 0.28); transition: background-color 0.4s ease, border-color 0.4s ease, box-shadow 0.4s ease; }
+  .fl-puntos i[data-leida] { background: var(--color-cyan); border-color: var(--color-cyan); box-shadow: 0 0 8px -1px rgb(var(--rgb-cian) / 0.7); }
   .fl-fila[data-estado='leida'] .fl-estado { color: var(--color-lime); }
   .fl-fila[data-estado='parcial'] .fl-estado { color: var(--color-cyan); }
   .fl-fila[data-estado='sala'] .fl-estado { color: var(--color-ink-400); }
   /* Tinte de fondo en la fila que ya se leyó por completo. */
-  .fl-fila[data-estado='leida'] { background: linear-gradient(90deg, rgba(0, 242, 255, 0.05), transparent 70%); }
+  .fl-fila[data-estado='leida'] { background: linear-gradient(90deg, rgb(var(--rgb-cian) / 0.05), transparent 70%); }
   .fl-nota { margin: 14px 0 0; font-family: var(--font-mono); font-size: 10.5px; color: var(--color-ink-400); }
   @media (min-width: 640px) {
     .fl-fila { grid-template-columns: minmax(0, 1fr) auto; align-items: center; }
@@ -160,8 +160,8 @@ const L = (path: string) => localizedHref(path, locale)
   /* Medidor de bits: 38 marcas, una por bit posible; se enciende con lo leído. */
   .fm:not(.fl-vivo) { display: none; }
   .fm-marcas { display: flex; gap: 3px; margin-top: 16px; }
-  .fm-marcas i { flex: 1 1 0; min-width: 0; height: 14px; border-radius: 2px; background: rgba(255, 255, 255, 0.08); transition: background-color 0.3s ease, box-shadow 0.3s ease; }
-  .fm-marcas i[data-lleno] { background: var(--color-cyan); box-shadow: 0 0 8px -2px rgba(0, 242, 255, 0.8); }
+  .fm-marcas i { flex: 1 1 0; min-width: 0; height: 14px; border-radius: 2px; background: rgb(var(--rgb-luz) / 0.08); transition: background-color 0.3s ease, box-shadow 0.3s ease; }
+  .fm-marcas i[data-lleno] { background: var(--color-cyan); box-shadow: 0 0 8px -2px rgb(var(--rgb-cian) / 0.8); }
 </style>
 
 <script>

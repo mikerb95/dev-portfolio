@@ -95,7 +95,7 @@ const jsonLd = jsonEnScript({
 })
 ---
 
-<BaseLayout
+<BaseLayout temaClaro
   title={`${note.data.title} - CodeByMike`}
   description={note.data.description}
   type="article"
@@ -201,10 +201,10 @@ const jsonLd = jsonEnScript({
     margin-bottom: 32px;
     border-radius: 20px;
     overflow: hidden;
-    border: 1px solid rgba(255, 255, 255, 0.07);
+    border: 1px solid rgb(var(--rgb-luz) / 0.07);
     background:
       radial-gradient(120% 140% at 25% 20%, color-mix(in srgb, var(--na) 22%, transparent), transparent 60%),
-      #0c0c10;
+      var(--color-ink-900);
   }
   /* Más alto que la banda y recortado: a 200 px las curvas se apiñaban. */
   .na-lienzo { position: absolute; left: 0; top: 50%; width: 100%; height: 220%; transform: translateY(-50%); display: block; }
@@ -212,7 +212,7 @@ const jsonLd = jsonEnScript({
     content: '';
     position: absolute;
     inset: 0;
-    background: linear-gradient(180deg, rgba(10, 10, 13, 0) 40%, rgba(10, 10, 13, 0.85));
+    background: linear-gradient(180deg, rgb(var(--rgb-pozo) / 0) 40%, rgb(var(--rgb-pozo) / 0.85));
   }
   .na-mapa-pie {
     position: absolute;
@@ -225,9 +225,9 @@ const jsonLd = jsonEnScript({
     font-size: 10.5px;
     letter-spacing: 0.14em;
     text-transform: uppercase;
-    color: #85858f;
+    color: var(--color-ink-200);
   }
-  .na-familia { display: inline-flex; align-items: center; gap: 8px; color: #c4c4cc; flex: none; }
+  .na-familia { display: inline-flex; align-items: center; gap: 8px; color: var(--color-ink-100); flex: none; }
   .na-familia i { width: 7px; height: 7px; border-radius: 50%; background: var(--na); box-shadow: 0 0 10px var(--na); }
 
   /* Barra de progreso superior: solo donde no hay índice lateral. */
@@ -259,12 +259,12 @@ const jsonLd = jsonEnScript({
     font-size: 10.5px;
     letter-spacing: 0.16em;
     text-transform: uppercase;
-    color: #85858f;
+    color: var(--color-ink-200);
   }
   .na-indice-cab { margin-bottom: 16px; }
-  .na-quedan { margin-top: 18px; color: #c4c4cc; }
+  .na-quedan { margin-top: 18px; color: var(--color-ink-100); }
   .na-indice-cuerpo { position: relative; padding-left: 18px; }
-  .na-indice-riel { position: absolute; left: 0; top: 4px; bottom: 4px; width: 1px; background: rgba(255, 255, 255, 0.08); }
+  .na-indice-riel { position: absolute; left: 0; top: 4px; bottom: 4px; width: 1px; background: rgb(var(--rgb-luz) / 0.08); }
   .na-indice-relleno {
     position: absolute;
     inset: 0;
@@ -279,12 +279,12 @@ const jsonLd = jsonEnScript({
     display: block;
     font-size: 13px;
     line-height: 1.4;
-    color: #85858f;
+    color: var(--color-ink-200);
     transition: color 0.25s, transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
   }
-  .na-indice-lista a:hover { color: #e7e7ec; }
-  .na-indice-lista a[aria-current] { color: #e7e7ec; transform: translateX(3px); }
-  .na-indice-lista a:focus-visible { outline: 2px solid #00f2ff; outline-offset: 3px; border-radius: 4px; }
+  .na-indice-lista a:hover { color: var(--color-ink-50); }
+  .na-indice-lista a[aria-current] { color: var(--color-ink-50); transform: translateX(3px); }
+  .na-indice-lista a:focus-visible { outline: 2px solid var(--color-cyan); outline-offset: 3px; border-radius: 4px; }
 
   .na-rel { margin-top: 72px; }
   .na-rel-titulo {
@@ -292,7 +292,7 @@ const jsonLd = jsonEnScript({
     font-size: 11px;
     letter-spacing: 0.18em;
     text-transform: uppercase;
-    color: #c4c4cc;
+    color: var(--color-ink-100);
     margin-bottom: 18px;
   }
   .na-rel-lista { list-style: none; margin: 0; padding: 0; display: grid; gap: 16px; grid-template-columns: minmax(0, 1fr); }
@@ -302,8 +302,8 @@ const jsonLd = jsonEnScript({
     gap: 10px;
     padding: 10px 10px 14px;
     border-radius: 16px;
-    border: 1px solid rgba(255, 255, 255, 0.06);
-    background: rgba(255, 255, 255, 0.015);
+    border: 1px solid rgb(var(--rgb-luz) / 0.06);
+    background: rgb(var(--rgb-luz) / 0.015);
     transition: background-color 0.3s, border-color 0.3s;
   }
   .na-rel-enlace:hover, .na-rel-enlace:focus-visible {
@@ -317,15 +317,15 @@ const jsonLd = jsonEnScript({
     overflow: hidden;
     background:
       radial-gradient(120% 140% at 25% 20%, color-mix(in srgb, var(--c) 22%, transparent), transparent 60%),
-      #0c0c10;
+      var(--color-ink-900);
   }
   .na-rel-lienzo {
     position: absolute; left: -50%; top: -50%; width: 200%; height: 200%; display: block;
     transition: transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
   }
   .na-rel-enlace:hover .na-rel-lienzo { transform: scale(1.06); }
-  .na-rel-meta { padding: 0 4px; font-family: var(--font-mono); font-size: 10.5px; letter-spacing: 0.08em; color: #85858f; }
-  .na-rel-nombre { padding: 0 4px; font-size: 15px; font-weight: 500; line-height: 1.35; color: #e7e7ec; text-wrap: balance; }
+  .na-rel-meta { padding: 0 4px; font-family: var(--font-mono); font-size: 10.5px; letter-spacing: 0.08em; color: var(--color-ink-200); }
+  .na-rel-nombre { padding: 0 4px; font-size: 15px; font-weight: 500; line-height: 1.35; color: var(--color-ink-50); text-wrap: balance; }
 </style>
 
 <script>
@@ -334,37 +334,37 @@ const jsonLd = jsonEnScript({
 </script>
 
 <style is:global>
-  .note-prose { color: #c4c4cc; font-size: 16px; line-height: 1.75; }
+  .note-prose { color: var(--color-ink-100); font-size: 16px; line-height: 1.75; }
   .note-prose h2 {
     scroll-margin-top: 110px;
-    color: #e7e7ec; font-size: 24px; font-weight: 550; letter-spacing: -0.02em;
+    color: var(--color-ink-50); font-size: 24px; font-weight: 550; letter-spacing: -0.02em;
     margin: 2.2em 0 0.7em;
   }
-  .note-prose h3 { color: #e7e7ec; font-size: 19px; font-weight: 550; margin: 1.8em 0 0.6em; }
+  .note-prose h3 { color: var(--color-ink-50); font-size: 19px; font-weight: 550; margin: 1.8em 0 0.6em; }
   .note-prose p { margin: 0 0 1.2em; }
-  .note-prose strong { color: #e7e7ec; font-weight: 600; }
+  .note-prose strong { color: var(--color-ink-50); font-weight: 600; }
   .note-prose em { font-style: italic; }
-  .note-prose a { color: #00f2ff; text-decoration: none; }
+  .note-prose a { color: var(--color-cyan); text-decoration: none; }
   .note-prose a:hover { text-decoration: underline; }
   .note-prose ul, .note-prose ol { margin: 0 0 1.2em; padding-left: 1.4em; }
   .note-prose li { margin: 0.4em 0; }
-  .note-prose li::marker { color: #00f2ff; }
+  .note-prose li::marker { color: var(--color-cyan); }
   .note-prose code {
     font-family: "JetBrains Mono Variable", ui-monospace, monospace;
-    font-size: 0.88em; color: #9bfaff;
-    background: rgba(0, 242, 255, 0.07);
-    border: 1px solid rgba(0, 242, 255, 0.12);
+    font-size: 0.88em; color: var(--color-cyan-glow);
+    background: rgb(var(--rgb-cian) / 0.07);
+    border: 1px solid rgb(var(--rgb-cian-linea) / 0.12);
     border-radius: 6px; padding: 0.1em 0.4em;
   }
   .note-prose pre {
-    background: #0e0e12; border: 1px solid rgba(255, 255, 255, 0.06);
+    background: var(--color-ink-850); border: 1px solid rgb(var(--rgb-luz) / 0.06);
     border-radius: 12px; padding: 1.1em 1.3em; margin: 0 0 1.4em;
     overflow-x: auto; font-size: 13.5px; line-height: 1.6;
   }
   .note-prose pre code { background: none; border: none; padding: 0; color: inherit; }
   .note-prose blockquote {
-    border-left: 2px solid #00f2ff; margin: 0 0 1.2em; padding: 0.2em 0 0.2em 1.2em;
-    color: #85858f; font-style: italic;
+    border-left: 2px solid var(--color-cyan); margin: 0 0 1.2em; padding: 0.2em 0 0.2em 1.2em;
+    color: var(--color-ink-200); font-style: italic;
   }
-  .note-prose hr { border: none; border-top: 1px solid rgba(255, 255, 255, 0.06); margin: 2.5em 0; }
+  .note-prose hr { border: none; border-top: 1px solid rgb(var(--rgb-luz) / 0.06); margin: 2.5em 0; }
 </style>

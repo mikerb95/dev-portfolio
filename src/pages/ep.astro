@@ -298,7 +298,7 @@ const meta = [
 ]
 ---
 
-<BaseLayout
+<BaseLayout temaClaro
   title="Etapa productiva SENA - Fichas 3114731, 3114732, 3114733"
   description="Cronograma de la etapa productiva: bitácoras, visitas de seguimiento, formatos oficiales y calculadora para proyectar otra ficha."
   image="/og-default.png"
@@ -970,16 +970,16 @@ const meta = [
     flex: 1 1 0;
     height: 9px;
     border-radius: 1px;
-    background: rgba(231, 231, 236, 0.16);
+    background: rgb(var(--rgb-tinta) / 0.16);
   }
-  .ep-mini i[data-inh] { height: 5px; background: rgba(231, 231, 236, 0.07); }
-  .ep-mini i[data-inh='festivo'] { background: rgba(255, 107, 61, 0.65); }
-  .ep-mini i.pasado { background: rgba(155, 250, 255, 0.55); }
-  .ep-mini i.pasado[data-inh] { background: rgba(155, 250, 255, 0.22); }
-  .ep-mini i[data-entrega] { height: 13px; background: transparent; box-shadow: inset 0 0 0 1px #00f2ff; }
-  .ep-mini i[data-cierre] { height: 16px; background: #00f2ff; }
-  .ep-mini i[data-cierre][data-inh] { background: linear-gradient(#ff6b3d 0 4px, #00b8c4 4px); }
-  .ep-mini i.hoy { height: 16px; background: #c9ff5b; box-shadow: 0 0 8px rgba(201, 255, 91, 0.7); }
+  .ep-mini i[data-inh] { height: 5px; background: rgb(var(--rgb-tinta) / 0.07); }
+  .ep-mini i[data-inh='festivo'] { background: rgb(var(--rgb-ember) / 0.65); }
+  .ep-mini i.pasado { background: rgb(var(--rgb-cian) / 0.55); }
+  .ep-mini i.pasado[data-inh] { background: rgb(var(--rgb-cian) / 0.22); }
+  .ep-mini i[data-entrega] { height: 13px; background: transparent; box-shadow: inset 0 0 0 1px rgb(var(--rgb-cian)); }
+  .ep-mini i[data-cierre] { height: 16px; background: var(--background-color-cyan); }
+  .ep-mini i[data-cierre][data-inh] { background: linear-gradient(var(--background-color-ember) 0 4px, var(--color-cyan-dim) 4px); }
+  .ep-mini i.hoy { height: 16px; background: var(--background-color-lime); box-shadow: 0 0 8px rgb(var(--rgb-lima) / 0.7); }
 
   /* Fracción del SMMLV: una barra llena es un salario mínimo. */
   .ep-medidor {
@@ -987,7 +987,7 @@ const meta = [
     height: 3px;
     margin: 4px 0 6px;
     border-radius: 2px;
-    background: rgba(255, 255, 255, 0.06);
+    background: rgb(var(--rgb-luz) / 0.06);
     overflow: hidden;
   }
   .ep-medidor i {
@@ -995,7 +995,7 @@ const meta = [
     height: 100%;
     width: calc(var(--p) * 100%);
     border-radius: inherit;
-    background: linear-gradient(90deg, rgba(201, 255, 91, 0.35), #c9ff5b);
+    background: linear-gradient(90deg, rgb(var(--rgb-lima) / 0.35), var(--background-color-lime));
     transform-origin: 0 50%;
   }
 
@@ -1004,8 +1004,8 @@ const meta = [
     transition: background-color 0.35s, border-color 0.35s;
   }
   #ep-page li.marcada {
-    background-color: rgba(201, 255, 91, 0.05);
-    border-color: rgba(201, 255, 91, 0.28);
+    background-color: rgb(var(--rgb-lima) / 0.05);
+    border-color: rgb(var(--rgb-lima-linea) / 0.28);
   }
   .ep-check + .ep-sello,
   .ep-sello {
@@ -1014,7 +1014,7 @@ const meta = [
     height: 14px;
     margin: 2px 0 0 0;
     border-radius: 50%;
-    box-shadow: 0 0 0 2px #c9ff5b;
+    box-shadow: 0 0 0 2px rgb(var(--rgb-lima));
     pointer-events: none;
   }
   #ep-page label:has(> .ep-check) {

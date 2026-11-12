@@ -32,7 +32,7 @@ const primera = notas[notas.length - 1]?.date
 const fmtDesde = new Intl.DateTimeFormat(locale === 'en' ? 'en-US' : 'es-CO', { month: 'long', year: 'numeric', timeZone: 'UTC' })
 ---
 
-<BaseLayout title={n.title} description={n.description} image="/og-notes.png">
+<BaseLayout temaClaro title={n.title} description={n.description} image="/og-notes.png">
   <div class="max-w-[1280px] mx-auto px-6 md:px-12 lg:px-20 pt-32 pb-24">
 
     <!-- Back -->
@@ -105,7 +105,7 @@ const fmtDesde = new Intl.DateTimeFormat(locale === 'en' ? 'en-US' : 'es-CO', { 
     flex-wrap: wrap;
     gap: 0;
     margin-top: 40px;
-    border-top: 1px solid rgba(255, 255, 255, 0.07);
+    border-top: 1px solid rgb(var(--rgb-luz) / 0.07);
     padding-top: 20px;
   }
   .nt-resumen > div {
@@ -114,7 +114,7 @@ const fmtDesde = new Intl.DateTimeFormat(locale === 'en' ? 'en-US' : 'es-CO', { 
     gap: 4px;
     padding-right: 28px;
     margin-right: 28px;
-    border-right: 1px solid rgba(255, 255, 255, 0.07);
+    border-right: 1px solid rgb(var(--rgb-luz) / 0.07);
   }
   .nt-resumen > div:last-child { border-right: 0; margin-right: 0; padding-right: 0; }
   .nt-resumen dt {
@@ -122,14 +122,14 @@ const fmtDesde = new Intl.DateTimeFormat(locale === 'en' ? 'en-US' : 'es-CO', { 
     font-size: 10.5px;
     letter-spacing: 0.16em;
     text-transform: uppercase;
-    color: #85858f;
+    color: var(--color-ink-200);
   }
   .nt-resumen dd {
     margin: 0;
     font-size: 30px;
     font-weight: 500;
     letter-spacing: -0.03em;
-    color: #e7e7ec;
+    color: var(--color-ink-50);
     line-height: 1.1;
     font-variant-numeric: tabular-nums;
   }

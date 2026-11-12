@@ -176,12 +176,12 @@ const datos = JSON.stringify({ guiones, textos })
     color: var(--color-ink-100);
     padding: 9px 13px;
     border-radius: 999px;
-    border: 1px solid rgba(255, 255, 255, .08);
-    background: rgba(255, 255, 255, .02);
+    border: 1px solid rgb(var(--rgb-luz) / .08);
+    background: rgb(var(--rgb-luz) / .02);
     transition: background .2s, color .2s, border-color .2s;
   }
   .tz-tab[aria-pressed='true'] {
-    color: #061014;
+    color: var(--sobre-acento);
     background: var(--color-cyan);
     border-color: var(--color-cyan);
   }
@@ -192,7 +192,7 @@ const datos = JSON.stringify({ guiones, textos })
     padding: 6px;
     transition: background .35s;
   }
-  .tz-caso.tz-activo { background: rgba(0, 242, 255, .035); }
+  .tz-caso.tz-activo { background: rgb(var(--rgb-cian) / .035); }
   .tz-caso-cab {
     display: flex;
     align-items: flex-start;
@@ -222,13 +222,13 @@ const datos = JSON.stringify({ guiones, textos })
     height: 30px;
     flex: none;
     border-radius: 999px;
-    border: 1px solid rgba(255, 255, 255, .1);
+    border: 1px solid rgb(var(--rgb-luz) / .1);
     color: var(--color-ink-200);
     transition: color .25s, border-color .25s, background .25s;
   }
   .tz-caso-cab:hover .tz-caso-play,
   .tz-activo .tz-caso-play {
-    color: #061014;
+    color: var(--sobre-acento);
     background: var(--color-cyan);
     border-color: var(--color-cyan);
   }
@@ -312,14 +312,14 @@ const datos = JSON.stringify({ guiones, textos })
     border-radius: 7px;
     white-space: nowrap;
   }
-  .tz-status[data-tono='ok'] { color: var(--color-cyan); background: rgba(0, 242, 255, .1); }
-  .tz-status[data-tono='desvio'] { color: var(--color-violet); background: rgba(167, 139, 255, .12); }
-  .tz-status[data-tono='corte'] { color: var(--color-ember); background: rgba(255, 107, 61, .12); }
+  .tz-status[data-tono='ok'] { color: var(--color-cyan); background: rgb(var(--rgb-cian) / .1); }
+  .tz-status[data-tono='desvio'] { color: var(--color-violet); background: rgb(var(--rgb-violeta) / .12); }
+  .tz-status[data-tono='corte'] { color: var(--color-ember); background: rgb(var(--rgb-ember) / .12); }
 
   /* ── Panel del diagrama ────────────────────────────────────────────── */
   .tz-panel {
-    background: linear-gradient(180deg, rgba(255, 255, 255, .035), rgba(255, 255, 255, .012));
-    border: 1px solid rgba(255, 255, 255, .07);
+    background: linear-gradient(180deg, rgb(var(--rgb-luz) / .035), rgb(var(--rgb-luz) / .012));
+    border: 1px solid rgb(var(--rgb-luz) / .07);
     padding: 18px;
     display: grid;
     gap: 16px;
@@ -330,7 +330,7 @@ const datos = JSON.stringify({ guiones, textos })
     display: grid;
     gap: 6px;
     padding-bottom: 14px;
-    border-bottom: 1px solid rgba(255, 255, 255, .06);
+    border-bottom: 1px solid rgb(var(--rgb-luz) / .06);
     min-height: 96px;
   }
   .tz-consola-linea { display: flex; align-items: center; gap: 10px; min-width: 0; flex-wrap: wrap; }
@@ -377,10 +377,10 @@ const datos = JSON.stringify({ guiones, textos })
     z-index: 0;
   }
   .tz-trazo path { fill: none; stroke-linecap: round; stroke-linejoin: round; }
-  .tz-trazo-linea { stroke: var(--color-cyan); stroke-width: 1.6; filter: drop-shadow(0 0 4px rgba(0, 242, 255, .55)); }
+  .tz-trazo-linea { stroke: var(--color-cyan); stroke-width: 1.6; filter: drop-shadow(0 0 4px rgb(var(--rgb-cian) / .55)); }
   .tz-trazo-viejo { stroke: var(--color-cyan-deep); stroke-width: 1.2; stroke-dasharray: 3 5; opacity: .7; }
-  .tz-trazo-paquete { fill: #eaffff; }
-  .tz-trazo-halo { fill: rgba(0, 242, 255, .22); }
+  .tz-trazo-paquete { fill: var(--cian-blanco); }
+  .tz-trazo-halo { fill: rgb(var(--rgb-cian-linea) / .22); }
 
   .tz-capa {
     display: grid;
@@ -388,8 +388,8 @@ const datos = JSON.stringify({ guiones, textos })
     gap: 6px;
     padding: 9px 10px;
     border-radius: 12px;
-    background: rgba(255, 255, 255, .015);
-    border: 1px solid rgba(255, 255, 255, .04);
+    background: rgb(var(--rgb-luz) / .015);
+    border: 1px solid rgb(var(--rgb-luz) / .04);
   }
   @media (min-width: 640px) {
     .tz-capa { grid-template-columns: 92px minmax(0, 1fr); align-items: center; }
@@ -412,11 +412,11 @@ const datos = JSON.stringify({ guiones, textos })
     color: var(--color-ink-100);
     padding: 7px 10px;
     border-radius: 9px;
-    border: 1px solid rgba(255, 255, 255, .08);
+    border: 1px solid rgb(var(--rgb-luz) / .08);
     background: var(--color-ink-900);
     transition: opacity .3s, color .3s, border-color .3s, box-shadow .3s, background .3s;
   }
-  .tz-nodo:hover { color: var(--color-ink-50); border-color: rgba(0, 242, 255, .35); }
+  .tz-nodo:hover { color: var(--color-ink-50); border-color: rgb(var(--rgb-cian-linea) / .35); }
   .tz-nodo:focus-visible { outline: 2px solid var(--color-cyan); outline-offset: 2px; }
   .tz-nodo-caido {
     display: none;
@@ -428,28 +428,28 @@ const datos = JSON.stringify({ guiones, textos })
   /* Estados del recorrido. */
   /* Lo que el recorrido no pisa se apaga con color, no con opacidad: una pieza
      translúcida dejaría ver la línea que pasa por debajo, como un tachón. */
-  .tz-recorriendo .tz-nodo:not([data-estado]) { color: var(--color-ink-300); border-color: rgba(255, 255, 255, .045); }
+  .tz-recorriendo .tz-nodo:not([data-estado]) { color: var(--color-ink-300); border-color: rgb(var(--rgb-luz) / .045); }
   .tz-nodo[data-estado='pasa'] {
     color: var(--color-ink-50);
-    border-color: rgba(0, 242, 255, .55);
-    box-shadow: 0 0 0 1px rgba(0, 242, 255, .15), 0 0 18px -4px rgba(0, 242, 255, .6);
+    border-color: rgb(var(--rgb-cian-linea) / .55);
+    box-shadow: 0 0 0 1px rgb(var(--rgb-cian-linea) / .15), 0 0 18px -4px rgb(var(--rgb-cian) / .6);
   }
   .tz-nodo[data-estado='registra'] {
     color: var(--color-ink-50);
-    border-color: rgba(167, 139, 255, .7);
-    box-shadow: 0 0 18px -4px rgba(167, 139, 255, .7);
+    border-color: rgb(var(--rgb-violeta-linea) / .7);
+    box-shadow: 0 0 18px -4px rgb(var(--rgb-violeta) / .7);
   }
   .tz-nodo[data-estado='responde'] {
-    color: #061014;
+    color: var(--sobre-acento);
     border-color: var(--color-cyan);
     background: var(--color-cyan);
-    box-shadow: 0 0 24px -4px rgba(0, 242, 255, .85);
+    box-shadow: 0 0 24px -4px rgb(var(--rgb-cian) / .85);
   }
   .tz-nodo[data-estado='corta'] {
-    color: #fff;
+    color: var(--color-white);
     border-color: var(--color-ember);
-    background: rgba(255, 107, 61, .16);
-    box-shadow: 0 0 22px -4px rgba(255, 107, 61, .8);
+    background: rgb(var(--rgb-ember) / .16);
+    box-shadow: 0 0 22px -4px rgb(var(--rgb-ember) / .8);
   }
   .tz-nodo[data-estado='falla'] {
     color: var(--color-ink-50);
@@ -457,7 +457,7 @@ const datos = JSON.stringify({ guiones, textos })
     border-style: dashed;
   }
   /* Pieza rota por un interruptor: se ve rota aunque el recorrido no la pise. */
-  .tz-nodo.tz-roto { border-style: dashed; border-color: rgba(255, 107, 61, .7); opacity: 1; }
+  .tz-nodo.tz-roto { border-style: dashed; border-color: rgb(var(--rgb-ember-linea) / .7); opacity: 1; }
   .tz-nodo.tz-roto .tz-nodo-caido { display: inline; }
 
   .tz-pie {
@@ -466,7 +466,7 @@ const datos = JSON.stringify({ guiones, textos })
     justify-content: space-between;
     gap: 12px 20px;
     padding-top: 14px;
-    border-top: 1px solid rgba(255, 255, 255, .06);
+    border-top: 1px solid rgb(var(--rgb-luz) / .06);
   }
   .tz-fallos, .tz-externos { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
   .tz-pie-rotulo {
@@ -484,10 +484,10 @@ const datos = JSON.stringify({ guiones, textos })
     color: var(--color-ink-100);
     padding: 7px 11px;
     border-radius: 999px;
-    border: 1px solid rgba(255, 255, 255, .1);
+    border: 1px solid rgb(var(--rgb-luz) / .1);
     transition: color .2s, border-color .2s, background .2s;
   }
-  .tz-fallo:hover { border-color: rgba(255, 107, 61, .5); }
+  .tz-fallo:hover { border-color: rgb(var(--rgb-ember-linea) / .5); }
   .tz-fallo:focus-visible { outline: 2px solid var(--color-ember); outline-offset: 2px; }
   .tz-fallo-caja {
     width: 10px;
@@ -496,7 +496,7 @@ const datos = JSON.stringify({ guiones, textos })
     border: 1px solid var(--color-ink-300);
     transition: background .2s, border-color .2s;
   }
-  .tz-fallo[aria-pressed='true'] { color: #fff; border-color: var(--color-ember); background: rgba(255, 107, 61, .14); }
+  .tz-fallo[aria-pressed='true'] { color: var(--color-white); border-color: var(--color-ember); background: rgb(var(--rgb-ember) / .14); }
   .tz-fallo[aria-pressed='true'] .tz-fallo-caja { background: var(--color-ember); border-color: var(--color-ember); }
   .tz-fallos-nota { font-size: 11.5px; color: var(--color-ink-200); margin-top: -6px; }
   /* Los interruptores solo tienen sentido con el script. */
@@ -511,9 +511,9 @@ const datos = JSON.stringify({ guiones, textos })
     color: var(--color-ink-300);
     padding: 6px 9px;
     border-radius: 7px;
-    border: 1px solid rgba(255, 255, 255, .06);
+    border: 1px solid rgb(var(--rgb-luz) / .06);
     transition: color .3s, border-color .3s, background .3s;
   }
-  .tz-externo.tz-tocado { color: var(--color-cyan); border-color: rgba(0, 242, 255, .35); background: rgba(0, 242, 255, .06); }
-  .tz-externo.tz-roto { color: var(--color-ember); border-color: rgba(255, 107, 61, .45); border-style: dashed; }
+  .tz-externo.tz-tocado { color: var(--color-cyan); border-color: rgb(var(--rgb-cian-linea) / .35); background: rgb(var(--rgb-cian) / .06); }
+  .tz-externo.tz-roto { color: var(--color-ember); border-color: rgb(var(--rgb-ember-linea) / .45); border-style: dashed; }
 </style>

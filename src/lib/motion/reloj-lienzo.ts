@@ -12,6 +12,7 @@
 // Módulo solo de navegador.
 
 import { diaBogota, horaBogota } from '../actividad'
+import { alCambiarTema, paleta } from '../tema'
 import {
   anchoUtil,
   baseHisto,
@@ -71,12 +72,27 @@ type Opciones = {
   alProgreso?: (p: Progreso) => void
 }
 
-// Paleta en hex: los tweens y el lienzo no entienden var(--color).
-const CIAN = '0, 242, 255'
-const CIAN_CLARO = '#9bfaff'
-const GRIS = '#85858f'
-const LIMA = '201, 255, 91'
-const TINTA = '133, 133, 143'
+// El lienzo no entiende var(--color): la paleta se copia aquí en cadenas
+// concretas y se vuelve a copiar cuando cambia el tema (cargarPaleta).
+let CIAN = '0, 242, 255'
+let CIAN_CLARO = '#9bfaff'
+let GRIS = '#85858f'
+let LIMA = '201, 255, 91'
+let TINTA = '133, 133, 143'
+let LUZ = '255, 255, 255'
+let TINTA_50 = '#e7e7ec'
+let TINTA_100 = '#c4c4cc'
+function cargarPaleta() {
+  const p = paleta()
+  CIAN = p.rgb.cian
+  CIAN_CLARO = p.cianClaro
+  GRIS = p.tinta200
+  LIMA = p.rgb.lima
+  TINTA = p.rgb.tinta200
+  LUZ = p.rgb.luz
+  TINTA_50 = p.tinta50
+  TINTA_100 = p.tinta100
+}
 const FUENTE = '"JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace'
 
 const f2 = (n: number) => Math.round(n * 10) / 10
@@ -122,13 +138,14 @@ export function montarReloj(raiz: HTMLElement, op: Opciones): Reloj {
   const tip = raiz.querySelector<HTMLElement>('[data-reloj-tip]')
   const marcaAhora = raiz.querySelector<HTMLElement>('[data-reloj-ahora]')
   if (!ctx) throw new Error('sin contexto 2D')
+  cargarPaleta()
 
   const FILAS = 31
   let m: Medidas = medidasReloj(raiz.clientWidth || 360, FILAS)
   let dpr = Math.min(window.devicePixelRatio || 1, 2)
   let brillo = spriteBrillo(dpr)
   let rayaPrevio = rayado(ctx, `rgba(${CIAN}, 0.45)`, 4)
-  let rayaFuera = rayado(ctx, 'rgba(255,255,255,0.07)', 5)
+  let rayaFuera = rayado(ctx, `rgba(${LUZ},0.07)`, 5)
 
   let modelo: ModeloReloj | null = null
   let horasSemanaFila: number[] = []
@@ -165,7 +182,7 @@ export function montarReloj(raiz: HTMLElement, op: Opciones): Reloj {
     lienzo.style.height = `${m.alto}px`
     raiz.style.height = `${m.alto}px`
     rayaPrevio = rayado(ctx!, `rgba(${CIAN}, 0.45)`, 4)
-    rayaFuera = rayado(ctx!, 'rgba(255,255,255,0.07)', 5)
+    rayaFuera = rayado(ctx!, `rgba(${LUZ},0.07)`, 5)
     colocarAhora()
   }
 
@@ -273,7 +290,7 @@ export function montarReloj(raiz: HTMLElement, op: Opciones): Reloj {
     dias.forEach((d, f) => {
       const dow = fechaDeDia(d).getUTCDay()
       if (dow === 0 || dow === 6) {
-        c.fillStyle = 'rgba(255,255,255,0.022)'
+        c.fillStyle = `rgba(${LUZ},0.022)`
         c.fillRect(x0, yDeFila(m, f), util, m.altoFila)
       }
     })
@@ -298,7 +315,7 @@ export function montarReloj(raiz: HTMLElement, op: Opciones): Reloj {
     // Rejilla de horas.
     for (let h = 0; h <= 24; h++) {
       const x = Math.round(xDeHora(m, h)) + 0.5
-      c.strokeStyle = h % 6 === 0 ? 'rgba(255,255,255,0.085)' : 'rgba(255,255,255,0.03)'
+      c.strokeStyle = h % 6 === 0 ? `rgba(${LUZ},0.085)` : `rgba(${LUZ},0.03)`
       c.beginPath()
       c.moveTo(x, m.arriba - 4)
       c.lineTo(x, yDeFila(m, filas))
@@ -315,7 +332,7 @@ export function montarReloj(raiz: HTMLElement, op: Opciones): Reloj {
 
     // Lectura bajo el cursor: fila y columna.
     if (lectura && puntero) {
-      c.fillStyle = 'rgba(255,255,255,0.045)'
+      c.fillStyle = `rgba(${LUZ},0.045)`
       c.fillRect(x0, yDeFila(m, lectura.fila), util, m.altoFila)
       c.strokeStyle = `rgba(${CIAN}, 0.25)`
       c.beginPath()
@@ -335,7 +352,7 @@ export function montarReloj(raiz: HTMLElement, op: Opciones): Reloj {
       const fecha = fechaDeDia(d)
       const y = yDeFila(m, f) + m.altoFila / 2 + 0.5
       const alcanzada = cab >= f
-      c.fillStyle = esHoy ? `rgba(${CIAN}, ${alcanzada ? 1 : 0.35})` : bajoCursor ? '#e7e7ec' : `rgba(${TINTA}, ${alcanzada ? 0.95 : 0.4})`
+      c.fillStyle = esHoy ? `rgba(${CIAN}, ${alcanzada ? 1 : 0.35})` : bajoCursor ? TINTA_50 : `rgba(${TINTA}, ${alcanzada ? 0.95 : 0.4})`
       const texto = esHoy ? op.textos.hoy : String(fecha.getUTCDate())
       c.fillText(texto, x0 - (m.compacto ? 6 : 26), y)
       if (!m.compacto) {
@@ -419,7 +436,7 @@ export function montarReloj(raiz: HTMLElement, op: Opciones): Reloj {
     // Commit bajo el cursor: anillo.
     if (lectura?.tipo === 'punto') {
       const p = lectura.punto
-      c.strokeStyle = p.publico ? CIAN_CLARO : '#c4c4cc'
+      c.strokeStyle = p.publico ? CIAN_CLARO : TINTA_100
       c.lineWidth = 1.25
       c.beginPath()
       c.arc(xDeHora(m, p.h), yDeFila(m, p.fila) + m.altoFila / 2, r + 3.5, 0, Math.PI * 2)
@@ -457,7 +474,7 @@ export function montarReloj(raiz: HTMLElement, op: Opciones): Reloj {
       c.fillStyle = lectura?.fila === f ? CIAN_CLARO : `rgba(${CIAN}, 0.5)`
       c.fillRect(bx, y - 1.5, Math.max(1.5, (h / maxH) * bMax * fase.fusion), 3)
       if (!m.compacto) {
-        c.fillStyle = lectura?.fila === f ? '#e7e7ec' : `rgba(${TINTA}, 0.9)`
+        c.fillStyle = lectura?.fila === f ? TINTA_50 : `rgba(${TINTA}, 0.9)`
         c.fillText(formatoNum.format(h * fase.fusion), m.ancho - 2, y + 0.5)
       }
       c.globalAlpha = 1
@@ -483,10 +500,10 @@ export function montarReloj(raiz: HTMLElement, op: Opciones): Reloj {
       if (!n) return
       const alto = (n / maxHora) * m.histo * easeOut(Math.max(0, Math.min(1, crecer * 1.4 - h / 40)))
       const activo = resalte !== 'mes' && resalte !== 'semana' && resalte !== 'racha'
-      c.fillStyle = h === pico ? `rgba(${CIAN}, ${0.7 * atenuar(activo)})` : `rgba(255,255,255,${0.15 * atenuar(activo)})`
+      c.fillStyle = h === pico ? `rgba(${CIAN}, ${0.7 * atenuar(activo)})` : `rgba(${LUZ},${0.15 * atenuar(activo)})`
       c.fillRect(xDeHora(m, h) + 1, yb - alto, anchoHora - 2, alto)
     })
-    c.fillStyle = 'rgba(255,255,255,0.08)'
+    c.fillStyle = `rgba(${LUZ},0.08)`
     c.fillRect(x0, yb, util, 1)
     c.textAlign = 'left'
     c.textBaseline = 'alphabetic'
@@ -639,6 +656,15 @@ export function montarReloj(raiz: HTMLElement, op: Opciones): Reloj {
   medir()
   pintar()
 
+  // Los rayados y el brillo son imágenes ya pintadas con el color viejo.
+  const sinTema = alCambiarTema(() => {
+    cargarPaleta()
+    brillo = spriteBrillo(dpr)
+    rayaPrevio = rayado(ctx!, `rgba(${CIAN}, 0.45)`, 4)
+    rayaFuera = rayado(ctx!, `rgba(${LUZ},0.07)`, 5)
+    pintar()
+  })
+
   return {
     cargar(nuevo, nuevos) {
       const anterior = modelo
@@ -666,6 +692,7 @@ export function montarReloj(raiz: HTMLElement, op: Opciones): Reloj {
     },
     destruir() {
       cancelAnimationFrame(raf)
+      sinTema()
       io.disconnect()
       ro.disconnect()
       document.removeEventListener('pointerdown', alTocarFuera)

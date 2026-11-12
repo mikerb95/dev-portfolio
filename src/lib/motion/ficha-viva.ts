@@ -19,6 +19,7 @@ import { SplitText } from 'gsap/SplitText'
 import { montarPortadas, type Portadas } from './portadas-gl'
 import { circular, ritmoFicha } from './notas'
 import type { FichaDato } from './notas'
+import { paleta } from '../tema'
 
 gsap.registerPlugin(SplitText)
 
@@ -141,7 +142,7 @@ export function montarFicha(raiz: HTMLElement) {
     if (previa !== actual || entrada) portadas?.mostrar(d)
     division = new SplitText(problema, { type: 'words' })
     gsap.set(division.words, { opacity: 0, y: 6, filter: 'blur(6px)' })
-    gsap.set(descartado, { opacity: 0, backgroundSize: '0% 2px', color: '#e7e7ec' })
+    gsap.set(descartado, { opacity: 0, backgroundSize: '0% 2px', color: paleta().tinta50 })
     decidido.textContent = ''
     raiz.classList.add('tecleando')
 
@@ -158,7 +159,7 @@ export function montarFicha(raiz: HTMLElement) {
     tl.to(division.words, { opacity: 1, y: 0, filter: 'blur(0px)', duration: 0.55, ease: 'power3.out', stagger: 0.035 }, r.problema)
     tl.to(descartado, { opacity: 1, duration: 0.4, ease: 'power2.out' }, r.descartado)
     // El tachón cruza y la opción se apaga: ya no es candidata.
-    tl.to(descartado, { backgroundSize: '100% 2px', color: '#85858f', duration: 0.5, ease: 'power2.inOut' }, r.tachon)
+    tl.to(descartado, { backgroundSize: '100% 2px', color: paleta().tinta200, duration: 0.5, ease: 'power2.inOut' }, r.tachon)
 
     const letras = [...d.chosen]
     const cursor = { n: 0 }

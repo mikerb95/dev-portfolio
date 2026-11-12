@@ -190,11 +190,11 @@ const tiempoDe = (i: number, linea: number) => {
   /* Prefijo `co-` y global: el script cambia estados con atributos, y cómo se
      ve cada estado vive aquí. El script decide CUÁNDO, nunca CÓMO. */
   .co {
-    --co-cyan: #00f2ff;
-    --co-lime: #c9ff5b;
-    --co-ember: #ff6b3d;
-    --co-amber: #fbbf24;
-    --co-borde: rgba(255, 255, 255, 0.09);
+    --co-cyan: var(--color-cyan);
+    --co-lime: var(--color-lime);
+    --co-ember: var(--color-ember);
+    --co-amber: var(--color-ambar);
+    --co-borde: rgb(var(--rgb-luz) / 0.09);
     position: relative;
     margin: 0;
     width: 100%;
@@ -219,11 +219,11 @@ const tiempoDe = (i: number, linea: number) => {
   }
   .co-cable {
     fill: none;
-    stroke: rgba(255, 255, 255, 0.1);
+    stroke: rgb(var(--rgb-luz) / 0.1);
     stroke-width: 1;
     transition: stroke 0.3s ease;
   }
-  .co-cable.is-luz { stroke: rgba(0, 242, 255, 0.45); }
+  .co-cable.is-luz { stroke: rgb(var(--rgb-cian-linea) / 0.45); }
   .co-traza { fill: none; stroke-width: 1.5; stroke-linecap: round; }
   /* En escritorio las columnas se disuelven en la rejilla del mapa y cada
      nodo de fuera se sienta en la fila de su franja (el sitio es subgrid). */
@@ -247,9 +247,9 @@ const tiempoDe = (i: number, linea: number) => {
     align-items: baseline;
     padding: 7px 9px 8px;
     border-radius: 10px;
-    background: #111117;
+    background: var(--color-ink-850);
     border: 1px solid var(--co-borde);
-    color: #e7e7ec;
+    color: var(--color-ink-50);
     text-decoration: none;
     transition: border-color 0.3s ease, background-color 0.3s ease, box-shadow 0.3s ease;
   }
@@ -258,7 +258,7 @@ const tiempoDe = (i: number, linea: number) => {
     font-style: italic;
     font-size: 13px;
     line-height: 1;
-    color: #85858f;
+    color: var(--color-ink-200);
   }
   .co-nombre {
     font-size: 12px;
@@ -275,25 +275,25 @@ const tiempoDe = (i: number, linea: number) => {
     font-family: var(--font-mono, ui-monospace, monospace);
     font-size: 10px;
     line-height: 1.2;
-    color: #85858f;
+    color: var(--color-ink-200);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
   }
-  .co-externo { border-style: dashed; background: #0e0e12; }
+  .co-externo { border-style: dashed; background: var(--color-ink-850); }
   .co-herramienta { cursor: pointer; }
   .co-herramienta:hover, .co-herramienta:focus-visible, .co-herramienta.is-foco {
-    border-color: rgba(0, 242, 255, 0.55);
-    background: #0f1a1d;
+    border-color: rgb(var(--rgb-cian-linea) / 0.55);
+    background: color-mix(in srgb, rgb(var(--rgb-cian)) 7%, var(--color-ink-900));
     outline: none;
   }
-  .co-nodo[data-estado='activo'] { border-color: rgba(0, 242, 255, 0.7); box-shadow: 0 0 0 3px rgba(0, 242, 255, 0.08), 0 0 22px -6px rgba(0, 242, 255, 0.55); }
+  .co-nodo[data-estado='activo'] { border-color: rgb(var(--rgb-cian-linea) / 0.7); box-shadow: 0 0 0 3px rgb(var(--rgb-cian-linea) / 0.08), 0 0 22px -6px rgb(var(--rgb-cian) / 0.55); }
   .co-nodo[data-estado='activo'] .co-lectura { color: var(--co-cyan); }
-  .co-nodo[data-estado='ok'] { border-color: rgba(201, 255, 91, 0.65); box-shadow: 0 0 22px -8px rgba(201, 255, 91, 0.5); }
+  .co-nodo[data-estado='ok'] { border-color: rgb(var(--rgb-lima-linea) / 0.65); box-shadow: 0 0 22px -8px rgb(var(--rgb-lima) / 0.5); }
   .co-nodo[data-estado='ok'] .co-lectura { color: var(--co-lime); }
-  .co-nodo[data-estado='alerta'] { border-color: rgba(251, 191, 36, 0.7); box-shadow: 0 0 22px -8px rgba(251, 191, 36, 0.55); }
+  .co-nodo[data-estado='alerta'] { border-color: rgb(var(--rgb-ambar-linea) / 0.7); box-shadow: 0 0 22px -8px rgb(var(--rgb-ambar) / 0.55); }
   .co-nodo[data-estado='alerta'] .co-lectura { color: var(--co-amber); }
-  .co-nodo[data-estado='error'] { border-color: rgba(255, 107, 61, 0.8); background: #1a100d; box-shadow: 0 0 0 3px rgba(255, 107, 61, 0.08), 0 0 24px -6px rgba(255, 107, 61, 0.6); }
+  .co-nodo[data-estado='error'] { border-color: rgb(var(--rgb-ember-linea) / 0.8); background: color-mix(in srgb, rgb(var(--rgb-ember)) 7%, var(--color-ink-900)); box-shadow: 0 0 0 3px rgb(var(--rgb-ember-linea) / 0.08), 0 0 24px -6px rgb(var(--rgb-ember) / 0.6); }
   .co-nodo[data-estado='error'] .co-lectura { color: var(--co-ember); }
 
   /* El sitio */
@@ -306,10 +306,10 @@ const tiempoDe = (i: number, linea: number) => {
     grid-template-rows: subgrid;
     padding: 10px;
     border-radius: 16px;
-    border: 1px solid rgba(0, 242, 255, 0.18);
+    border: 1px solid rgb(var(--rgb-cian-linea) / 0.18);
     background:
-      radial-gradient(120% 80% at 50% 0%, rgba(0, 242, 255, 0.06), transparent 60%),
-      rgba(12, 12, 16, 0.55);
+      radial-gradient(120% 80% at 50% 0%, rgb(var(--rgb-cian) / 0.06), transparent 60%),
+      rgb(var(--rgb-pozo) / 0.55);
   }
   .co-sitio-cab {
     display: flex;
@@ -320,18 +320,18 @@ const tiempoDe = (i: number, linea: number) => {
     font-size: 11px;
   }
   .co-led { width: 6px; height: 6px; border-radius: 99px; background: var(--co-lime); box-shadow: 0 0 10px var(--co-lime); }
-  .co-dominio { color: #e7e7ec; }
-  .co-sitio-sub { margin-left: auto; color: #85858f; font-size: 10px; }
+  .co-dominio { color: var(--color-ink-50); }
+  .co-sitio-sub { margin-left: auto; color: var(--color-ink-200); font-size: 10px; }
   .co-banda {
     display: grid;
     gap: 6px;
     padding: 7px;
     border-radius: 11px;
-    background: rgba(255, 255, 255, 0.02);
-    border: 1px solid rgba(255, 255, 255, 0.05);
+    background: rgb(var(--rgb-luz) / 0.02);
+    border: 1px solid rgb(var(--rgb-luz) / 0.05);
     transition: border-color 0.3s ease, background-color 0.3s ease;
   }
-  .co-banda[data-estado='activo'] { border-color: rgba(0, 242, 255, 0.45); background: rgba(0, 242, 255, 0.04); }
+  .co-banda[data-estado='activo'] { border-color: rgb(var(--rgb-cian-linea) / 0.45); background: rgb(var(--rgb-cian) / 0.04); }
   .co-banda-rot {
     display: flex;
     align-items: baseline;
@@ -340,12 +340,12 @@ const tiempoDe = (i: number, linea: number) => {
     font-size: 9.5px;
     letter-spacing: 0.16em;
     text-transform: uppercase;
-    color: #6b6b78;
+    color: var(--color-ink-300);
   }
   .co-banda-lectura { margin: 0 0 0 auto; letter-spacing: 0; text-transform: none; color: var(--co-cyan); }
   .co-banda-nodos { display: grid; grid-template-columns: repeat(auto-fit, minmax(0, 1fr)); gap: 6px; }
   .co-chip { padding: 6px 7px 7px; }
-  .co-ruta { background: #0d0d12; }
+  .co-ruta { background: var(--color-ink-850); }
   .co-ruta .co-nombre { font-family: var(--font-mono, ui-monospace, monospace); font-size: 11px; }
 
   /* Pista bajo el cursor */
@@ -358,12 +358,12 @@ const tiempoDe = (i: number, linea: number) => {
     max-width: 230px;
     padding: 8px 10px;
     border-radius: 10px;
-    background: #16161d;
-    border: 1px solid rgba(0, 242, 255, 0.3);
-    box-shadow: 0 12px 30px -10px rgba(0, 0, 0, 0.7);
+    background: var(--color-ink-800);
+    border: 1px solid rgb(var(--rgb-cian-linea) / 0.3);
+    box-shadow: 0 12px 30px -10px var(--sombra-profunda);
     font-size: 12px;
     line-height: 1.35;
-    color: #e7e7ec;
+    color: var(--color-ink-50);
     pointer-events: none;
     opacity: 0;
     visibility: hidden;
@@ -378,8 +378,8 @@ const tiempoDe = (i: number, linea: number) => {
     height: calc(4 * 22px + 20px);
     overflow: hidden;
     border-radius: 12px;
-    background: #0b0b0f;
-    border: 1px solid rgba(255, 255, 255, 0.06);
+    background: var(--color-ink-900);
+    border: 1px solid rgb(var(--rgb-luz) / 0.06);
     font-family: var(--font-mono, ui-monospace, monospace);
     font-size: 11px;
     display: flex;
@@ -393,16 +393,16 @@ const tiempoDe = (i: number, linea: number) => {
     height: 22px;
     align-items: center;
     flex: none;
-    color: #c4c4cc;
+    color: var(--color-ink-100);
   }
-  .co-linea-t { color: #4d4d5d; }
-  .co-linea-nodo { color: #85858f; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .co-linea-t { color: var(--color-ink-300); }
+  .co-linea-nodo { color: var(--color-ink-200); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .co-linea-txt { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .co-linea[data-tono='dato'] .co-linea-nodo { color: var(--co-cyan); }
   .co-linea[data-tono='ok'] .co-linea-nodo { color: var(--co-lime); }
   .co-linea[data-tono='alerta'] .co-linea-nodo { color: var(--co-amber); }
   .co-linea[data-tono='error'] .co-linea-nodo { color: var(--co-ember); }
-  .co-linea[data-tono='error'] .co-linea-txt { color: #f3c6b8; }
+  .co-linea[data-tono='error'] .co-linea-txt { color: var(--ember-suave); }
 
   /* Escenarios */
   .co-escenarios { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; margin-top: 10px; }
@@ -411,23 +411,23 @@ const tiempoDe = (i: number, linea: number) => {
     gap: 7px;
     padding: 8px 9px 9px;
     border-radius: 10px;
-    border: 1px solid rgba(255, 255, 255, 0.06);
+    border: 1px solid rgb(var(--rgb-luz) / 0.06);
     background: transparent;
-    color: #85858f;
+    color: var(--color-ink-200);
     font-size: 11.5px;
     text-align: left;
     cursor: pointer;
     transition: color 0.25s ease, border-color 0.25s ease, background-color 0.25s ease;
   }
-  .co-esc:hover { color: #e7e7ec; }
-  .co-esc:focus-visible { outline: 2px solid rgba(0, 242, 255, 0.6); outline-offset: 2px; }
-  .co-esc[aria-pressed='true'] { color: #e7e7ec; border-color: rgba(0, 242, 255, 0.28); background: rgba(0, 242, 255, 0.04); }
+  .co-esc:hover { color: var(--color-ink-50); }
+  .co-esc:focus-visible { outline: 2px solid rgb(var(--rgb-cian-linea) / 0.6); outline-offset: 2px; }
+  .co-esc[aria-pressed='true'] { color: var(--color-ink-50); border-color: rgb(var(--rgb-cian-linea) / 0.28); background: rgb(var(--rgb-cian) / 0.04); }
   .co-esc-nombre { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .co-esc-barra { display: block; height: 2px; border-radius: 2px; background: rgba(255, 255, 255, 0.08); overflow: hidden; }
+  .co-esc-barra { display: block; height: 2px; border-radius: 2px; background: rgb(var(--rgb-luz) / 0.08); overflow: hidden; }
   .co-esc-barra > span { display: block; height: 100%; background: var(--co-cyan); transform-origin: left; transform: scaleX(0); }
   .co-esc[aria-pressed='true'] .co-esc-barra > span { transform: scaleX(1); }
   .co[data-vivo] .co-esc[aria-pressed='true'] .co-esc-barra > span { transform: scaleX(0); }
-  .co-pie { margin-top: 10px; font-family: var(--font-mono, ui-monospace, monospace); font-size: 10px; color: #4d4d5d; }
+  .co-pie { margin-top: 10px; font-family: var(--font-mono, ui-monospace, monospace); font-size: 10px; color: var(--color-ink-300); }
 
   /* Móvil: el flujo pasa de izquierda-derecha a arriba-abajo. Mismas piezas,
      misma lógica de cables (el conector elige el eje por la distancia). */

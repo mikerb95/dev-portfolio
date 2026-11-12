@@ -18,6 +18,10 @@ import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import { ScrambleTextPlugin } from 'gsap/ScrambleTextPlugin'
 import { mmss } from './circuito'
+import { paleta } from '../tema'
+
+/** Tinte de acento con el tema del momento, para destellos de GSAP. */
+const tinte = (c: 'cian' | 'ember', a: number) => `rgba(${paleta().rgb[c]}, ${a})`
 
 gsap.registerPlugin(ScrollTrigger, ScrambleTextPlugin)
 
@@ -30,7 +34,7 @@ const qa = <T extends Element = HTMLElement>(el: ParentNode, sel: string) => [..
 const bucle = (repeatDelay = 0.9): Bucle => gsap.timeline({ repeat: -1, repeatDelay, paused: true })
 
 /** Destello de "sondeo": una sombra interior que se apaga, sin pisar el fondo del estado. */
-const destello = (tl: Bucle, el: Element, pos: number, color = 'rgba(0, 242, 255, 0.10)') =>
+const destello = (tl: Bucle, el: Element, pos: number, color = tinte('cian', 0.1)) =>
   tl.fromTo(
     el,
     { boxShadow: `inset 0 0 0 999px ${color}` },
@@ -80,7 +84,7 @@ function monitores(el: HTMLElement): Bucle | null {
     tl.fromTo(qa(f, '.es-check'), { opacity: 0.25 }, { opacity: 1, stagger: 0.1, duration: 0.25 }, 0.25 + i * 0.35)
   })
   // Segunda pasada sobre la tienda: 200, pero con la página equivocada.
-  destello(tl, tienda, 2.0, 'rgba(255, 107, 61, 0.14)')
+  destello(tl, tienda, 2.0, tinte('ember', 0.14))
   tl.call(() => estadoTienda(true), [], 2.3)
     .call(() => {
       hoy.classList.add('es-barra-caida')
@@ -389,7 +393,7 @@ function seguridad(el: HTMLElement): Bucle | null {
     const repetido = orden.slice(0, i).some((o) => o.dataset.ip === ev.dataset.ip)
     if (i === 0) tl.call(() => escalar(0), [], t + 0.2)
     if (repetido) {
-      destello(tl, ev, t + 0.2, 'rgba(255, 107, 61, 0.18)')
+      destello(tl, ev, t + 0.2, tinte('ember', 0.18))
       tl.call(() => escalar(1), [], t + 0.3)
     }
   })

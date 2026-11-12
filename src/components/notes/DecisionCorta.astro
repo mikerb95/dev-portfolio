@@ -41,8 +41,8 @@ const t = getDictionary(locale).notes.motion
     border-radius: 18px;
     background:
       radial-gradient(90% 120% at 0% 0%, color-mix(in srgb, var(--dc) 7%, transparent), transparent 60%),
-      rgba(255, 255, 255, 0.02);
-    border: 1px solid rgba(255, 255, 255, 0.07);
+      rgb(var(--rgb-luz) / 0.02);
+    border: 1px solid rgb(var(--rgb-luz) / 0.07);
   }
   .dc-cab {
     display: flex;
@@ -53,7 +53,7 @@ const t = getDictionary(locale).notes.motion
     font-size: 10.5px;
     letter-spacing: 0.18em;
     text-transform: uppercase;
-    color: #c4c4cc;
+    color: var(--color-ink-100);
   }
   .dc-cab::before {
     content: '';
@@ -75,15 +75,15 @@ const t = getDictionary(locale).notes.motion
     font-size: 10.5px;
     letter-spacing: 0.16em;
     text-transform: uppercase;
-    color: #85858f;
+    color: var(--color-ink-200);
   }
   .dc-fila dd { margin: 0; font-size: 15px; line-height: 1.5; }
-  .dc-problema { color: #e7e7ec; }
+  .dc-problema { color: var(--color-ink-50); }
   .dc-rot-dec { color: var(--dc) !important; }
   .dc-descartado {
     text-decoration: none;
-    color: #85858f;
-    background-image: linear-gradient(#c4c4cc, #c4c4cc);
+    color: var(--color-ink-200);
+    background-image: linear-gradient(var(--color-ink-100), var(--color-ink-100));
     background-repeat: no-repeat;
     background-position: 0 58%;
     background-size: 100% 1.5px;
@@ -92,14 +92,14 @@ const t = getDictionary(locale).notes.motion
     transition: background-size 0.6s cubic-bezier(0.65, 0, 0.35, 1) 0.35s, color 0.6s 0.35s;
   }
   .dc-decidido {
-    color: #e7e7ec;
+    color: var(--color-ink-50);
     transition: opacity 0.6s 0.9s, transform 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.9s, filter 0.6s 0.9s;
   }
 
   /* `pendiente` lo pone el script solo si va a animar; `vista`, al entrar. */
-  .dc.pendiente .dc-descartado { background-size: 0% 1.5px; color: #e7e7ec; }
+  .dc.pendiente .dc-descartado { background-size: 0% 1.5px; color: var(--color-ink-50); }
   .dc.pendiente .dc-decidido { opacity: 0; transform: translateY(6px); filter: blur(4px); }
-  .dc.pendiente.vista .dc-descartado { background-size: 100% 1.5px; color: #85858f; }
+  .dc.pendiente.vista .dc-descartado { background-size: 100% 1.5px; color: var(--color-ink-200); }
   .dc.pendiente.vista .dc-decidido { opacity: 1; transform: none; filter: none; }
 
   @media (max-width: 639px) {

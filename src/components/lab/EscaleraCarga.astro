@@ -98,15 +98,15 @@ const variantes: { clase: string; lienzo: Lienzo; letra: number }[] = [
 
 <style is:global>
   .ec {
-    --ec-lime: #c9ff5b;
-    --ec-amber: #fbbf24;
-    --ec-ember: #ff6b3d;
-    --ec-cyan: #00f2ff;
+    --ec-lime: var(--color-lime);
+    --ec-amber: var(--color-ambar);
+    --ec-ember: var(--color-ember);
+    --ec-cyan: var(--color-cyan);
     margin: 0 0 18px;
     padding: 18px 18px 14px;
     border-radius: 18px;
-    border: 1px solid rgba(255, 255, 255, 0.06);
-    background: rgba(12, 12, 16, 0.55);
+    border: 1px solid rgb(var(--rgb-luz) / 0.06);
+    background: rgb(var(--rgb-pozo) / 0.55);
   }
   .ec-svg { display: block; width: 100%; height: auto; overflow: visible; font-family: var(--font-mono, ui-monospace, monospace); font-size: var(--letra); }
   .ec-movil { display: none; }
@@ -115,32 +115,32 @@ const variantes: { clase: string; lienzo: Lienzo; letra: number }[] = [
     .ec-escritorio { display: none; }
     .ec-movil { display: block; }
   }
-  .ec-marca line { stroke: rgba(255, 255, 255, 0.05); }
-  .ec-marca text, .ec-marca-p95, .ec-carga { fill: #6b6b78; }
-  .ec-eje { fill: #85858f; letter-spacing: 0.1em; }
-  .ec-eje-p95, .ec-marca-p95 { fill: rgba(0, 242, 255, 0.55); }
-  .ec-base { stroke: rgba(255, 255, 255, 0.15); }
-  .ec-ofrecido { fill: rgba(255, 255, 255, 0.015); stroke: rgba(255, 255, 255, 0.22); stroke-dasharray: 3 3; }
+  .ec-marca line { stroke: rgb(var(--rgb-luz) / 0.05); }
+  .ec-marca text, .ec-marca-p95, .ec-carga { fill: var(--color-ink-300); }
+  .ec-eje { fill: var(--color-ink-200); letter-spacing: 0.1em; }
+  .ec-eje-p95, .ec-marca-p95 { fill: rgb(var(--rgb-cian-linea) / 0.55); }
+  .ec-base { stroke: rgb(var(--rgb-luz) / 0.15); }
+  .ec-ofrecido { fill: rgb(var(--rgb-luz) / 0.015); stroke: rgb(var(--rgb-luz) / 0.22); stroke-dasharray: 3 3; }
   .ec-servido { stroke: none; }
   .ec-escalon[data-estado='ok'] .ec-servido { fill: var(--ec-lime); fill-opacity: 0.8; }
   .ec-escalon[data-estado='degradado'] .ec-servido { fill: var(--ec-amber); fill-opacity: 0.8; }
   .ec-escalon[data-estado='roto'] .ec-servido { fill: var(--ec-ember); fill-opacity: 0.85; }
-  .ec-escalon[data-estado='roto'] .ec-ofrecido { stroke: rgba(255, 107, 61, 0.45); }
+  .ec-escalon[data-estado='roto'] .ec-ofrecido { stroke: rgb(var(--rgb-ember-linea) / 0.45); }
   .ec-p95 { fill: none; stroke: var(--ec-cyan); stroke-width: 1.6; stroke-linejoin: round; }
-  .ec-p95-punto { fill: #0c0c10; stroke: var(--ec-cyan); stroke-width: 1.5; }
+  .ec-p95-punto { fill: var(--color-ink-900); stroke: var(--ec-cyan); stroke-width: 1.5; }
   .ec-sostiene { fill: var(--ec-lime); }
   .ec-quiebre line { stroke: var(--ec-ember); stroke-dasharray: 4 4; }
   .ec-quiebre text { fill: var(--ec-ember); letter-spacing: 0.04em; }
-  .ec-cesa { stroke: rgba(255, 255, 255, 0.25); stroke-dasharray: 2 4; }
-  .ec-cesa-rot { fill: #6b6b78; }
+  .ec-cesa { stroke: rgb(var(--rgb-luz) / 0.25); stroke-dasharray: 2 4; }
+  .ec-cesa-rot { fill: var(--color-ink-300); }
   .ec-recupera-arco { fill: none; stroke: var(--ec-lime); stroke-width: 1.4; }
   .ec-recupera-rot { fill: var(--ec-lime); }
   .ec-recupera-no .ec-recupera-arco { stroke: var(--ec-ember); }
   .ec-recupera-no .ec-recupera-rot { fill: var(--ec-ember); }
-  .ec-leyenda { display: flex; flex-wrap: wrap; gap: 8px 18px; margin-top: 12px; font-family: var(--font-mono, ui-monospace, monospace); font-size: 10.5px; color: #85858f; }
+  .ec-leyenda { display: flex; flex-wrap: wrap; gap: 8px 18px; margin-top: 12px; font-family: var(--font-mono, ui-monospace, monospace); font-size: 10.5px; color: var(--color-ink-200); }
   .ec-leyenda span { display: inline-flex; align-items: center; gap: 7px; }
   .ec-leyenda i { display: inline-block; width: 12px; height: 9px; }
-  .ec-ley-of { border: 1px dashed rgba(255, 255, 255, 0.35); }
+  .ec-ley-of { border: 1px dashed rgb(var(--rgb-luz) / 0.35); }
   .ec-ley-sv { background: linear-gradient(90deg, var(--ec-lime) 33%, var(--ec-amber) 33% 66%, var(--ec-ember) 66%); }
   .ec-ley-p95 { height: 2px !important; background: var(--ec-cyan); }
 </style>

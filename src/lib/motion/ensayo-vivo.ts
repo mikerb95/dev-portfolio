@@ -28,6 +28,7 @@ import {
   type Lectura,
   type Registro,
 } from './ensayo'
+import { paleta } from '../tema'
 
 gsap.registerPlugin(ScrambleTextPlugin)
 
@@ -231,7 +232,7 @@ export function montarBanco(raiz: HTMLElement, opciones: { reducido: boolean }):
         gsap.to(el, { duration: 0.35, scrambleText: { text: nuevo, chars: 'lowerCase', speed: 0.9 } })
       } else {
         el.textContent = nuevo
-        if (animar) gsap.fromTo(el, { color: '#00f2ff' }, { color: '#e7e7ec', duration: 0.9, ease: 'power2.out', clearProps: 'color' })
+        if (animar) gsap.fromTo(el, { color: paleta().cian }, { color: paleta().tinta50, duration: 0.9, ease: 'power2.out', clearProps: 'color' })
       }
     }
     if (r.tentativo) registroEl!.setAttribute('data-tentativo', '')

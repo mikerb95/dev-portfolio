@@ -69,9 +69,9 @@ const datos = {
     <svg class="fc-svg" data-svg viewBox={`0 0 ${W} ${H}`} aria-hidden="true">
       <defs>
         <linearGradient id="fc-sitio" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stop-color="#00f2ff" stop-opacity="0"></stop>
-          <stop offset="50%" stop-color="#00f2ff" stop-opacity="0.9"></stop>
-          <stop offset="100%" stop-color="#00f2ff" stop-opacity="0"></stop>
+          <stop offset="0%" stop-color="var(--color-cyan)" stop-opacity="0"></stop>
+          <stop offset="50%" stop-color="var(--color-cyan)" stop-opacity="0.9"></stop>
+          <stop offset="100%" stop-color="var(--color-cyan)" stop-opacity="0"></stop>
         </linearGradient>
       </defs>
       {CAPAS_X.map((x, i) => (
@@ -169,15 +169,15 @@ const datos = {
     width: 6px;
     height: 6px;
     border-radius: 999px;
-    background: #ff6b3d;
-    box-shadow: 0 0 10px #ff6b3d;
+    background: var(--background-color-ember);
+    box-shadow: 0 0 10px rgb(var(--rgb-ember));
     flex-shrink: 0;
   }
   /* Renglón propio y reservado: la frase de la visita aparece a los pocos
      segundos y, en la misma línea que el título, lo empujaba y lo cortaba. */
   .fc-estado {
     flex-basis: 100%;
-    color: #00f2ff;
+    color: var(--color-cyan);
     text-transform: none;
     letter-spacing: 0;
     font-size: 11px;
@@ -189,10 +189,10 @@ const datos = {
     border-radius: 12px;
     overflow: hidden;
     background:
-      radial-gradient(120% 90% at 92% 40%, rgba(0, 242, 255, 0.07), transparent 60%),
-      repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.025) 0 1px, transparent 1px 32px),
-      rgba(8, 8, 11, 0.55);
-    border: 1px solid rgba(255, 255, 255, 0.05);
+      radial-gradient(120% 90% at 92% 40%, rgb(var(--rgb-cian) / 0.07), transparent 60%),
+      repeating-linear-gradient(0deg, rgb(var(--rgb-luz) / 0.025) 0 1px, transparent 1px 32px),
+      rgb(var(--rgb-pozo) / 0.55);
+    border: 1px solid rgb(var(--rgb-luz) / 0.05);
   }
   .fc-svg,
   .fc-lienzo {
@@ -216,24 +216,24 @@ const datos = {
     stroke-width: 2;
   }
   .fc-membrana-1 {
-    stroke: #4d4d5d;
+    stroke: var(--color-ink-300);
     stroke-dasharray: 3 7;
   }
   .fc-membrana-2 {
-    stroke: #00f2ff;
+    stroke: var(--color-cyan);
     stroke-opacity: 0.75;
   }
   .fc-membrana-3 {
-    stroke: #a78bff;
+    stroke: var(--color-violet);
     stroke-opacity: 0.7;
   }
-  .fc-punto-limpia { fill: #c4c4cc; fill-opacity: 0.55; }
+  .fc-punto-limpia { fill: var(--color-ink-100); fill-opacity: 0.55; }
   .fc-punto-registrada,
-  .fc-punto-frenada { fill: #ff6b3d; }
-  .fc-punto-senuelo { fill: #a78bff; }
-  .fc-tramo-registrada { fill: #ff6b3d; fill-opacity: 0.55; }
-  .fc-tramo-frenada { fill: #ff6b3d; }
-  .fc-tramo-senuelo { fill: #a78bff; }
+  .fc-punto-frenada { fill: var(--color-ember); }
+  .fc-punto-senuelo { fill: var(--color-violet); }
+  .fc-tramo-registrada { fill: var(--color-ember); fill-opacity: 0.55; }
+  .fc-tramo-frenada { fill: var(--color-ember); }
+  .fc-tramo-senuelo { fill: var(--color-violet); }
 
   .fc-rotulos {
     position: absolute;
@@ -243,7 +243,7 @@ const datos = {
     font-size: 10px;
     letter-spacing: 0.14em;
     text-transform: uppercase;
-    color: #85858f;
+    color: var(--color-ink-200);
   }
   .fc-rotulo {
     position: absolute;
@@ -251,11 +251,11 @@ const datos = {
     transform: translateX(-50%);
   }
   .fc-rotulo-sitio {
-    color: #00f2ff;
+    color: var(--color-cyan);
   }
   .fc-rotulo-bitacora {
     transform: translate(0, 9px);
-    color: #85858f;
+    color: var(--color-ink-200);
   }
 
   .fc-etiqueta,
@@ -266,23 +266,23 @@ const datos = {
     font-size: 11px;
     line-height: 1.35;
     border-radius: 8px;
-    background: rgba(10, 10, 13, 0.92);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgb(var(--rgb-pozo) / 0.92);
+    border: 1px solid rgb(var(--rgb-luz) / 0.1);
     padding: 6px 9px;
-    color: #e7e7ec;
+    color: var(--color-ink-50);
     white-space: nowrap;
     z-index: 2;
   }
   .fc-etiqueta small {
     display: block;
-    color: #85858f;
+    color: var(--color-ink-200);
     font-size: 10px;
   }
   .fc-aviso {
     left: 50%;
     bottom: 22%;
     transform: translateX(-50%);
-    border-color: rgba(255, 107, 61, 0.35);
+    border-color: rgb(var(--rgb-ember-linea) / 0.35);
     white-space: normal;
     width: max-content;
     max-width: 88%;
@@ -308,7 +308,7 @@ const datos = {
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    color: #85858f;
+    color: var(--color-ink-200);
   }
   /* El punto de color de cada capa es el mismo trazo que la dibuja en la
      escena: así la lista funciona como leyenda sin decir "leyenda". */
@@ -318,29 +318,29 @@ const datos = {
     height: 6px;
     border-radius: 999px;
   }
-  .fc-capa-1 .fc-capa-num::before { border: 1px dashed #85858f; }
-  .fc-capa-2 .fc-capa-num::before { background: #00f2ff; }
-  .fc-capa-3 .fc-capa-num::before { background: #a78bff; }
-  .fc-capa-4 .fc-capa-num::before { background: #c9ff5b; }
+  .fc-capa-1 .fc-capa-num::before { border: 1px dashed var(--color-ink-200); }
+  .fc-capa-2 .fc-capa-num::before { background: var(--background-color-cyan); }
+  .fc-capa-3 .fc-capa-num::before { background: var(--background-color-violet); }
+  .fc-capa-4 .fc-capa-num::before { background: var(--background-color-lime); }
   .fc-capa-nombre {
     font-size: 13px;
-    color: #e7e7ec;
+    color: var(--color-ink-50);
     font-weight: 500;
   }
   .fc-capa-dato {
     font-size: 12px;
-    color: #85858f;
+    color: var(--color-ink-200);
   }
   .fc-nota {
     margin-top: 12px;
     font-size: 11px;
     line-height: 1.5;
-    color: #6e6e7c;
+    color: var(--color-ink-300);
   }
   .fc-pista {
     display: block;
     margin-top: 4px;
-    color: #85858f;
+    color: var(--color-ink-200);
   }
 
   @media (max-width: 640px) {

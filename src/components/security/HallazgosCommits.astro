@@ -113,13 +113,13 @@ for (const f of findings) {
     top: 14px;
     bottom: 14px;
     width: 1px;
-    background: rgba(255, 255, 255, 0.08);
+    background: rgb(var(--rgb-luz) / 0.08);
     transform: translateX(-0.5px);
   }
   .hc-linea-luz {
     position: absolute;
     inset: 0;
-    background: linear-gradient(180deg, #c9ff5b, rgba(201, 255, 91, 0.35));
+    background: linear-gradient(180deg, var(--background-color-lime), rgb(var(--rgb-lima) / 0.35));
     transform-origin: top center;
   }
   .hc-grupo {
@@ -138,20 +138,20 @@ for (const f of findings) {
     height: 11px;
     margin-left: calc(var(--hc-x) - 5.5px);
     transform: rotate(45deg);
-    background: #121216;
-    border: 1px solid #00f2ff;
-    box-shadow: 0 0 0 5px #121216;
+    background: var(--color-ink-950);
+    border: 1px solid var(--color-cyan);
+    box-shadow: 0 0 0 5px var(--color-ink-950);
   }
   .hc-grupo-titulo {
     font-family: var(--font-mono, ui-monospace, monospace);
     font-size: 11px;
     letter-spacing: 0.16em;
     text-transform: uppercase;
-    color: #00f2ff;
+    color: var(--color-cyan);
     font-weight: 400;
   }
   .hc-grupo-n {
-    color: #4d4d5d;
+    color: var(--color-ink-300);
   }
   .hc-item {
     display: grid;
@@ -171,9 +171,9 @@ for (const f of findings) {
     width: 19px;
     height: 19px;
     border-radius: 999px;
-    background: #0e0e12;
-    border: 2px solid #c9ff5b;
-    box-shadow: 0 0 0 4px #121216;
+    background: var(--color-ink-850);
+    border: 2px solid var(--color-lime);
+    box-shadow: 0 0 0 4px var(--color-ink-950);
     transition: border-color 0.4s ease, background-color 0.4s ease;
   }
   .hc-nodo::after {
@@ -181,7 +181,7 @@ for (const f of findings) {
     position: absolute;
     inset: 3px;
     border-radius: 999px;
-    background: #c9ff5b;
+    background: var(--background-color-lime);
     transition: transform 0.4s cubic-bezier(0.2, 0.9, 0.3, 1.4), background-color 0.4s ease;
   }
   .hc-hash {
@@ -194,22 +194,22 @@ for (const f of findings) {
     padding-top: 1px;
   }
   .hc-hash-id {
-    color: #c9ff5b;
+    color: var(--color-lime);
     transition: color 0.4s ease;
   }
   .hc-hash:hover .hc-hash-id {
     text-decoration: underline;
   }
   .hc-hash-fecha {
-    color: #4d4d5d;
+    color: var(--color-ink-300);
     font-size: 11px;
   }
 
   .hc-card {
     position: relative;
     padding: 22px 24px;
-    background: rgba(255, 255, 255, 0.025);
-    border: 1px solid rgba(255, 255, 255, 0.07);
+    background: rgb(var(--rgb-luz) / 0.025);
+    border: 1px solid rgb(var(--rgb-luz) / 0.07);
     transition: background-color 0.5s ease, border-color 0.5s ease, box-shadow 0.5s ease;
   }
   .hc-cabeza {
@@ -222,7 +222,7 @@ for (const f of findings) {
   .hc-titulo {
     font-size: 17px;
     font-weight: 500;
-    color: #e7e7ec;
+    color: var(--color-ink-50);
     letter-spacing: -0.01em;
     text-wrap: balance;
   }
@@ -243,22 +243,22 @@ for (const f of findings) {
     white-space: nowrap;
   }
   .hc-sev-alta {
-    color: #ff6b3d;
-    border-color: rgba(255, 107, 61, 0.4);
-    background: rgba(255, 107, 61, 0.12);
+    color: var(--color-ember);
+    border-color: rgb(var(--rgb-ember-linea) / 0.4);
+    background: rgb(var(--rgb-ember) / 0.12);
   }
   .hc-sev-media {
-    color: rgba(255, 107, 61, 0.85);
-    border-color: rgba(255, 107, 61, 0.25);
-    background: rgba(255, 107, 61, 0.07);
+    color: rgb(var(--rgb-ember-linea) / 0.85);
+    border-color: rgb(var(--rgb-ember-linea) / 0.25);
+    background: rgb(var(--rgb-ember) / 0.07);
   }
   .hc-chip {
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    color: #c9ff5b;
-    border-color: rgba(201, 255, 91, 0.35);
-    background: rgba(201, 255, 91, 0.08);
+    color: var(--color-lime);
+    border-color: rgb(var(--rgb-lima-linea) / 0.35);
+    background: rgb(var(--rgb-lima) / 0.08);
     transition: color 0.4s ease, border-color 0.4s ease, background-color 0.4s ease;
   }
   .hc-chip::before {
@@ -277,7 +277,7 @@ for (const f of findings) {
     font-size: 11px;
   }
   .hc-archivo {
-    color: #4d4d5d;
+    color: var(--color-ink-300);
     overflow-wrap: anywhere;
   }
   .hc-cuerpo {
@@ -288,13 +288,13 @@ for (const f of findings) {
   .hc-bloque {
     border-radius: 12px;
     padding: 14px 16px;
-    background: rgba(255, 255, 255, 0.02);
-    border: 1px solid rgba(255, 255, 255, 0.05);
+    background: rgb(var(--rgb-luz) / 0.02);
+    border: 1px solid rgb(var(--rgb-luz) / 0.05);
   }
   .hc-bloque p {
     font-size: 13px;
     line-height: 1.6;
-    color: #c4c4cc;
+    color: var(--color-ink-100);
     transition: color 0.5s ease;
   }
   .hc-rotulo {
@@ -305,10 +305,10 @@ for (const f of findings) {
     margin-bottom: 8px;
   }
   .hc-problema .hc-rotulo {
-    color: #ff6b3d;
+    color: var(--color-ember);
   }
   .hc-fix .hc-rotulo {
-    color: #c9ff5b;
+    color: var(--color-lime);
   }
   /* El tachado es un fondo de 1 px que crece, no text-decoration: así se
      puede animar su largo de izquierda a derecha. */
@@ -317,7 +317,7 @@ for (const f of findings) {
     transition: background-size 0.6s cubic-bezier(0.6, 0, 0.2, 1);
   }
   .hc-problema p {
-    color: #85858f;
+    color: var(--color-ink-200);
   }
   .hc-fix {
     clip-path: inset(0 0 0 0 round 12px);
@@ -328,18 +328,18 @@ for (const f of findings) {
     margin-top: 14px;
     font-family: var(--font-mono, ui-monospace, monospace);
     font-size: 11px;
-    color: #c9ff5b;
+    color: var(--color-lime);
   }
 
   /* ── Estado "vulnerable" ── */
   .hc-item[data-estado='abierto'] .hc-card {
-    background: radial-gradient(120% 140% at 0% 0%, rgba(255, 107, 61, 0.08), transparent 55%), rgba(255, 255, 255, 0.025);
-    border-color: rgba(255, 107, 61, 0.22);
+    background: radial-gradient(120% 140% at 0% 0%, rgb(var(--rgb-ember) / 0.08), transparent 55%), rgb(var(--rgb-luz) / 0.025);
+    border-color: rgb(var(--rgb-ember-linea) / 0.22);
   }
   .hc-item[data-estado='abierto'] .hc-chip {
-    color: #ff6b3d;
-    border-color: rgba(255, 107, 61, 0.4);
-    background: rgba(255, 107, 61, 0.1);
+    color: var(--color-ember);
+    border-color: rgb(var(--rgb-ember-linea) / 0.4);
+    background: rgb(var(--rgb-ember) / 0.1);
   }
   .hc-item[data-estado='abierto'] .hc-chip::before {
     animation: hc-latido 1.2s ease-in-out infinite;
@@ -348,7 +348,7 @@ for (const f of findings) {
     background-size: 0% 1px;
   }
   .hc-item[data-estado='abierto'] .hc-problema p {
-    color: #e7e7ec;
+    color: var(--color-ink-50);
   }
   .hc-item[data-estado='abierto'] .hc-fix {
     clip-path: inset(0 100% 0 0 round 12px);
@@ -356,18 +356,18 @@ for (const f of findings) {
     transition-delay: 0s;
   }
   .hc-item[data-estado='abierto'] .hc-nodo {
-    border-color: #ff6b3d;
+    border-color: var(--color-ember);
   }
   .hc-item[data-estado='abierto'] .hc-nodo::after {
     transform: scale(0);
-    background: #ff6b3d;
+    background: var(--background-color-ember);
   }
   .hc-item[data-estado='abierto'] .hc-hash-id {
-    color: #4d4d5d;
+    color: var(--color-ink-300);
   }
   /* Al cerrarse, un destello verde recorre la tarjeta una vez. */
   .hc-item[data-cerrando] .hc-card {
-    box-shadow: 0 0 0 1px rgba(201, 255, 91, 0.35), 0 0 40px -10px rgba(201, 255, 91, 0.35);
+    box-shadow: 0 0 0 1px rgb(var(--rgb-lima-linea) / 0.35), 0 0 40px -10px rgb(var(--rgb-lima) / 0.35);
   }
   @keyframes hc-latido {
     50% {

@@ -10,6 +10,7 @@
 // Módulo solo de navegador.
 
 import gsap from 'gsap'
+import { paleta } from '../tema'
 
 type Constructor = (el: HTMLElement) => gsap.core.Timeline
 
@@ -17,10 +18,23 @@ const $ = <T extends Element = HTMLElement>(el: Element, sel: string) => el.quer
 const $$ = (el: Element, sel: string) => Array.from(el.querySelectorAll<HTMLElement>(sel))
 const nueva = () => gsap.timeline({ paused: true, repeat: -1, repeatDelay: 0.4 })
 
-const LIMA = '#c9ff5b'
-const EMBER = '#ff6b3d'
-const VIOLETA = '#a78bff'
-const GRIS = '#85858f'
+// GSAP no interpola var(--color): la paleta se copia en cadenas concretas al
+// montar las escenas (cargarPaleta), con el tema que haya en ese momento.
+let LIMA = '#c9ff5b'
+let EMBER = '#ff6b3d'
+let VIOLETA = '#a78bff'
+let GRIS = '#85858f'
+let TINTA_50 = '#e7e7ec'
+let C = { ember: '255,107,61', violeta: '167,139,255', lima: '201,255,91', cian: '0,242,255', luz: '255,255,255', tinta100: '196,196,204', tinta200: '133,133,143' }
+function cargarPaleta() {
+  const p = paleta()
+  LIMA = p.lima
+  EMBER = p.ember
+  VIOLETA = p.violeta
+  GRIS = p.tinta200
+  TINTA_50 = p.tinta50
+  C = p.rgb
+}
 
 /** Un sondeo tras otro; el primero fallido abre, el primero sano después cierra. */
 const incidentes: Constructor = (el) => {
@@ -78,7 +92,7 @@ const bloqueo: Constructor = (el) => {
   // La maliciosa llega a la puerta y se queda.
   tl.fromTo(mala, { x: -30, opacity: 1 }, { x: enPuerta, duration: 1.5, ease: 'none' }, 1.1)
     .to(rotMala, { opacity: 0.9, duration: 0.3 }, 1.1)
-    .to(puerta, { backgroundColor: EMBER, boxShadow: '0 0 14px rgba(255,107,61,.7)', duration: 0.15 }, 2.6)
+    .to(puerta, { backgroundColor: EMBER, boxShadow: `0 0 14px rgba(${C.ember},.7)`, duration: 0.15 }, 2.6)
     .to(chipBloq, { opacity: 1, y: 0, duration: 0.3 }, 2.6)
     .to(mala, { opacity: 0, scale: 0.4, duration: 0.6, ease: 'power2.in' }, 3.4)
     .to(puerta, { backgroundColor: GRIS, boxShadow: '0 0 0 rgba(0,0,0,0)', duration: 0.4 }, 3.6)
@@ -87,7 +101,7 @@ const bloqueo: Constructor = (el) => {
   tl.to([chipBloq, rotMala], { opacity: 0, duration: 0.3 }, 4.2)
     .to(rotPropia, { opacity: 0.9, y: 0, duration: 0.3 }, 4.2)
     .fromTo(propia, { x: -30, opacity: 1 }, { x: () => ancho() + 10, duration: 2.6, ease: 'none' }, 4.2)
-    .to(puerta, { backgroundColor: VIOLETA, boxShadow: '0 0 14px rgba(167,139,255,.6)', duration: 0.15 }, 5.6)
+    .to(puerta, { backgroundColor: VIOLETA, boxShadow: `0 0 14px rgba(${C.violeta},.6)`, duration: 0.15 }, 5.6)
     .to(chipSalva, { opacity: 1, y: 0, duration: 0.3 }, 5.6)
     .to(puerta, { backgroundColor: GRIS, boxShadow: '0 0 0 rgba(0,0,0,0)', duration: 0.5 }, 6.3)
   cruzar(normales[3], 5.2)
@@ -102,13 +116,13 @@ const anomalias: Constructor = (el) => {
   const chip = $(el, '[data-fuera-chip]')
   const tl = nueva()
   tl.set(barras, { scaleY: 0 })
-    .set(ultima, { backgroundColor: 'rgba(196,196,204,0.35)', boxShadow: '0 0 0 rgba(0,0,0,0)' })
+    .set(ultima, { backgroundColor: `rgba(${C.tinta100},0.35)`, boxShadow: '0 0 0 rgba(0,0,0,0)' })
     .set(chip, { opacity: 0, y: 5 })
     .to(barras.slice(0, -1), { scaleY: 1, duration: 0.45, ease: 'back.out(1.6)', stagger: 0.12 })
     // La última crece como las demás hasta la banda, duda, y se sale.
     .to(ultima, { scaleY: 0.6, duration: 0.45, ease: 'power2.out' })
     .to(ultima, { scaleY: 1, duration: 0.7, ease: 'power3.out' }, '+=0.35')
-    .to(ultima, { backgroundColor: EMBER, boxShadow: '0 0 12px rgba(255,107,61,.45)', duration: 0.25 }, '<0.25')
+    .to(ultima, { backgroundColor: EMBER, boxShadow: `0 0 12px rgba(${C.ember},.45)`, duration: 0.25 }, '<0.25')
     .to(chip, { opacity: 1, y: 0, duration: 0.3 }, '<')
     .to({}, { duration: 2 })
     .to([...barras, chip], { opacity: 0, duration: 0.4 })
@@ -161,21 +175,21 @@ const reversion: Constructor = (el) => {
   const insanos = $(el, '[data-insanos]')
   const revertido = $(el, '[data-revertido]')
   const tl = nueva()
-  tl.set(v41, { color: LIMA, borderColor: 'rgba(201,255,91,.45)' })
-    .set(v42, { opacity: 0, x: 16, color: GRIS, borderColor: 'rgba(255,255,255,.14)' })
+  tl.set(v41, { color: LIMA, borderColor: `rgba(${C.lima},.45)` })
+    .set(v42, { opacity: 0, x: 16, color: GRIS, borderColor: `rgba(${C.luz},.14)` })
     .set(checks, { opacity: 0, scale: 0.4 })
     .set(rot, { opacity: 0 })
     .set(curva, { clipPath: 'inset(-20% 0% -20% 100%)', opacity: 1 })
     .set([insanos, revertido], { opacity: 0, y: 5 })
     .to(v42, { opacity: 1, x: 0, duration: 0.5, ease: 'expo.out' }, 0.3)
-    .to(v41, { color: GRIS, borderColor: 'rgba(255,255,255,.14)', duration: 0.4 }, 0.6)
-    .to(v42, { color: '#e7e7ec', borderColor: 'rgba(0,242,255,.4)', duration: 0.3 }, 0.6)
+    .to(v41, { color: GRIS, borderColor: `rgba(${C.luz},.14)`, duration: 0.4 }, 0.6)
+    .to(v42, { color: TINTA_50, borderColor: `rgba(${C.cian},.4)`, duration: 0.3 }, 0.6)
     .to(rot, { opacity: 1, duration: 0.3 }, 1)
   checks.forEach((c, i) => tl.to(c, { opacity: 1, scale: 1, duration: 0.3, ease: 'back.out(3)' }, 1.3 + i * 0.55))
   tl.to(insanos, { opacity: 1, y: 0, duration: 0.3 }, 2.5)
-    .to(v42, { color: EMBER, borderColor: 'rgba(255,107,61,.6)', duration: 0.3 }, 2.5)
+    .to(v42, { color: EMBER, borderColor: `rgba(${C.ember},.6)`, duration: 0.3 }, 2.5)
     .to(curva, { clipPath: 'inset(-20% 0% -20% 0%)', duration: 0.9, ease: 'power2.inOut' }, 3)
-    .to(v41, { color: LIMA, borderColor: 'rgba(201,255,91,.45)', duration: 0.3 }, 3.8)
+    .to(v41, { color: LIMA, borderColor: `rgba(${C.lima},.45)`, duration: 0.3 }, 3.8)
     .to(v42, { opacity: 0.25, duration: 0.4 }, 3.9)
     .to(insanos, { opacity: 0, duration: 0.25 }, 3.9)
     .to(revertido, { opacity: 1, y: 0, duration: 0.3 }, 4.1)
@@ -212,6 +226,7 @@ const purga: Constructor = (el) => {
 const ESCENAS: Record<string, Constructor> = { incidentes, bloqueo, anomalias, respaldo, reversion, purga }
 
 export function montarEscenas(): void {
+  cargarPaleta()
   const vivas = new Map<Element, gsap.core.Timeline>()
   document.querySelectorAll<HTMLElement>('[data-escena]').forEach((el) => {
     const crear = ESCENAS[el.dataset.escena ?? '']

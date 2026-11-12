@@ -120,7 +120,7 @@ const dos = (n: number) => String(n).padStart(2, '0')
   .fd {
     position: relative;
     margin: 0;
-    --fd-color: #00f2ff;
+    --fd-color: var(--color-cyan);
   }
 
   /* Mazo: dos cartas detrás, algo giradas. Solo con JS (el mazo anuncia que
@@ -132,8 +132,8 @@ const dos = (n: number) => String(n).padStart(2, '0')
     position: absolute;
     inset: 10px 6px -10px 6px;
     border-radius: 22px;
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    background: linear-gradient(180deg, rgba(255, 255, 255, 0.025), rgba(255, 255, 255, 0.008));
+    border: 1px solid rgb(var(--rgb-luz) / 0.05);
+    background: linear-gradient(180deg, rgb(var(--rgb-luz) / 0.025), rgb(var(--rgb-luz) / 0.008));
     transform-origin: 50% 100%;
   }
   .fd-f1 { transform: rotate(2.2deg) translateY(6px); }
@@ -145,9 +145,9 @@ const dos = (n: number) => String(n).padStart(2, '0')
     grid-template-columns: minmax(0, 1fr);
     border-radius: 22px;
     overflow: hidden;
-    background: #0e0e12;
-    border: 1px solid rgba(255, 255, 255, 0.07);
-    box-shadow: 0 40px 80px -40px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(0, 0, 0, 0.3);
+    background: var(--color-ink-850);
+    border: 1px solid rgb(var(--rgb-luz) / 0.07);
+    box-shadow: 0 40px 80px -40px var(--sombra-profunda), 0 0 0 1px rgba(0, 0, 0, 0.3);
   }
 
   .fd-mapa {
@@ -156,8 +156,8 @@ const dos = (n: number) => String(n).padStart(2, '0')
     /* Respaldo sin WebGL: un halo del color de la familia, no una caja vacía. */
     background:
       radial-gradient(120% 140% at 25% 20%, color-mix(in srgb, var(--fd-color) 22%, transparent), transparent 60%),
-      #0c0c10;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      var(--color-ink-900);
+    border-bottom: 1px solid rgb(var(--rgb-luz) / 0.06);
   }
   /* El lienzo mide más que la banda y se recorta: el mapa se dibuja en
      unidades de su altura, y a 132 px las curvas quedaban apiñadas como
@@ -168,7 +168,7 @@ const dos = (n: number) => String(n).padStart(2, '0')
     content: '';
     position: absolute;
     inset: 0;
-    background: linear-gradient(180deg, rgba(14, 14, 18, 0) 35%, rgba(14, 14, 18, 0.85));
+    background: linear-gradient(180deg, rgb(var(--rgb-pozo) / 0) 35%, rgb(var(--rgb-pozo) / 0.85));
     pointer-events: none;
   }
   .fd-mapa-pie {
@@ -182,18 +182,18 @@ const dos = (n: number) => String(n).padStart(2, '0')
     font-size: 10.5px;
     letter-spacing: 0.16em;
     text-transform: uppercase;
-    color: #c4c4cc;
-    text-shadow: 0 1px 8px rgba(0, 0, 0, 0.9);
+    color: var(--color-ink-100);
+    text-shadow: 0 1px 8px var(--sombra-profunda);
   }
-  .fd-num b { color: #e7e7ec; font-weight: 500; }
+  .fd-num b { color: var(--color-ink-50); font-weight: 500; }
   .fd-tema {
     display: inline-flex;
     align-items: center;
     gap: 8px;
     padding: 4px 10px;
     border-radius: 999px;
-    background: rgba(10, 10, 13, 0.72);
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgb(var(--rgb-pozo) / 0.72);
+    border: 1px solid rgb(var(--rgb-luz) / 0.08);
   }
   .fd-punto {
     width: 7px;
@@ -221,7 +221,7 @@ const dos = (n: number) => String(n).padStart(2, '0')
     font-size: 10.5px;
     letter-spacing: 0.18em;
     text-transform: uppercase;
-    color: #85858f;
+    color: var(--color-ink-200);
   }
   .fd-bloque:first-child .fd-rot { margin-bottom: 8px; }
   .fd-rot-dec { color: var(--fd-color); }
@@ -232,7 +232,7 @@ const dos = (n: number) => String(n).padStart(2, '0')
   .fd-problema {
     font-size: 17px;
     line-height: 1.45;
-    color: #e7e7ec;
+    color: var(--color-ink-50);
     letter-spacing: -0.01em;
     min-height: 3lh;
     text-wrap: pretty;
@@ -243,8 +243,8 @@ const dos = (n: number) => String(n).padStart(2, '0')
      línea, porque el span es inline y el fondo se parte con el texto. */
   .fd-desc-txt {
     text-decoration: none;
-    color: #85858f;
-    background-image: linear-gradient(#c4c4cc, #c4c4cc);
+    color: var(--color-ink-200);
+    background-image: linear-gradient(var(--color-ink-100), var(--color-ink-100));
     background-repeat: no-repeat;
     background-position: 0 58%;
     background-size: 100% 2px;
@@ -254,7 +254,7 @@ const dos = (n: number) => String(n).padStart(2, '0')
   .fd-decidido {
     font-size: 15.5px;
     line-height: 1.45;
-    color: #e7e7ec;
+    color: var(--color-ink-50);
     min-height: 2lh;
   }
   .fd-caret {
@@ -275,8 +275,8 @@ const dos = (n: number) => String(n).padStart(2, '0')
     margin: 10px 12px 12px;
     padding: 14px 14px 12px;
     border-radius: 14px;
-    background: rgba(255, 255, 255, 0.025);
-    border: 1px solid rgba(255, 255, 255, 0.05);
+    background: rgb(var(--rgb-luz) / 0.025);
+    border: 1px solid rgb(var(--rgb-luz) / 0.05);
     transition: background-color 0.3s, border-color 0.3s;
   }
   .fd-leer:hover, .fd-leer:focus-visible {
@@ -286,7 +286,7 @@ const dos = (n: number) => String(n).padStart(2, '0')
   .fd-titulo {
     font-size: 14.5px;
     font-weight: 500;
-    color: #e7e7ec;
+    color: var(--color-ink-50);
     line-height: 1.35;
     min-height: 2lh;
     text-wrap: balance;
@@ -296,7 +296,7 @@ const dos = (n: number) => String(n).padStart(2, '0')
     justify-content: space-between;
     font-family: var(--font-mono);
     font-size: 11px;
-    color: #85858f;
+    color: var(--color-ink-200);
   }
   .fd-cta { color: var(--fd-color); transition: transform 0.3s; }
   .fd-leer:hover .fd-cta { transform: translateX(3px); }
@@ -315,13 +315,13 @@ const dos = (n: number) => String(n).padStart(2, '0')
     display: grid;
     place-items: center;
     border-radius: 999px;
-    color: #c4c4cc;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    background: rgba(255, 255, 255, 0.02);
+    color: var(--color-ink-100);
+    border: 1px solid rgb(var(--rgb-luz) / 0.1);
+    background: rgb(var(--rgb-luz) / 0.02);
     transition: color 0.2s, border-color 0.2s, background-color 0.2s;
   }
-  .fd-btn:hover { color: #e7e7ec; border-color: rgba(255, 255, 255, 0.22); }
-  .fd-btn:focus-visible { outline: 2px solid #00f2ff; outline-offset: 2px; }
+  .fd-btn:hover { color: var(--color-ink-50); border-color: rgb(var(--rgb-luz) / 0.22); }
+  .fd-btn:focus-visible { outline: 2px solid var(--color-cyan); outline-offset: 2px; }
   .fd-ico-play { display: none; }
   .fd-pausa[aria-pressed='true'] .fd-ico-pausa { display: none; }
   .fd-pausa[aria-pressed='true'] .fd-ico-play { display: block; }
@@ -344,10 +344,10 @@ const dos = (n: number) => String(n).padStart(2, '0')
     height: 8px;
     margin-top: 4px;
     border-radius: 1px;
-    background: #3a3a48;
+    background: var(--color-ink-400);
     transition: height 0.35s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.35s, margin 0.35s;
   }
-  .fd-marca:hover { background: #85858f; }
+  .fd-marca:hover { background: var(--color-ink-200); }
   .fd-marca.actual { height: 16px; margin-top: 0; background: var(--fd-color); }
   .fd-avance {
     position: absolute;

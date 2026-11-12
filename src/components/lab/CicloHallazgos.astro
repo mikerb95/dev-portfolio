@@ -41,9 +41,9 @@ const cajas = [
 
 <style is:global>
   .ch {
-    --ch-ember: #ff6b3d;
-    --ch-lime: #c9ff5b;
-    --ch-cyan: #00f2ff;
+    --ch-ember: var(--color-ember);
+    --ch-lime: var(--color-lime);
+    --ch-cyan: var(--color-cyan);
     position: relative;
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -57,13 +57,13 @@ const cajas = [
     gap: 14px;
     padding: 16px 16px 18px;
     border-radius: 16px;
-    border: 1px solid rgba(255, 255, 255, 0.06);
-    background: rgba(12, 12, 16, 0.55);
+    border: 1px solid rgb(var(--rgb-luz) / 0.06);
+    background: rgb(var(--rgb-pozo) / 0.55);
     min-height: 150px;
   }
   .ch-cab { display: flex; align-items: baseline; gap: 10px; }
   .ch-n { font-family: var(--font-mono, ui-monospace, monospace); font-size: 26px; line-height: 1; }
-  .ch-rot { font-family: var(--font-mono, ui-monospace, monospace); font-size: 10px; letter-spacing: 0.15em; text-transform: uppercase; color: #85858f; }
+  .ch-rot { font-family: var(--font-mono, ui-monospace, monospace); font-size: 10px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--color-ink-200); }
   .ch-open .ch-n { color: var(--ch-ember); }
   .ch-resolved .ch-n { color: var(--ch-lime); }
   .ch-accepted .ch-n { color: var(--ch-cyan); }
@@ -71,13 +71,13 @@ const cajas = [
   .ch-punto { width: 9px; height: 9px; border-radius: 99px; flex: none; }
   /* El color lo da la caja donde está el punto, no el punto: al cambiar de
      caja cambia de color, que es lo que cuenta la pieza. */
-  .ch-open .ch-punto { background: var(--ch-ember); box-shadow: 0 0 8px -1px rgba(255, 107, 61, 0.7); }
-  .ch-resolved .ch-punto { background: var(--ch-lime); box-shadow: 0 0 8px -1px rgba(201, 255, 91, 0.6); }
+  .ch-open .ch-punto { background: var(--ch-ember); box-shadow: 0 0 8px -1px rgb(var(--rgb-ember) / 0.7); }
+  .ch-resolved .ch-punto { background: var(--ch-lime); box-shadow: 0 0 8px -1px rgb(var(--rgb-lima) / 0.6); }
   .ch-accepted .ch-punto { background: transparent; border: 1.5px solid var(--ch-cyan); }
   /* En vuelo, el punto conserva el color de donde salió hasta aterrizar. */
-  .ch .ch-punto[data-vuelo] { background: var(--ch-ember); border: 0; box-shadow: 0 0 10px 0 rgba(255, 107, 61, 0.8); }
-  .ch-nota { font-family: var(--font-mono, ui-monospace, monospace); font-size: 10px; color: #4d4d5d; }
-  .ch-leyenda { grid-column: 1 / -1; margin: 0; font-family: var(--font-mono, ui-monospace, monospace); font-size: 10px; color: #6b6b78; }
+  .ch .ch-punto[data-vuelo] { background: var(--ch-ember); border: 0; box-shadow: 0 0 10px 0 rgb(var(--rgb-ember) / 0.8); }
+  .ch-nota { font-family: var(--font-mono, ui-monospace, monospace); font-size: 10px; color: var(--color-ink-300); }
+  .ch-leyenda { grid-column: 1 / -1; margin: 0; font-family: var(--font-mono, ui-monospace, monospace); font-size: 10px; color: var(--color-ink-300); }
   @media (max-width: 639px) {
     .ch { gap: 8px; }
     .ch-caja { padding: 12px; min-height: 130px; }

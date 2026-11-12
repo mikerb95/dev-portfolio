@@ -21,6 +21,7 @@ import { entradaDesdeHitos, htmlCinta, indiceDe, lecturaDia, modeloCinta, type C
 import { coincideBandeja, consultaBandeja } from './ep-datos'
 import { odometro, revelarPalabras } from './efectos'
 import { montarLanding } from './landing'
+import { paleta } from '../tema'
 
 gsap.registerPlugin(ScrollTrigger)
 
@@ -324,8 +325,8 @@ function animarRecibo(el: HTMLElement) {
         if (tipo === 'total') {
           gsap.fromTo(
             fila,
-            { backgroundColor: 'rgba(201,255,91,0.16)' },
-            { backgroundColor: 'rgba(201,255,91,0)', duration: 1, delay: t + 0.3, ease: 'power2.out', clearProps: 'backgroundColor' },
+            { backgroundColor: `rgba(${paleta().rgb.lima},0.16)` },
+            { backgroundColor: `rgba(${paleta().rgb.lima},0)`, duration: 1, delay: t + 0.3, ease: 'power2.out', clearProps: 'backgroundColor' },
           )
         }
       })
@@ -403,7 +404,7 @@ function aplicarBandeja(ok: boolean, asunto: string, animar: boolean) {
         { height: 0, paddingTop: 0, paddingBottom: 0, opacity: 0 },
         { height: 'auto', paddingTop: 9, paddingBottom: 9, opacity: 1, duration: 0.6, ease: 'expo.out', clearProps: 'all' },
       )
-      gsap.fromTo(tuyo, { backgroundColor: 'rgba(201,255,91,0.3)' }, { backgroundColor: 'rgba(201,255,91,0.06)', duration: 1.4, clearProps: 'backgroundColor' })
+      gsap.fromTo(tuyo, { backgroundColor: `rgba(${paleta().rgb.lima},0.3)` }, { backgroundColor: `rgba(${paleta().rgb.lima},0.06)`, duration: 1.4, clearProps: 'backgroundColor' })
     }
   }
 

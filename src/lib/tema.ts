@@ -62,3 +62,51 @@ export function alCambiarTema(fn: (t: Tema) => void): () => void {
 export function colorDeTema(variable: string): string {
   return getComputedStyle(document.documentElement).getPropertyValue(variable).trim()
 }
+
+/** "#0a0a0d" o "10 10 13" a "10, 10, 13", la forma que piden las plantillas `rgba(${x}, .5)`. */
+function aCanales(valor: string): string {
+  const v = valor.trim()
+  if (v.startsWith('#')) {
+    const h = v.length === 4 ? v.slice(1).replace(/./g, '$&$&') : v.slice(1, 7)
+    return [0, 2, 4].map((i) => parseInt(h.slice(i, i + 2), 16)).join(', ')
+  }
+  return v.split(/[\s,]+/).join(', ')
+}
+
+/**
+ * Colores del tema actual como cadenas concretas, para donde `var()` no llega:
+ * canvas 2D y tweens de GSAP. `rgb.*` son canales ("0, 242, 255") para armar
+ * `rgba()`. Los `*Linea` son el acento como trazo: en oscuro igual al acento,
+ * en claro su versión que se lee sobre blanco. En un lienzo casi todo es trazo
+ * fino, así que suele ser la que toca.
+ *
+ * Se lee al pintar o al armar la animación, nunca al cargar el módulo: el tema
+ * puede cambiar con la página abierta (`alCambiarTema`).
+ */
+export function paleta() {
+  const css = getComputedStyle(document.documentElement)
+  const v = (n: string) => css.getPropertyValue(n).trim()
+  return {
+    cian: v('--color-cyan'),
+    cianClaro: v('--color-cyan-glow'),
+    lima: v('--color-lime'),
+    ember: v('--color-ember'),
+    violeta: v('--color-violet'),
+    ambar: v('--color-ambar'),
+    blanco: v('--color-white'),
+    tinta50: v('--color-ink-50'),
+    tinta100: v('--color-ink-100'),
+    tinta200: v('--color-ink-200'),
+    tinta300: v('--color-ink-300'),
+    rgb: {
+      cian: aCanales(v('--rgb-cian-linea')),
+      lima: aCanales(v('--rgb-lima-linea')),
+      ember: aCanales(v('--rgb-ember-linea')),
+      violeta: aCanales(v('--rgb-violeta-linea')),
+      luz: aCanales(v('--rgb-luz')),
+      tinta100: aCanales(v('--color-ink-100')),
+      tinta200: aCanales(v('--color-ink-200')),
+    },
+  }
+}
+export type Paleta = ReturnType<typeof paleta>

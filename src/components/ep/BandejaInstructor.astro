@@ -57,8 +57,8 @@ const correos = [
 <style>
   .bj {
     border-radius: 14px;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    background: rgba(10, 10, 13, 0.55);
+    border: 1px solid rgb(var(--rgb-luz) / 0.1);
+    background: rgb(var(--rgb-pozo) / 0.55);
     overflow: hidden;
   }
   .bj-barra {
@@ -67,17 +67,17 @@ const correos = [
     justify-content: space-between;
     gap: 12px;
     padding: 10px 14px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+    border-bottom: 1px solid rgb(var(--rgb-luz) / 0.07);
     font: 10px/1 var(--font-mono, ui-monospace, monospace);
     text-transform: uppercase;
     letter-spacing: 0.12em;
   }
   .bj-titulo {
-    color: #c4c4cc;
+    color: var(--color-ink-100);
   }
   .bj-ejemplo {
-    color: #85858f;
-    border: 1px dashed rgba(255, 255, 255, 0.18);
+    color: var(--color-ink-200);
+    border: 1px dashed rgb(var(--rgb-luz) / 0.18);
     border-radius: 999px;
     padding: 4px 8px;
     letter-spacing: 0.08em;
@@ -90,30 +90,30 @@ const correos = [
     height: 36px;
     padding: 0 12px;
     border-radius: 999px;
-    background: rgba(255, 255, 255, 0.04);
-    border: 1px solid rgba(255, 255, 255, 0.09);
-    color: #85858f;
+    background: rgb(var(--rgb-luz) / 0.04);
+    border: 1px solid rgb(var(--rgb-luz) / 0.09);
+    color: var(--color-ink-200);
     font: 12px/1 var(--font-mono, ui-monospace, monospace);
     transition: border-color 0.3s;
   }
   .bj[data-filtrando] .bj-buscar {
-    border-color: rgba(0, 242, 255, 0.4);
+    border-color: rgb(var(--rgb-cian-linea) / 0.4);
   }
   .bj-q {
-    color: #e7e7ec;
+    color: var(--color-ink-50);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
     min-width: 0;
   }
   .bj-q-vacio {
-    color: #85858f;
+    color: var(--color-ink-200);
   }
   .bj-cursor {
     width: 1px;
     height: 14px;
     margin-left: -6px;
-    background: #00f2ff;
+    background: var(--background-color-cyan);
     opacity: 0;
   }
   .bj[data-escribiendo] .bj-cursor {
@@ -122,7 +122,7 @@ const correos = [
   .bj-cuenta {
     margin-left: auto;
     flex-shrink: 0;
-    color: #00f2ff;
+    color: var(--color-cyan);
     font-size: 10px;
     text-transform: uppercase;
     letter-spacing: 0.1em;
@@ -136,7 +136,7 @@ const correos = [
     align-items: center;
     gap: 10px;
     padding: 9px 14px;
-    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    border-top: 1px solid rgb(var(--rgb-luz) / 0.05);
     transition: opacity 0.45s, background-color 0.45s, filter 0.45s;
   }
   .bj-correo[hidden] {
@@ -148,14 +148,14 @@ const correos = [
     width: 30px;
     height: 30px;
     border-radius: 50%;
-    background: rgba(255, 255, 255, 0.06);
-    color: #c4c4cc;
+    background: rgb(var(--rgb-luz) / 0.06);
+    color: var(--color-ink-100);
     font: 10px/1 var(--font-mono, ui-monospace, monospace);
     letter-spacing: 0.04em;
   }
   .bj-av-tu {
-    background: #c9ff5b;
-    color: #0a0a0d;
+    background: var(--background-color-lime);
+    color: var(--sobre-acento);
   }
   .bj-cuerpo {
     display: grid;
@@ -163,41 +163,41 @@ const correos = [
   }
   .bj-de {
     font-size: 12px;
-    color: #e7e7ec;
+    color: var(--color-ink-50);
   }
   .bj-de em {
     font-style: normal;
     font: 9px/1 var(--font-mono, ui-monospace, monospace);
     text-transform: uppercase;
     letter-spacing: 0.1em;
-    color: #c9ff5b;
+    color: var(--color-lime);
     margin-left: 6px;
   }
   .bj-asunto {
     font: 11px/1.5 var(--font-mono, ui-monospace, monospace);
-    color: #85858f;
+    color: var(--color-ink-200);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
   }
   .bj-hora {
     font: 10px/1 var(--font-mono, ui-monospace, monospace);
-    color: #85858f;
+    color: var(--color-ink-200);
   }
   .bj-tuyo {
-    background: rgba(201, 255, 91, 0.06);
+    background: rgb(var(--rgb-lima) / 0.06);
   }
 
   /* Con la búsqueda aplicada: lo encontrado se ilumina, lo demás se apaga. */
   .bj[data-filtrando] .bj-correo.encontrado {
-    background: rgba(0, 242, 255, 0.06);
+    background: rgb(var(--rgb-cian) / 0.06);
   }
   .bj[data-filtrando] .bj-correo.encontrado .bj-asunto {
-    color: #c4c4cc;
+    color: var(--color-ink-100);
   }
   .bj :global(.bj-marca) {
-    color: #00f2ff;
-    background: rgba(0, 242, 255, 0.14);
+    color: var(--color-cyan);
+    background: rgb(var(--rgb-cian) / 0.14);
     border-radius: 3px;
   }
   .bj[data-filtrando] .bj-correo:not(.encontrado) {
@@ -206,9 +206,9 @@ const correos = [
   }
   .bj-nota {
     padding: 10px 14px 12px;
-    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    border-top: 1px solid rgb(var(--rgb-luz) / 0.05);
     font-size: 11px;
     line-height: 1.5;
-    color: #85858f;
+    color: var(--color-ink-200);
   }
 </style>

@@ -13,6 +13,7 @@
 import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import { Flip } from 'gsap/Flip'
+import { paleta } from '../tema'
 
 gsap.registerPlugin(ScrollTrigger, Flip)
 
@@ -90,7 +91,7 @@ function pista() {
       const nodo = (e: string) => f.querySelector<HTMLElement>(`.pp-nodo[data-etapa="${e}"]`)
       const desenlace = f.dataset.desenlace
       const TRAMO = 0.34
-      tl.set(chispa, { left: '0%', opacity: 1, background: '#ffffff' }, t0)
+      tl.set(chispa, { left: '0%', opacity: 1, background: paleta().blanco }, t0)
       ETAPAS.forEach((e, k) => {
         tl.call(() => nodo(e)?.removeAttribute('data-apagado'), undefined, t0 + k * TRAMO)
         tl.fromTo(nodo(e), { scale: 1.8 }, { scale: 1, duration: 0.35, ease: 'back.out(2)' }, t0 + k * TRAMO)

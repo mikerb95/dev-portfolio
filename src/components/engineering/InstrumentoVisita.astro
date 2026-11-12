@@ -76,8 +76,8 @@ const datos = {
     <svg class="inst-svg" data-svg>
       <defs>
         <linearGradient id="inst-relleno" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stop-color="#00f2ff" stop-opacity="0.32"></stop>
-          <stop offset="100%" stop-color="#00f2ff" stop-opacity="0"></stop>
+          <stop offset="0%" stop-color="var(--color-cyan)" stop-opacity="0.32"></stop>
+          <stop offset="100%" stop-color="var(--color-cyan)" stop-opacity="0"></stop>
         </linearGradient>
         <clipPath id="inst-recorte"><rect data-recorte x="0" y="0" width="0" height="100%"></rect></clipPath>
       </defs>
@@ -166,16 +166,16 @@ const datos = {
     width: 7px;
     height: 7px;
     border-radius: 9999px;
-    background: #00f2ff;
-    box-shadow: 0 0 10px #00f2ff;
+    background: var(--background-color-cyan);
+    box-shadow: 0 0 10px rgb(var(--rgb-cian));
     flex-shrink: 0;
   }
   .inst[data-fase='midiendo'] .inst-led {
     animation: inst-parpadeo 0.9s ease-in-out infinite;
   }
   .inst[data-fase='listo'] .inst-led {
-    background: #c9ff5b;
-    box-shadow: 0 0 10px #c9ff5b;
+    background: var(--background-color-lime);
+    box-shadow: 0 0 10px rgb(var(--rgb-lima));
   }
   @keyframes inst-parpadeo {
     50% {
@@ -183,7 +183,7 @@ const datos = {
     }
   }
   .inst-estado {
-    color: #85858f;
+    color: var(--color-ink-200);
     white-space: nowrap;
   }
 
@@ -195,11 +195,11 @@ const datos = {
     border-radius: 12px;
     overflow: hidden;
     background:
-      linear-gradient(rgba(255, 255, 255, 0.045) 1px, transparent 1px) 0 0 / 100% 25%,
-      linear-gradient(90deg, rgba(255, 255, 255, 0.045) 1px, transparent 1px) 0 0 / 10% 100%,
-      radial-gradient(120% 90% at 50% 40%, rgba(0, 242, 255, 0.07), transparent 70%),
-      #0a0a0d;
-    border: 1px solid rgba(255, 255, 255, 0.07);
+      linear-gradient(rgb(var(--rgb-luz) / 0.045) 1px, transparent 1px) 0 0 / 100% 25%,
+      linear-gradient(90deg, rgb(var(--rgb-luz) / 0.045) 1px, transparent 1px) 0 0 / 10% 100%,
+      radial-gradient(120% 90% at 50% 40%, rgb(var(--rgb-cian) / 0.07), transparent 70%),
+      var(--color-ink-900);
+    border: 1px solid rgb(var(--rgb-luz) / 0.07);
   }
   .inst-svg {
     position: absolute;
@@ -210,25 +210,25 @@ const datos = {
   }
   .inst-traza {
     fill: none;
-    stroke: #9bfaff;
+    stroke: var(--color-cyan-glow);
     stroke-width: 1.6;
     stroke-linejoin: round;
   }
   .inst-traza-halo {
     fill: none;
-    stroke: #00f2ff;
+    stroke: var(--color-cyan);
     stroke-width: 6;
     stroke-opacity: 0.22;
     filter: blur(3px);
   }
   .inst-haz {
-    stroke: #e7fdff;
+    stroke: var(--cian-blanco);
     stroke-width: 1.5;
-    filter: drop-shadow(0 0 6px #00f2ff) drop-shadow(0 0 14px #00f2ff);
+    filter: drop-shadow(0 0 6px rgb(var(--rgb-cian))) drop-shadow(0 0 14px rgb(var(--rgb-cian)));
     opacity: 0;
   }
   .inst-cursor {
-    stroke: rgba(231, 231, 236, 0.55);
+    stroke: rgb(var(--rgb-tinta) / 0.55);
     stroke-width: 1;
     stroke-dasharray: 3 3;
     opacity: 0;
@@ -244,7 +244,7 @@ const datos = {
     /* Contorno del color de la pantalla: la etiqueta se lee aunque caiga
        encima de un pico de la traza. */
     paint-order: stroke;
-    stroke: #0a0a0d;
+    stroke: var(--color-ink-900);
     stroke-width: 4px;
     stroke-linejoin: round;
   }
@@ -256,7 +256,7 @@ const datos = {
     height: 12px;
     font-family: var(--font-mono, ui-monospace, monospace);
     font-size: 9.5px;
-    color: #4d4d5d;
+    color: var(--color-ink-300);
   }
   .inst-ejes span {
     position: absolute;
@@ -277,11 +277,11 @@ const datos = {
     right: 10px;
     padding: 3px 7px;
     border-radius: 6px;
-    background: rgba(10, 10, 13, 0.85);
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgb(var(--rgb-pozo) / 0.85);
+    border: 1px solid rgb(var(--rgb-luz) / 0.08);
     font-family: var(--font-mono, ui-monospace, monospace);
     font-size: 10.5px;
-    color: #c4c4cc;
+    color: var(--color-ink-100);
     opacity: 0;
     transition: opacity 0.2s ease;
     pointer-events: none;
@@ -296,7 +296,7 @@ const datos = {
     place-items: center;
     padding: 0 28px;
     text-align: center;
-    color: #85858f;
+    color: var(--color-ink-200);
     font-size: 12.5px;
     line-height: 1.55;
   }
@@ -311,7 +311,7 @@ const datos = {
     margin: 9px 2px 4px;
     font-family: var(--font-mono, ui-monospace, monospace);
     font-size: 10.5px;
-    color: #85858f;
+    color: var(--color-ink-200);
   }
   .inst-leyenda span {
     display: inline-flex;
@@ -320,7 +320,7 @@ const datos = {
   }
   .inst-leyenda .inst-total {
     margin-left: auto;
-    color: #4d4d5d;
+    color: var(--color-ink-300);
   }
   .inst-leyenda i {
     width: 10px;
@@ -334,7 +334,7 @@ const datos = {
     gap: 10px;
     margin-top: 10px;
     padding-top: 12px;
-    border-top: 1px solid rgba(255, 255, 255, 0.06);
+    border-top: 1px solid rgb(var(--rgb-luz) / 0.06);
   }
   .inst-fila {
     display: grid;
@@ -349,22 +349,22 @@ const datos = {
     font-family: var(--font-mono, ui-monospace, monospace);
     font-size: 11px;
     font-weight: 600;
-    color: #e7e7ec;
+    color: var(--color-ink-50);
   }
   .inst-val {
     grid-area: val;
     font-family: var(--font-mono, ui-monospace, monospace);
     font-size: 12px;
     font-variant-numeric: tabular-nums;
-    color: #c4c4cc;
+    color: var(--color-ink-100);
     white-space: nowrap;
   }
   .inst-val.good {
-    color: #c9ff5b;
+    color: var(--color-lime);
   }
   .inst-val.needs-improvement,
   .inst-val.poor {
-    color: #ff6b3d;
+    color: var(--color-ember);
   }
   .inst-dist {
     grid-area: dist;
@@ -380,8 +380,8 @@ const datos = {
     height: 24px;
   }
   .inst-dist-area {
-    fill: rgba(196, 196, 204, 0.16);
-    stroke: rgba(196, 196, 204, 0.35);
+    fill: rgb(var(--rgb-tinta) / 0.16);
+    stroke: rgb(var(--rgb-tinta) / 0.35);
     stroke-width: 1;
     vector-effect: non-scaling-stroke;
   }
@@ -401,7 +401,7 @@ const datos = {
     top: 0;
     bottom: 0;
     width: 1px;
-    background: rgba(231, 231, 236, 0.5);
+    background: rgb(var(--rgb-tinta) / 0.5);
   }
   .inst-p75::after {
     content: 'p75';
@@ -410,7 +410,7 @@ const datos = {
     left: 4px;
     font-family: var(--font-mono, ui-monospace, monospace);
     font-size: 8.5px;
-    color: #85858f;
+    color: var(--color-ink-200);
   }
   .inst-tu {
     position: absolute;
@@ -420,10 +420,10 @@ const datos = {
     height: 11px;
     margin: -8px 0 0 -5.5px;
     border-radius: 9999px;
-    background: #00f2ff;
+    background: var(--background-color-cyan);
     box-shadow:
-      0 0 0 3px rgba(0, 242, 255, 0.18),
-      0 0 14px #00f2ff;
+      0 0 0 3px rgb(var(--rgb-cian-linea) / 0.18),
+      0 0 14px rgb(var(--rgb-cian));
     opacity: 0;
   }
   .inst-tu span {
@@ -433,17 +433,17 @@ const datos = {
     transform: translateX(-50%);
     font-family: var(--font-mono, ui-monospace, monospace);
     font-size: 9px;
-    color: #9bfaff;
+    color: var(--color-cyan-glow);
     text-transform: uppercase;
     letter-spacing: 0.08em;
   }
   .inst-rank {
     grid-area: rank;
     font-size: 11px;
-    color: #85858f;
+    color: var(--color-ink-200);
   }
   .inst-rank strong {
-    color: #e7e7ec;
+    color: var(--color-ink-50);
     font-weight: 500;
   }
   .inst-pie {
@@ -451,10 +451,10 @@ const datos = {
     gap: 4px;
     margin-top: 14px;
     padding-top: 12px;
-    border-top: 1px solid rgba(255, 255, 255, 0.06);
+    border-top: 1px solid rgb(var(--rgb-luz) / 0.06);
     font-size: 11.5px;
     line-height: 1.5;
-    color: #c4c4cc;
+    color: var(--color-ink-100);
   }
   .inst-pie p:empty {
     display: none;

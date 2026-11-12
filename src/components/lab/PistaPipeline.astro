@@ -76,12 +76,12 @@ const ETAPAS = ['calidad', 'deploy', 'health'] as const
     list-style: none;
     margin: 0;
     padding: 0;
-    --pp-cyan: #00f2ff;
-    --pp-lime: #c9ff5b;
-    --pp-ember: #ff6b3d;
+    --pp-cyan: var(--color-cyan);
+    --pp-lime: var(--color-lime);
+    --pp-ember: var(--color-ember);
     border-radius: 18px;
-    border: 1px solid rgba(255, 255, 255, 0.06);
-    background: rgba(12, 12, 16, 0.55);
+    border: 1px solid rgb(var(--rgb-luz) / 0.06);
+    background: rgb(var(--rgb-pozo) / 0.55);
     overflow: hidden;
   }
   .pp-cab, .pp-fila {
@@ -91,7 +91,7 @@ const ETAPAS = ['calidad', 'deploy', 'health'] as const
     align-items: center;
     padding: 0 22px;
   }
-  .pp-cab { padding-top: 16px; padding-bottom: 10px; border-bottom: 1px solid rgba(255, 255, 255, 0.05); }
+  .pp-cab { padding-top: 16px; padding-bottom: 10px; border-bottom: 1px solid rgb(var(--rgb-luz) / 0.05); }
   .pp-cab-pista { display: flex; justify-content: space-between; grid-column: 2; }
   .pp-cab-etapa {
     display: grid;
@@ -100,26 +100,26 @@ const ETAPAS = ['calidad', 'deploy', 'health'] as const
     font-size: 10px;
     letter-spacing: 0.15em;
     text-transform: uppercase;
-    color: #85858f;
+    color: var(--color-ink-200);
     text-align: center;
     width: 0;
     justify-items: center;
     white-space: nowrap;
   }
-  .pp-cab-etapa em { font-style: normal; letter-spacing: 0; text-transform: none; color: #4d4d5d; font-size: 10px; }
-  .pp-fila { height: 46px; border-bottom: 1px solid rgba(255, 255, 255, 0.04); transition: background-color 0.25s ease; }
+  .pp-cab-etapa em { font-style: normal; letter-spacing: 0; text-transform: none; color: var(--color-ink-300); font-size: 10px; }
+  .pp-fila { height: 46px; border-bottom: 1px solid rgb(var(--rgb-luz) / 0.04); transition: background-color 0.25s ease; }
   .pp-fila:last-child { border-bottom: 0; }
-  .pp-fila:hover { background: rgba(0, 242, 255, 0.025); }
+  .pp-fila:hover { background: rgb(var(--rgb-cian) / 0.025); }
   .pp-fila[data-desenlace='rollback'] { height: 58px; }
-  .pp-sha { font-family: var(--font-mono, ui-monospace, monospace); font-size: 12px; color: #c4c4cc; white-space: nowrap; }
+  .pp-sha { font-family: var(--font-mono, ui-monospace, monospace); font-size: 12px; color: var(--color-ink-100); white-space: nowrap; }
   .pp-sha a { color: inherit; text-decoration: none; transition: color 0.2s ease; }
   .pp-sha a:hover { color: var(--pp-cyan); }
 
   /* La pista: un riel con tres nodos (inicio, centro, fin) y la luz encima. */
   .pp-pista { position: relative; height: 14px; }
-  .pp-riel { position: absolute; left: 0; right: 0; top: 50%; height: 1px; margin-top: -0.5px; background: rgba(255, 255, 255, 0.08); }
-  .pp-riel-luz { position: absolute; inset: 0; transform-origin: left center; background: linear-gradient(90deg, rgba(201, 255, 91, 0.25), rgba(201, 255, 91, 0.7)); }
-  .pp-fila[data-desenlace='fallo'] .pp-riel-luz, .pp-fila[data-desenlace='rollback'] .pp-riel-luz { background: linear-gradient(90deg, rgba(201, 255, 91, 0.3), rgba(201, 255, 91, 0.6) 50%, rgba(255, 107, 61, 0.8)); }
+  .pp-riel { position: absolute; left: 0; right: 0; top: 50%; height: 1px; margin-top: -0.5px; background: rgb(var(--rgb-luz) / 0.08); }
+  .pp-riel-luz { position: absolute; inset: 0; transform-origin: left center; background: linear-gradient(90deg, rgb(var(--rgb-lima) / 0.25), rgb(var(--rgb-lima) / 0.7)); }
+  .pp-fila[data-desenlace='fallo'] .pp-riel-luz, .pp-fila[data-desenlace='rollback'] .pp-riel-luz { background: linear-gradient(90deg, rgb(var(--rgb-lima) / 0.3), rgb(var(--rgb-lima) / 0.6) 50%, rgb(var(--rgb-ember) / 0.8)); }
   .pp-nodo {
     position: absolute;
     top: 50%;
@@ -127,18 +127,18 @@ const ETAPAS = ['calidad', 'deploy', 'health'] as const
     height: 11px;
     margin: -5.5px 0 0 -5.5px;
     border-radius: 99px;
-    border: 1.5px solid #4d4d5d;
-    background: #0d0d12;
+    border: 1.5px solid var(--color-ink-300);
+    background: var(--color-ink-850);
     transition: background-color 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
   }
   .pp-nodo[data-etapa='calidad'] { left: 0; }
   .pp-nodo[data-etapa='deploy'] { left: 50%; }
   .pp-nodo[data-etapa='health'] { left: 100%; }
   .pp-nodo[data-estado='ok'] { border-color: var(--pp-lime); background: var(--pp-lime); box-shadow: 0 0 10px -2px var(--pp-lime); }
-  .pp-nodo[data-estado='fallo'] { border-color: var(--pp-ember); background: #1f110c; box-shadow: 0 0 12px -2px var(--pp-ember); }
+  .pp-nodo[data-estado='fallo'] { border-color: var(--pp-ember); background: color-mix(in srgb, rgb(var(--rgb-ember)) 7%, var(--color-ink-900)); box-shadow: 0 0 12px -2px var(--pp-ember); }
   .pp-nodo[data-estado='fallo']::after { content: '✕'; position: absolute; inset: 0; display: grid; place-items: center; font-size: 8px; line-height: 1; color: var(--pp-ember); }
   .pp-nodo[data-estado='sin-dato'] { border-style: dashed; }
-  .pp-nodo[data-apagado] { border-color: #34343f; background: #0d0d12; box-shadow: none; }
+  .pp-nodo[data-apagado] { border-color: var(--color-ink-500); background: var(--color-ink-850); box-shadow: none; }
   .pp-nodo[data-apagado]::after { opacity: 0; }
 
   /* El desvío del rollback: de health check de vuelta al inicio, por debajo. */
@@ -156,7 +156,7 @@ const ETAPAS = ['calidad', 'deploy', 'health'] as const
     margin: -3.5px 0 0 -3.5px;
     border-radius: 99px;
     background: #fff;
-    box-shadow: 0 0 8px 2px rgba(0, 242, 255, 0.9), 0 0 18px 4px rgba(0, 242, 255, 0.45);
+    box-shadow: 0 0 8px 2px rgb(var(--rgb-cian) / 0.9), 0 0 18px 4px rgb(var(--rgb-cian) / 0.45);
     opacity: 0;
     pointer-events: none;
   }
@@ -172,9 +172,9 @@ const ETAPAS = ['calidad', 'deploy', 'health'] as const
     border: 1px solid;
     white-space: nowrap;
   }
-  .pp-badge-ok { color: var(--pp-lime); border-color: rgba(201, 255, 91, 0.3); background: rgba(201, 255, 91, 0.08); }
-  .pp-badge-fallo, .pp-badge-rollback { color: var(--pp-ember); border-color: rgba(255, 107, 61, 0.35); background: rgba(255, 107, 61, 0.1); }
-  .pp-meta, .pp-cuando { font-family: var(--font-mono, ui-monospace, monospace); font-size: 11px; color: #6b6b78; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .pp-badge-ok { color: var(--pp-lime); border-color: rgb(var(--rgb-lima-linea) / 0.3); background: rgb(var(--rgb-lima) / 0.08); }
+  .pp-badge-fallo, .pp-badge-rollback { color: var(--pp-ember); border-color: rgb(var(--rgb-ember-linea) / 0.35); background: rgb(var(--rgb-ember) / 0.1); }
+  .pp-meta, .pp-cuando { font-family: var(--font-mono, ui-monospace, monospace); font-size: 11px; color: var(--color-ink-300); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .pp-cuando { text-align: right; }
 
   /* Móvil: sha, veredicto y fecha arriba; la pista ocupa el ancho abajo. */

@@ -14,6 +14,7 @@
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { ScrambleTextPlugin } from "gsap/ScrambleTextPlugin";
+import { paleta } from "../tema";
 
 gsap.registerPlugin(ScrollTrigger, ScrambleTextPlugin);
 
@@ -435,9 +436,9 @@ function demoSql(demo: HTMLElement) {
     // La entrada no se pega a la consulta: entra por el hueco como un valor.
     .fromTo(
       hueco,
-      { color: "#00f2ff", textShadow: "0 0 0 rgba(0,242,255,0)" },
+      { color: paleta().cian, textShadow: `0 0 0 rgba(${paleta().rgb.cian},0)` },
       {
-        textShadow: "0 0 12px rgba(0,242,255,.9)",
+        textShadow: `0 0 12px rgba(${paleta().rgb.cian},.9)`,
         duration: 0.3,
         yoyo: true,
         repeat: 1,

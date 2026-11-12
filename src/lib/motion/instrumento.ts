@@ -34,10 +34,10 @@ type Datos = { tablas: Partial<Record<VitalMetric, number[]>>; locale: string; t
 type Recurso = { inicio: number; fin: number; bytes: number }
 
 const COLOR_FASE: Record<ClaveFase, string> = {
-  red: '#a78bff',
-  servidor: '#00f2ff',
-  descarga: '#9bfaff',
-  render: '#c9ff5b',
+  red: 'var(--color-violet)',
+  servidor: 'var(--color-cyan)',
+  descarga: 'var(--color-cyan-glow)',
+  render: 'var(--color-lime)',
 }
 const MARCAS: VitalMetric[] = ['TTFB', 'FCP', 'LCP']
 const SVG = 'http://www.w3.org/2000/svg'
@@ -172,7 +172,7 @@ export function montarInstrumento(raiz: HTMLElement, opciones: { reducido: boole
         r.setAttribute('width', Math.max(2, x(f.fin) - x(f.inicio) - 1.5).toFixed(1))
         r.setAttribute('height', '4')
         r.setAttribute('rx', '2')
-        r.setAttribute('fill', COLOR_FASE[f.clave])
+        r.style.fill = COLOR_FASE[f.clave]
         r.setAttribute('fill-opacity', '0.75')
         r.dataset.fase = f.clave
         return r
@@ -225,19 +225,19 @@ export function montarInstrumento(raiz: HTMLElement, opciones: { reducido: boole
         const g = document.createElementNS(SVG, 'g')
         g.classList.add('inst-marca')
         g.dataset.metrica = m
-        const color = m === 'LCP' ? '#00f2ff' : '#c4c4cc'
+        const color = m === 'LCP' ? 'var(--color-cyan)' : 'var(--color-ink-100)'
         const l = document.createElementNS(SVG, 'line')
         l.setAttribute('x1', px.toFixed(1))
         l.setAttribute('x2', px.toFixed(1))
         l.setAttribute('y1', String(14 + fila * 13))
         l.setAttribute('y2', String(alto))
-        l.setAttribute('stroke', color)
+        l.style.stroke = color
         const t = document.createElementNS(SVG, 'text')
         const derecha = px > W - 90
         t.setAttribute('x', (derecha ? px - 5 : px + 5).toFixed(1))
         t.setAttribute('y', String(22 + fila * 13))
         t.setAttribute('text-anchor', derecha ? 'end' : 'start')
-        t.setAttribute('fill', color)
+        t.style.fill = color
         t.textContent = `${m} ${formatVital(m, v)}`
         g.append(l, t)
         if (ocultas) g.style.opacity = '0'

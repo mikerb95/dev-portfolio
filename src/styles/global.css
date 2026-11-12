@@ -74,6 +74,15 @@
   --rgb-violeta: 167 139 255;
   --rgb-lima: 201 255 91;
   --rgb-ember: 255 107 61;
+  --rgb-tinta: 231 231 236;      /* el color del texto, para velos y trazos de tinta */
+  --rgb-ambar: 251 191 36;
+  --rgb-ambar-linea: 251 191 36;
+  /* Tonos pálidos de acento para texto sobre un fondo teñido del mismo color. */
+  --cian-blanco: #e7fdff;
+  --cian-suave: #a9eef2;
+  --ember-suave: #f3c6b8;
+  --violeta-suave: #c9b9ff;
+  --color-ambar: #fbbf24;        /* ámbar de aviso, como texto o trazo */
   /* Acentos como trazo (bordes, anillos de 1 px): en claro bajan de tono,
      igual que --rgb-cian-linea. */
   --rgb-violeta-linea: 167 139 255;
@@ -131,6 +140,13 @@
   --rgb-fondo: 255 255 255;
   --rgb-pozo: 255 255 255;
   --rgb-cian-linea: 0 122 130;
+  --rgb-tinta: 10 10 13;
+  --rgb-ambar-linea: 161 98 7;
+  --cian-blanco: #005a61;
+  --cian-suave: #006a72;
+  --ember-suave: #8f2c0c;
+  --violeta-suave: #4b2fb0;
+  --color-ambar: #a16207;
   --rgb-violeta-linea: 101 65 217;
   --rgb-lima-linea: 74 125 16;
   --rgb-ember-linea: 194 60 16;

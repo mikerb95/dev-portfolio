@@ -26,7 +26,7 @@ const fechaSemana = new Intl.DateTimeFormat(locale === 'en' ? 'en-US' : 'es-CO',
 const VISIBLES = 20
 ---
 
-<BaseLayout title={c.title} description={c.description}>
+<BaseLayout temaClaro title={c.title} description={c.description}>
   <div class="max-w-[1080px] mx-auto px-6 md:px-12 lg:px-20 pt-32 pb-24" data-locale={locale}>
     <a
       href={L('/')}
@@ -92,13 +92,13 @@ const VISIBLES = 20
 </BaseLayout>
 
 <style>
-  .aviso { padding: 1rem 1.2rem; border-radius: 1rem; background: rgb(255 255 255 / .03); border: 1px solid rgb(255 255 255 / .07); color: var(--color-ink-100); }
+  .aviso { padding: 1rem 1.2rem; border-radius: 1rem; background: rgb(var(--rgb-luz) / .03); border: 1px solid rgb(var(--rgb-luz) / .07); color: var(--color-ink-100); }
   /* Un riel une las semanas, como el recorrido del analista: el mismo gesto
      para "esto pasó en este orden". */
   .semanas { position: relative; display: grid; gap: .75rem; }
-  .semanas::before { content: ''; position: absolute; left: 1.55rem; top: 1.5rem; bottom: 1.5rem; width: 2px; margin-left: -1px; background: linear-gradient(rgb(0 242 255 / .3), rgb(0 242 255 / .05)); }
-  .semana details { border-radius: 1.1rem; background: rgb(255 255 255 / .02); border: 1px solid rgb(255 255 255 / .06); transition: background .25s, border-color .25s; interpolate-size: allow-keywords; }
-  .semana details[open], .semana details:hover { background: rgb(0 242 255 / .025); border-color: rgb(0 242 255 / .14); }
+  .semanas::before { content: ''; position: absolute; left: 1.55rem; top: 1.5rem; bottom: 1.5rem; width: 2px; margin-left: -1px; background: linear-gradient(rgb(var(--rgb-cian) / .3), rgb(var(--rgb-cian) / .05)); }
+  .semana details { border-radius: 1.1rem; background: rgb(var(--rgb-luz) / .02); border: 1px solid rgb(var(--rgb-luz) / .06); transition: background .25s, border-color .25s; interpolate-size: allow-keywords; }
+  .semana details[open], .semana details:hover { background: rgb(var(--rgb-cian) / .025); border-color: rgb(var(--rgb-cian-linea) / .14); }
   .semana details::details-content { block-size: 0; overflow: hidden; transition: block-size .4s cubic-bezier(.2, .8, .2, 1), content-visibility .4s allow-discrete; }
   .semana details[open]::details-content { block-size: auto; }
   summary { display: flex; align-items: center; gap: 1rem; padding: 1.1rem 1.25rem; cursor: pointer; list-style: none; }

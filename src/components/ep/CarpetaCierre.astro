@@ -38,20 +38,20 @@ const { paginas } = Astro.props
   .pdf {
     position: relative;
     border-radius: 14px;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    background: rgba(10, 10, 13, 0.55);
+    border: 1px solid rgb(var(--rgb-luz) / 0.1);
+    background: rgb(var(--rgb-pozo) / 0.55);
     padding: 12px;
   }
   .pdf-cab {
     display: flex;
     align-items: center;
     gap: 8px;
-    color: #ff6b3d;
+    color: var(--color-ember);
     padding: 2px 2px 10px;
   }
   .pdf-nombre {
     font: 11px/1 var(--font-mono, ui-monospace, monospace);
-    color: #c4c4cc;
+    color: var(--color-ink-100);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -68,8 +68,8 @@ const { paginas } = Astro.props
     height: 30px;
     padding: 0 10px;
     border-radius: 5px;
-    border: 1px dashed rgba(255, 255, 255, 0.13);
-    color: #85858f;
+    border: 1px dashed rgb(var(--rgb-luz) / 0.13);
+    color: var(--color-ink-200);
     font: 11px/1 var(--font-mono, ui-monospace, monospace);
     transition: background-color 0.35s, border-color 0.35s, color 0.35s, box-shadow 0.35s;
   }
@@ -92,7 +92,7 @@ const { paginas } = Astro.props
     display: block;
     height: 2px;
     border-radius: 1px;
-    background: rgba(18, 18, 22, 0.25);
+    background: rgb(var(--rgb-fondo) / 0.25);
   }
   .pdf-renglones i:nth-child(2) { width: 80%; }
   .pdf-renglones i:nth-child(3) { width: 55%; }
@@ -103,7 +103,7 @@ const { paginas } = Astro.props
     border: 1px solid transparent;
     background: #ececf1;
     color: #16181c;
-    box-shadow: 0 6px 14px -8px rgba(0, 0, 0, 0.8);
+    box-shadow: 0 6px 14px -8px var(--sombra-profunda);
   }
   .pdf-hoja.dentro:nth-child(odd) { transform: rotate(-0.5deg); }
   .pdf-hoja.dentro:nth-child(even) { transform: rotate(0.4deg); }
@@ -120,15 +120,15 @@ const { paginas } = Astro.props
     font: 10px/1 var(--font-mono, ui-monospace, monospace);
     text-transform: uppercase;
     letter-spacing: 0.1em;
-    color: #85858f;
+    color: var(--color-ink-200);
   }
   .pdf-pie b {
     font-weight: 500;
-    color: #e7e7ec;
+    color: var(--color-ink-50);
   }
   .pdf-sello {
-    color: #0a0a0d;
-    background: #c9ff5b;
+    color: var(--sobre-acento);
+    background: var(--background-color-lime);
     border-radius: 999px;
     padding: 5px 9px;
     opacity: 0;

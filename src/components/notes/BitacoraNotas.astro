@@ -117,7 +117,7 @@ let indice = 0
     font-weight: 500;
     letter-spacing: -0.03em;
     line-height: 1.02;
-    color: #e7e7ec;
+    color: var(--color-ink-50);
     text-wrap: balance;
   }
 
@@ -130,22 +130,22 @@ let indice = 0
     padding: 7px 12px 7px 13px;
     border-radius: 999px;
     font-size: 13px;
-    color: #c4c4cc;
-    border: 1px solid rgba(255, 255, 255, 0.09);
-    background: rgba(255, 255, 255, 0.02);
+    color: var(--color-ink-100);
+    border: 1px solid rgb(var(--rgb-luz) / 0.09);
+    background: rgb(var(--rgb-luz) / 0.02);
     transition: color 0.25s, border-color 0.25s, background-color 0.25s;
   }
-  .bit-filtro:hover { border-color: rgba(255, 255, 255, 0.2); color: #e7e7ec; }
-  .bit-filtro:focus-visible { outline: 2px solid #00f2ff; outline-offset: 2px; }
+  .bit-filtro:hover { border-color: rgb(var(--rgb-luz) / 0.2); color: var(--color-ink-50); }
+  .bit-filtro:focus-visible { outline: 2px solid var(--color-cyan); outline-offset: 2px; }
   .bit-filtro[aria-pressed='true'] {
-    color: #0a0a0d;
-    background: #e7e7ec;
-    border-color: #e7e7ec;
+    color: var(--sobre-acento);
+    background: var(--color-ink-50);
+    border-color: var(--color-ink-50);
   }
   .bit-filtro[aria-pressed='true'][data-familia]:not([data-familia='']) {
-    background: color-mix(in srgb, var(--c) 16%, #0e0e12);
+    background: color-mix(in srgb, var(--c) 16%, var(--color-ink-850));
     border-color: color-mix(in srgb, var(--c) 55%, transparent);
-    color: #e7e7ec;
+    color: var(--color-ink-50);
   }
   .bit-filtro-punto { width: 7px; height: 7px; border-radius: 50%; background: var(--c); }
   .bit-filtro-n { font-family: var(--font-mono); font-size: 11px; opacity: 0.6; }
@@ -154,7 +154,7 @@ let indice = 0
     font-family: var(--font-mono);
     font-size: 11px;
     letter-spacing: 0.08em;
-    color: #85858f;
+    color: var(--color-ink-200);
   }
   @media (min-width: 1024px) { .bit-contador { text-align: right; } }
 
@@ -166,15 +166,15 @@ let indice = 0
     bottom: 6px;
     left: calc(var(--mes) + var(--dia) + var(--nodo) / 2);
     width: 1px;
-    background: rgba(255, 255, 255, 0.08);
+    background: rgb(var(--rgb-luz) / 0.08);
   }
   .bit-riel-luz {
     position: absolute;
     inset: 0;
-    background: linear-gradient(180deg, rgba(0, 242, 255, 0), #00f2ff 12%, #00f2ff);
+    background: linear-gradient(180deg, rgb(var(--rgb-cian) / 0), var(--background-color-cyan) 12%, var(--background-color-cyan));
     transform-origin: 50% 0;
     transform: scaleY(0);
-    box-shadow: 0 0 12px rgba(0, 242, 255, 0.5);
+    box-shadow: 0 0 12px rgb(var(--rgb-cian) / 0.5);
   }
   /* Sin JS no hay nada que encienda el riel: se deja la línea tenue. */
   .bit:not(.vivo) .bit-riel-luz { display: none; }
@@ -193,9 +193,9 @@ let indice = 0
     font-family: var(--font-mono);
     text-transform: uppercase;
   }
-  .bit-mes-nombre { font-size: 12px; letter-spacing: 0.2em; color: #e7e7ec; }
-  .bit-mes-anio { font-size: 11px; letter-spacing: 0.2em; color: #4d4d5d; margin-top: 2px; }
-  .bit-mes-n { font-size: 10.5px; letter-spacing: 0.12em; color: #85858f; margin-top: 12px; }
+  .bit-mes-nombre { font-size: 12px; letter-spacing: 0.2em; color: var(--color-ink-50); }
+  .bit-mes-anio { font-size: 11px; letter-spacing: 0.2em; color: var(--color-ink-300); margin-top: 2px; }
+  .bit-mes-n { font-size: 10.5px; letter-spacing: 0.12em; color: var(--color-ink-200); margin-top: 12px; }
 
   .bit-lista { list-style: none; margin: 0; padding: 0; }
   .bit-entrada.fuera { display: none; }
@@ -214,13 +214,13 @@ let indice = 0
   .bit-enlace:hover, .bit-enlace:focus-visible {
     background: color-mix(in srgb, var(--c) 5%, transparent);
   }
-  .bit-enlace:focus-visible { outline: 2px solid #00f2ff; outline-offset: -2px; }
+  .bit-enlace:focus-visible { outline: 2px solid var(--color-cyan); outline-offset: -2px; }
 
   .bit-dia {
     padding-top: 2px;
     font-family: var(--font-mono);
     font-size: 13px;
-    color: #85858f;
+    color: var(--color-ink-200);
     text-align: right;
     padding-right: 10px;
   }
@@ -230,8 +230,8 @@ let indice = 0
     width: 9px;
     height: 9px;
     border-radius: 50%;
-    background: #0a0a0d;
-    border: 1.5px solid #4d4d5d;
+    background: var(--color-ink-900);
+    border: 1.5px solid var(--color-ink-300);
     position: relative;
     z-index: 1;
     transition: background-color 0.4s, border-color 0.4s, box-shadow 0.4s, transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
@@ -251,10 +251,10 @@ let indice = 0
     aspect-ratio: 1.6;
     border-radius: 12px;
     overflow: hidden;
-    border: 1px solid rgba(255, 255, 255, 0.07);
+    border: 1px solid rgb(var(--rgb-luz) / 0.07);
     background:
       radial-gradient(120% 140% at 25% 20%, color-mix(in srgb, var(--c) 22%, transparent), transparent 60%),
-      #0c0c10;
+      var(--color-ink-900);
   }
   /* Lienzo al doble del marco y recortado: el mapa se dibuja en unidades de
      su altura, y a tamaño de miniatura las curvas se apiñaban como estática. */
@@ -278,17 +278,17 @@ let indice = 0
     font-weight: 500;
     letter-spacing: -0.02em;
     line-height: 1.2;
-    color: #e7e7ec;
+    color: var(--color-ink-50);
     text-wrap: balance;
     transition: color 0.3s;
     padding-bottom: 2px;
   }
   .bit-titulo-txt { display: inline-block; }
-  .bit-enlace:hover .bit-titulo { color: #fff; }
+  .bit-enlace:hover .bit-titulo { color: var(--color-white); }
   .bit-desc {
     font-size: 14px;
     line-height: 1.6;
-    color: #85858f;
+    color: var(--color-ink-200);
     max-width: 62ch;
     display: -webkit-box;
     -webkit-line-clamp: 2;
@@ -302,16 +302,16 @@ let indice = 0
     align-items: center;
     font-family: var(--font-mono);
     font-size: 11px;
-    color: #c4c4cc;
+    color: var(--color-ink-100);
   }
-  .bit-tag { color: #85858f; }
-  .bit-tag::before { content: '#'; color: #4d4d5d; }
+  .bit-tag { color: var(--color-ink-200); }
+  .bit-tag::before { content: '#'; color: var(--color-ink-300); }
   .bit-fecha-movil { display: none; }
 
   .bit-flecha {
     justify-self: end;
     margin-top: 4px;
-    color: #4d4d5d;
+    color: var(--color-ink-300);
     transition: color 0.3s, transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
   }
   .bit-enlace:hover .bit-flecha { color: var(--c); transform: translateX(4px); }

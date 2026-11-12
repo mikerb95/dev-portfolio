@@ -52,7 +52,7 @@ const bi = l.motion.bitacora
     <div
       id="feed-fade"
       class="pointer-events-none absolute inset-x-0 bottom-0 h-28 rounded-b-2xl opacity-0 transition-opacity duration-300"
-      style="background:linear-gradient(to bottom, rgba(18,18,22,0) 0%, rgba(18,18,22,.6) 52%, #121216 100%)"
+      style="background:linear-gradient(to bottom, rgb(var(--rgb-fondo) / 0) 0%, rgb(var(--rgb-fondo) / .6) 52%, var(--color-ink-950) 100%)"
     ></div>
 
     <div id="feed-loader" class="pointer-events-none absolute inset-x-0 bottom-4 flex justify-center opacity-0 transition-opacity duration-300">
@@ -95,7 +95,7 @@ const bi = l.motion.bitacora
     font-size: 10px;
     letter-spacing: 0.2em;
     text-transform: uppercase;
-    color: #85858f;
+    color: var(--color-ink-200);
   }
   .lg-mezcla-rot { margin-bottom: 12px; }
   .lg-mezcla-barra {
@@ -115,7 +115,7 @@ const bi = l.motion.bitacora
     transition: opacity 0.25s ease, filter 0.25s ease;
   }
   .lg-mezcla-barra :global(button[data-privado]) {
-    background: repeating-linear-gradient(135deg, #4d4d5d 0 1px, #24242f 1px 4px);
+    background: repeating-linear-gradient(135deg, var(--color-ink-300) 0 1px, var(--color-ink-600) 1px 4px);
     cursor: default;
   }
   .lg-mezcla-lista {
@@ -134,23 +134,23 @@ const bi = l.motion.bitacora
     border: 1px solid transparent;
     background: transparent;
     font-size: 12.5px;
-    color: #c4c4cc;
+    color: var(--color-ink-100);
     cursor: pointer;
     transition: background-color 0.2s ease, border-color 0.2s ease, opacity 0.25s ease;
   }
-  .lg-mezcla-lista :global(button:hover) { background: rgba(255, 255, 255, 0.04); }
+  .lg-mezcla-lista :global(button:hover) { background: rgb(var(--rgb-luz) / 0.04); }
   .lg-mezcla-lista :global(button[aria-pressed='true']) {
-    background: color-mix(in srgb, #00f2ff 9%, transparent);
-    border-color: color-mix(in srgb, #00f2ff 30%, transparent);
-    color: #e7e7ec;
+    background: color-mix(in srgb, var(--background-color-cyan) 9%, transparent);
+    border-color: color-mix(in srgb, var(--color-cyan) 30%, transparent);
+    color: var(--color-ink-50);
   }
-  .lg-mezcla-lista :global(button[data-privado]) { cursor: default; color: #85858f; }
+  .lg-mezcla-lista :global(button[data-privado]) { cursor: default; color: var(--color-ink-200); }
   .lg-mezcla-lista :global(button[data-privado]:hover) { background: transparent; }
   .lg-mezcla-lista :global(i) { width: 7px; height: 7px; border-radius: 99px; background: var(--c); flex: none; }
   .lg-mezcla-lista :global(button[data-privado] i) {
-    background: repeating-linear-gradient(135deg, #85858f 0 1px, #24242f 1px 3px);
+    background: repeating-linear-gradient(135deg, var(--color-ink-200) 0 1px, var(--color-ink-600) 1px 3px);
   }
-  .lg-mezcla-lista :global(b) { font-family: var(--font-mono, ui-monospace, monospace); font-size: 10.5px; font-weight: 400; color: #85858f; }
+  .lg-mezcla-lista :global(b) { font-family: var(--font-mono, ui-monospace, monospace); font-size: 10.5px; font-weight: 400; color: var(--color-ink-200); }
   /* Con un proyecto elegido, los demás se apagan en la barra y en la lista. */
   [data-mezcla][data-activo] .lg-mezcla-barra :global(button:not([aria-pressed='true'])),
   [data-mezcla][data-activo] .lg-mezcla-lista :global(button:not([aria-pressed='true'])) { opacity: 0.35; }
@@ -164,29 +164,29 @@ const bi = l.motion.bitacora
     height: 30px;
     padding: 0 12px;
     border-radius: 99px;
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgb(var(--rgb-luz) / 0.08);
+    background: rgb(var(--rgb-luz) / 0.02);
     font-size: 12px;
-    color: #c4c4cc;
+    color: var(--color-ink-100);
     cursor: pointer;
     transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
   }
-  .lg-tipos :global(button:hover) { background: rgba(255, 255, 255, 0.05); }
+  .lg-tipos :global(button:hover) { background: rgb(var(--rgb-luz) / 0.05); }
   .lg-tipos :global(button[aria-pressed='true']) {
-    color: #e7e7ec;
-    border-color: color-mix(in srgb, var(--c, #00f2ff) 45%, transparent);
-    background: color-mix(in srgb, var(--c, #00f2ff) 10%, transparent);
+    color: var(--color-ink-50);
+    border-color: color-mix(in srgb, var(--c, var(--color-cyan)) 45%, transparent);
+    background: color-mix(in srgb, var(--c, var(--background-color-cyan)) 10%, transparent);
   }
   .lg-tipos :global(button:disabled) { opacity: 0.35; cursor: default; }
-  .lg-tipos :global(i) { width: 6px; height: 6px; border-radius: 99px; background: var(--c, #85858f); }
-  .lg-tipos :global(b) { font-family: var(--font-mono, ui-monospace, monospace); font-size: 10.5px; font-weight: 400; color: #85858f; }
+  .lg-tipos :global(i) { width: 6px; height: 6px; border-radius: 99px; background: var(--c, var(--color-ink-200)); }
+  .lg-tipos :global(b) { font-family: var(--font-mono, ui-monospace, monospace); font-size: 10.5px; font-weight: 400; color: var(--color-ink-200); }
 
   .lg-resultado { display: flex; align-items: center; gap: 14px; min-height: 22px; margin-bottom: 12px; }
   .lg-limpiar {
     font: inherit;
     letter-spacing: inherit;
     text-transform: inherit;
-    color: #00f2ff;
+    color: var(--color-cyan);
     background: none;
     border: 0;
     padding: 0;
@@ -200,11 +200,11 @@ const bi = l.motion.bitacora
   .lg-feed {
     border-radius: 18px;
     overflow: clip;
-    border: 1px solid rgba(255, 255, 255, 0.07);
-    background: #0d0d12;
+    border: 1px solid rgb(var(--rgb-luz) / 0.07);
+    background: var(--color-ink-850);
   }
-  .lg-esqueleto { display: flex; gap: 16px; padding: 15px 20px; border-bottom: 1px solid rgba(255, 255, 255, 0.03); }
-  .lg-esqueleto span { height: 11px; border-radius: 4px; background: rgba(255, 255, 255, 0.05); animation: lg-latido 1.6s ease-in-out infinite; }
+  .lg-esqueleto { display: flex; gap: 16px; padding: 15px 20px; border-bottom: 1px solid rgb(var(--rgb-luz) / 0.03); }
+  .lg-esqueleto span { height: 11px; border-radius: 4px; background: rgb(var(--rgb-luz) / 0.05); animation: lg-latido 1.6s ease-in-out infinite; }
   @keyframes lg-latido { 50% { opacity: 0.45; } }
 
   .lg-feed :global(.lg-dia) {
@@ -216,15 +216,15 @@ const bi = l.motion.bitacora
     align-items: center;
     gap: 6px 18px;
     padding: 11px 20px;
-    background: #101016;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    background: var(--color-ink-850);
+    border-bottom: 1px solid rgb(var(--rgb-luz) / 0.05);
   }
   .lg-feed :global(.lg-dia-fecha) {
     font-family: var(--font-mono, ui-monospace, monospace);
     font-size: 10px;
     letter-spacing: 0.18em;
     text-transform: uppercase;
-    color: #c4c4cc;
+    color: var(--color-ink-100);
   }
   .lg-feed :global(.lg-dia-fecha::first-letter) { text-transform: uppercase; }
   .lg-feed :global(.lg-dia-dato) {
@@ -233,7 +233,7 @@ const bi = l.motion.bitacora
     gap: 12px;
     font-family: var(--font-mono, ui-monospace, monospace);
     font-size: 10px;
-    color: #85858f;
+    color: var(--color-ink-200);
   }
   /* La franja del día: sus sesiones en 24 h, las mismas barras del reloj. */
   .lg-feed :global(.lg-dia-franja) { width: 192px; height: 10px; display: block; }
@@ -248,43 +248,43 @@ const bi = l.motion.bitacora
     align-items: baseline;
     gap: 16px;
     padding: 11px 20px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+    border-bottom: 1px solid rgb(var(--rgb-luz) / 0.03);
     transition: background-color 0.2s ease;
   }
-  .lg-feed :global(.lg-fila:hover) { background: color-mix(in srgb, var(--c, #00f2ff) 4%, transparent); }
-  .lg-feed :global(.lg-fila[data-nuevo]) { background: color-mix(in srgb, #00f2ff 8%, transparent); }
+  .lg-feed :global(.lg-fila:hover) { background: color-mix(in srgb, var(--c, var(--background-color-cyan)) 4%, transparent); }
+  .lg-feed :global(.lg-fila[data-nuevo]) { background: color-mix(in srgb, var(--background-color-cyan) 8%, transparent); }
   .lg-feed :global(.lg-tipo) {
     display: inline-flex;
     align-items: center;
     gap: 7px;
     font-family: var(--font-mono, ui-monospace, monospace);
     font-size: 10.5px;
-    color: #85858f;
+    color: var(--color-ink-200);
     white-space: nowrap;
   }
   .lg-feed :global(.lg-tipo i) { width: 6px; height: 6px; border-radius: 99px; background: var(--c); flex: none; transform: translateY(-1px); }
-  .lg-feed :global(.lg-msg) { font-size: 13px; line-height: 1.45; color: #e7e7ec; overflow-wrap: anywhere; }
+  .lg-feed :global(.lg-msg) { font-size: 13px; line-height: 1.45; color: var(--color-ink-50); overflow-wrap: anywhere; }
   .lg-feed :global(.lg-alcance) {
     display: inline-block;
     margin-right: 7px;
     padding: 0 6px;
     border-radius: 4px;
-    background: rgba(255, 255, 255, 0.05);
+    background: rgb(var(--rgb-luz) / 0.05);
     font-family: var(--font-mono, ui-monospace, monospace);
     font-size: 10.5px;
-    color: #c4c4cc;
+    color: var(--color-ink-100);
   }
   .lg-feed :global(.lg-repo),
   .lg-feed :global(.lg-hora),
   .lg-feed :global(.lg-sha) {
     font-family: var(--font-mono, ui-monospace, monospace);
     font-size: 10.5px;
-    color: #4d4d5d;
+    color: var(--color-ink-300);
     white-space: nowrap;
   }
-  .lg-feed :global(.lg-repo) { color: #85858f; }
-  .lg-feed :global(.lg-sha) { color: #85858f; text-decoration: none; }
-  .lg-feed :global(.lg-sha:hover) { color: #00f2ff; text-decoration: underline; }
+  .lg-feed :global(.lg-repo) { color: var(--color-ink-200); }
+  .lg-feed :global(.lg-sha) { color: var(--color-ink-200); text-decoration: none; }
+  .lg-feed :global(.lg-sha:hover) { color: var(--color-cyan); text-decoration: underline; }
   .lg-feed :global(.lg-hora) { text-align: right; }
   .lg-feed :global(.lg-nuevo) {
     margin-left: 8px;
@@ -292,7 +292,7 @@ const bi = l.motion.bitacora
     font-size: 9.5px;
     letter-spacing: 0.14em;
     text-transform: uppercase;
-    color: #00f2ff;
+    color: var(--color-cyan);
   }
   /* Móvil: tipo y hora arriba, el mensaje, y el proyecto con el sha debajo. */
   @media (max-width: 767px) {
@@ -308,7 +308,7 @@ const bi = l.motion.bitacora
     .lg-feed :global(.lg-repo) { grid-area: repo; }
     .lg-feed :global(.lg-sha) { grid-area: sha; text-align: right; }
   }
-  .lg-feed :global(.lg-vacio) { padding: 40px 20px; text-align: center; font-family: var(--font-mono, ui-monospace, monospace); font-size: 12px; color: #4d4d5d; }
+  .lg-feed :global(.lg-vacio) { padding: 40px 20px; text-align: center; font-family: var(--font-mono, ui-monospace, monospace); font-size: 12px; color: var(--color-ink-300); }
 
   .feed-loader-pill {
     display: inline-flex;
@@ -316,8 +316,8 @@ const bi = l.motion.bitacora
     gap: 5px;
     padding: 7px 13px;
     border-radius: 9999px;
-    background: rgba(8, 8, 12, 0.72);
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgb(var(--rgb-pozo) / 0.72);
+    border: 1px solid rgb(var(--rgb-luz) / 0.08);
     box-shadow: 0 6px 24px rgba(0, 0, 0, 0.45);
     backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
@@ -326,7 +326,7 @@ const bi = l.motion.bitacora
     width: 6px;
     height: 6px;
     border-radius: 9999px;
-    background: #00f2ff;
+    background: var(--background-color-cyan);
     animation: feed-bounce 1s ease-in-out infinite;
   }
   .feed-loader-pill .dot:nth-child(2) { animation-delay: 0.15s; }

@@ -58,15 +58,15 @@ type Textos = {
 }
 
 const COLOR_TIPO: Record<TipoCommit | 'pr', string> = {
-  feat: '#00f2ff',
-  fix: '#ff6b3d',
-  refactor: '#a78bff',
-  perf: '#9bfaff',
-  test: '#c9ff5b',
-  docs: '#c4c4cc',
-  chore: '#85858f',
-  otro: '#4d4d5d',
-  pr: '#a78bff',
+  feat: 'var(--color-cyan)',
+  fix: 'var(--color-ember)',
+  refactor: 'var(--color-violet)',
+  perf: 'var(--color-cyan-glow)',
+  test: 'var(--color-lime)',
+  docs: 'var(--color-ink-100)',
+  chore: 'var(--color-ink-200)',
+  otro: 'var(--color-ink-300)',
+  pr: 'var(--color-violet)',
 }
 
 const interpolar = (plantilla: string, v: Record<string, string | number>) =>
@@ -297,11 +297,11 @@ export function montarLog(opciones: { reducido: boolean }) {
       const rects = tramos
         .map(
           (t) =>
-            `<rect x="${t.h0.toFixed(3)}" y="${t.previo ? 3 : 2}" width="${Math.max(0.12, t.h1 - t.h0).toFixed(3)}" height="${t.previo ? 4 : 6}" rx=".4" fill="${t.previo ? 'rgba(0,242,255,.3)' : 'rgba(0,242,255,.8)'}"/>`,
+            `<rect x="${t.h0.toFixed(3)}" y="${t.previo ? 3 : 2}" width="${Math.max(0.12, t.h1 - t.h0).toFixed(3)}" height="${t.previo ? 4 : 6}" rx=".4" style="fill:rgb(var(--rgb-cian-linea) / ${t.previo ? '.3' : '.8'})"/>`,
         )
         .join('')
-      const ticks = [6, 12, 18].map((h) => `<rect x="${h - 0.03}" y="0" width=".06" height="10" fill="rgba(255,255,255,.12)"/>`).join('')
-      return `<svg class="lg-dia-franja" viewBox="0 0 24 10" preserveAspectRatio="none" aria-hidden="true"><rect x="0" y="4.5" width="24" height="1" fill="rgba(255,255,255,.06)"/>${ticks}${rects}</svg>`
+      const ticks = [6, 12, 18].map((h) => `<rect x="${h - 0.03}" y="0" width=".06" height="10" style="fill:rgb(var(--rgb-luz) / .12)"/>`).join('')
+      return `<svg class="lg-dia-franja" viewBox="0 0 24 10" preserveAspectRatio="none" aria-hidden="true"><rect x="0" y="4.5" width="24" height="1" style="fill:rgb(var(--rgb-luz) / .06)"/>${ticks}${rects}</svg>`
     }
 
     function cabeceraDia(dia: number): string {
@@ -462,7 +462,7 @@ export function montarLog(opciones: { reducido: boolean }) {
       const publicos = segs.filter((s) => !s.privado)
       // Un solo tono, del más al menos activo: la barra se lee por orden y
       // por tamaño; el color no tiene que distinguir nueve proyectos.
-      const color = (i: number) => `rgba(0, 242, 255, ${(0.92 - (0.62 * i) / Math.max(1, publicos.length - 1)).toFixed(2)})`
+      const color = (i: number) => `rgb(var(--rgb-cian-linea) / ${(0.92 - (0.62 * i) / Math.max(1, publicos.length - 1)).toFixed(2)})`
       const pct = (f: number) => (f * 100 < 1 ? '<1' : Math.round(f * 100))
       const boton = (s: (typeof segs)[number], i: number, conTexto: boolean) => {
         const nombre = s.privado ? T.motion.bitacora.privados : s.clave
@@ -497,7 +497,7 @@ export function montarLog(opciones: { reducido: boolean }) {
       const chip = (tipo: TipoCommit | null, n: number) => {
         const nombre = tipo ? T.motion.bitacora.tipos[tipo] : T.motion.bitacora.todos
         const activo = filtro.tipo === tipo
-        return `<button type="button" data-tipo="${tipo ?? ''}" aria-pressed="${activo}" style="--c:${tipo ? COLOR_TIPO[tipo] : '#00f2ff'}">${tipo ? '<i></i>' : ''}${escapar(nombre)}<b>${n}</b></button>`
+        return `<button type="button" data-tipo="${tipo ?? ''}" aria-pressed="${activo}" style="--c:${tipo ? COLOR_TIPO[tipo] : 'var(--color-cyan)'}">${tipo ? '<i></i>' : ''}${escapar(nombre)}<b>${n}</b></button>`
       }
       tiposEl.innerHTML = [chip(null, totalRepo), ...cuenta.map((c) => chip(c.tipo, c.n))].join('')
       tiposEl.hidden = false

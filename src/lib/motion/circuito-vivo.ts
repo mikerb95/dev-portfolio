@@ -29,17 +29,18 @@ import {
   type Punto,
   type Tono,
 } from './circuito'
+import { colorDeTema } from '../tema'
 
 gsap.registerPlugin(ScrambleTextPlugin)
 
 const SVG = 'http://www.w3.org/2000/svg'
 const FILAS = 4
 const COLOR: Record<Tono, string> = {
-  neutro: '#9a9aa6',
-  dato: '#00f2ff',
-  ok: '#c9ff5b',
-  alerta: '#fbbf24',
-  error: '#ff6b3d',
+  neutro: '--color-ink-200',
+  dato: '--color-cyan',
+  ok: '--color-lime',
+  alerta: '--color-ambar',
+  error: '--color-ember',
 }
 
 type Textos = { id: string; nombre: string; lineas: string[] }[]
@@ -206,7 +207,9 @@ export function montarCircuito(raiz: HTMLElement, opciones: { reducido: boolean 
   function viaje(p: Extract<Paso, { tipo: 'viaje' }>): gsap.core.Timeline | null {
     const puntos = ruta(p.de, p.a)
     if (!puntos) return null
-    const color = COLOR[p.tono]
+    // Hex concreto y no var(): más abajo se le pega el alfa (`${color}66`) para
+    // un tween de GSAP, que no interpola variables.
+    const color = colorDeTema(COLOR[p.tono])
     const dur = p.dur ?? DUR_VIAJE
     const g = document.createElementNS(SVG, 'g')
     g.setAttribute('class', 'co-viaje')

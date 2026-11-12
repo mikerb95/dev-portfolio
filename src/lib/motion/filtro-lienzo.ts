@@ -28,6 +28,7 @@ import {
   type Onda,
   type Reparto,
 } from "./filtro";
+import { alCambiarTema, paleta } from "../tema";
 
 type Tramo = {
   categoria: string;
@@ -79,11 +80,23 @@ type Destello = {
 };
 type Bloqueo = { x0: number; y0: number; y1: number; t: number };
 
-const GRIS = "196,196,204";
-const EMBER = "255,107,61";
-const CYAN = "0,242,255";
-const VIOLETA = "167,139,255";
-const LIMA = "201,255,91";
+// Canales de la paleta: el lienzo no entiende var(--color). Se vuelven a
+// copiar cuando cambia el tema (cargarPaleta).
+let GRIS = "196,196,204";
+let EMBER = "255,107,61";
+let CYAN = "0,242,255";
+let VIOLETA = "167,139,255";
+let LIMA = "201,255,91";
+let TENUE = "133,133,143";
+function cargarPaleta() {
+  const p = paleta();
+  GRIS = p.rgb.tinta100;
+  EMBER = p.rgb.ember;
+  CYAN = p.rgb.cian;
+  VIOLETA = p.rgb.violeta;
+  LIMA = p.rgb.lima;
+  TENUE = p.rgb.tinta200;
+}
 
 // Alto de las membranas en la escena (0..1), igual que el SVG del servidor.
 const MEM_Y0 = 0.06;
@@ -94,6 +107,7 @@ export function montarFiltro(
   fig: HTMLElement,
   opciones: { reducido: boolean },
 ): () => void {
+  cargarPaleta();
   const datosEl = fig.querySelector("[data-filtro-datos]");
   const escena = fig.querySelector<HTMLElement>("[data-escena]");
   const lienzo = fig.querySelector<HTMLCanvasElement>("[data-lienzo]");
@@ -331,7 +345,7 @@ export function montarFiltro(
     }
     if (i === 0) {
       ctx.setLineDash([3, 7]);
-      ctx.strokeStyle = "rgba(133,133,143,.55)";
+      ctx.strokeStyle = `rgba(${TENUE},.55)`;
       ctx.lineWidth = 1.5;
       ctx.stroke();
       ctx.setLineDash([]);
@@ -695,9 +709,14 @@ export function montarFiltro(
 
   dibujar();
   fig.dataset.vivo = "";
+  const sinTema = alCambiarTema(() => {
+    cargarPaleta();
+    dibujar();
+  });
 
   return () => {
     parar();
+    sinTema();
     io.disconnect();
     ro.disconnect();
     document.removeEventListener("visibilitychange", alVisibilidad);
