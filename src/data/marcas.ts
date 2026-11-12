@@ -33,6 +33,12 @@ export type Marca = {
   proporcion: number
   dominio: string
   url: string
+  /**
+   * El logo está dibujado en tinta clara (blanco o casi), pensado para fondo
+   * oscuro. En tema claro se pinta como silueta oscura; sin esto desaparece
+   * sobre el blanco. Se revisa a ojo al añadir una marca.
+   */
+  tintaClara?: boolean
 }
 
 // Las tres marcas que ya tienen captura en la vitrina de /paginas-web toman el
@@ -57,6 +63,7 @@ export const MARCAS: readonly Marca[] = [
     nombre: 'Toledo Producciones',
     logo: '/assets/marcas/toledo.svg',
     proporcion: 414.6 / 154.5,
+    tintaClara: true,
     ...enVitrina('Toledo Producciones'),
   },
   {
@@ -79,6 +86,7 @@ export const MARCAS: readonly Marca[] = [
     nombre: 'Gorillaz Motorbikes',
     logo: '/assets/marcas/gorillaz.webp',
     proporcion: 360 / 353,
+    tintaClara: true,
     ...enVitrina('Gorillaz Motorbikes'),
   },
   {
@@ -86,6 +94,7 @@ export const MARCAS: readonly Marca[] = [
     nombre: 'Joxe',
     logo: '/assets/marcas/joxe.svg',
     proporcion: 377.6 / 160.5,
+    tintaClara: true,
     dominio: 'joxe.app',
     url: 'https://joxe.app/',
   },

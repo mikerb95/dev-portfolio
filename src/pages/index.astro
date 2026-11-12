@@ -480,6 +480,7 @@ const senales = construirSenales(await leerPulso(), t.pulso, locale, L)
                       alt={m.nombre}
                       title={m.ficha}
                       class="resuelvo-logo"
+                      data-tinta-clara={m.tintaClara ? '' : undefined}
                       style={`--w:${m.tam.ancho.toFixed(1)}px;--h:${m.tam.alto.toFixed(1)}px`}
                       width={Math.round(m.proporcion * 100)}
                       height="100"

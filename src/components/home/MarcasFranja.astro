@@ -38,6 +38,7 @@ const items = MARCAS.map((m) => {
         <li>
           <a
             class="marca"
+            data-tinta-clara={m.tintaClara ? '' : undefined}
             href={m.url}
             target="_blank"
             rel="noopener"
@@ -92,12 +93,27 @@ const items = MARCAS.map((m) => {
     filter: none;
   }
   .marca:focus-visible {
-    outline: 2px solid rgb(34 211 238 / 0.7);
+    outline: 2px solid rgb(var(--rgb-cian-linea) / 0.7);
     outline-offset: 6px;
   }
   .marca img {
     width: 100%;
     height: 100%;
     object-fit: contain;
+  }
+
+  /* Tema claro: en reposo todos van en silueta oscura (el gris de la versión
+     oscura, del otro lado). Al apuntar recuperan su color, salvo los dibujados
+     en tinta clara, que a color serían blanco sobre blanco. */
+  :global(:root[data-tema='claro']) .marca {
+    filter: grayscale(1) brightness(0);
+  }
+  :global(:root[data-tema='claro']) .marca:hover,
+  :global(:root[data-tema='claro']) .marca:focus-visible {
+    filter: none;
+  }
+  :global(:root[data-tema='claro']) .marca[data-tinta-clara]:hover,
+  :global(:root[data-tema='claro']) .marca[data-tinta-clara]:focus-visible {
+    filter: brightness(0);
   }
 </style>

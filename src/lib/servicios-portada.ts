@@ -40,7 +40,7 @@ export type TarjetaServicio = {
   prueba: string
   enlace: string
   destino: Destino
-  marcas: { nombre: string; logo: string; proporcion: number; ficha: string; tam: { ancho: number; alto: number } }[]
+  marcas: { nombre: string; logo: string; proporcion: number; ficha: string; tintaClara: boolean; tam: { ancho: number; alto: number } }[]
 }
 
 export type CierreServicios = {
@@ -77,7 +77,7 @@ export function serviciosPortada(
         if (!m) throw new Error(`servicios-portada: la marca "${slug}" no está en MARCAS`)
         // Mismo tamaño óptico que la franja de logos: un gorila cuadrado y un
         // wordmark alargado pesan igual a la vista.
-        return { nombre: m.nombre, logo: m.logo, proporcion: m.proporcion, ficha: d.marcas.fichas[slug], tam: tamOptico(m.proporcion, BASE_LOGO) }
+        return { nombre: m.nombre, logo: m.logo, proporcion: m.proporcion, ficha: d.marcas.fichas[slug], tintaClara: !!m.tintaClara, tam: tamOptico(m.proporcion, BASE_LOGO) }
       }),
     }
   })

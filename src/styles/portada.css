@@ -291,6 +291,9 @@ section[data-en-pausa] *::after {
   transition: opacity .25s ease;
 }
 #bento article:hover .resuelvo-logo { opacity: 1; }
+/* Tema claro: los logos dibujados en tinta clara van en silueta oscura; a su
+   color serían blanco sobre blanco. */
+:root[data-tema='claro'] .resuelvo-logo[data-tinta-clara] { filter: brightness(0); }
 @media (prefers-reduced-motion: reduce) {
   .resuelvo-logo { transition: none; }
 }
