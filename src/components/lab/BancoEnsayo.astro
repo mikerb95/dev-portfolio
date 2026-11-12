@@ -280,9 +280,9 @@ const textos = { lecturas: b.lecturas, estados: b.estados, de: b.registro.de, ba
     transition: border-color 0.3s ease, color 0.3s ease, background-color 0.3s ease;
   }
   .be-estado-punto { width: 7px; height: 7px; border-radius: 99px; border: 1px solid currentColor; flex: none; transition: background-color 0.3s ease; }
-  .be-estado[data-actual] { color: var(--be-lime); border-color: rgb(var(--rgb-lima-linea) / 0.55); background: #121809; }
+  .be-estado[data-actual] { color: var(--be-lime); border-color: rgb(var(--rgb-lima-linea) / 0.55); background: color-mix(in srgb, rgb(var(--rgb-lima)) 7%, var(--color-ink-900)); }
   .be-estado[data-actual] .be-estado-punto { background: var(--be-lime); box-shadow: 0 0 10px var(--be-lime); }
-  .be-estado[data-tentativo] { color: var(--be-amber); border-color: rgb(var(--rgb-ambar-linea) / 0.6); border-style: dashed; background: #16120a; }
+  .be-estado[data-tentativo] { color: var(--be-amber); border-color: rgb(var(--rgb-ambar-linea) / 0.6); border-style: dashed; background: color-mix(in srgb, rgb(var(--rgb-ambar)) 7%, var(--color-ink-900)); }
   .be-estado[data-tentativo] .be-estado-punto { background: transparent; }
   .be-mapa.is-caida .be-maquina, .be-mapa.is-caida [data-guarda='tx'] { filter: saturate(0.3) brightness(0.7); }
 

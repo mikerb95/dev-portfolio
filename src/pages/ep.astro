@@ -1059,14 +1059,14 @@ const meta = [
        desaparece, así que el texto se fuerza a tinta. */
     #ep-page,
     #ep-page * {
-      color: #16181c !important;
+      color: var(--color-ink-900) !important;
       box-shadow: none !important;
       text-shadow: none !important;
     }
     #ep-page .text-mask,
     #ep-page .text-mask-cyan {
       background-image: none !important;
-      -webkit-text-fill-color: #16181c !important;
+      -webkit-text-fill-color: var(--color-ink-900) !important;
     }
     #ep-page .glass,
     #ep-page .border-accent {
@@ -1176,7 +1176,7 @@ const meta = [
       appearance: none;
       width: 11px;
       height: 11px;
-      border: 1px solid #16181c !important;
+      border: 1px solid var(--color-ink-900) !important;
       border-radius: 2px;
     }
   }

@@ -125,6 +125,10 @@
   --color-ink-100: #2e2e3a;
   --color-ink-50: #0a0a0d;
   --color-white: #0a0a0d;
+  /* `black` se usa como fondo más hondo que la página (pozos `bg-black/30`,
+     globos `bg-black/85` con texto de tinta): en claro ese papel lo hace el
+     blanco. Las sombras no pasan por aquí, van en rgba. */
+  --color-black: #ffffff;
 
   --color-cyan: #007a82;
   --color-cyan-dim: #006a72;
