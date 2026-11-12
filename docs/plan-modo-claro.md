@@ -57,8 +57,11 @@ Para encender una página:
 - ✅ **1. Base y portada** (11 nov 2026): variables, script, botón, barra,
   footer, burbuja del asesor, aviso de idioma, y `/` completa con sus tres
   lienzos WebGL.
-- ⬜ **2. Sitio público de venta:** `/paginas-web`, `/capacitacion-ia`,
-  `/capacitacion`, `/contact`, `/projects`.
+- ✅ **2. Sitio público de venta** (11 nov 2026): `/paginas-web`,
+  `/capacitacion-ia`, `/capacitacion` (banco, recurso y acceso), `/contact` y
+  `/projects/<slug>`. Las maquetas de cosas ajenas se dejan como son: el
+  celular de la demo, el chat de WhatsApp, el resultado de Google y las
+  capturas del aula son imágenes de otros productos, no superficies del sitio.
 - ⬜ **3. Sitio público técnico:** `/tools`, `/engineering`, `/lab` y
   `/lab/fingerprint`, `/notes`, `/security`, `/log`, `/status`,
   `/automatizaciones`, `/architecture`, `/ep`, `/changelog`.
@@ -74,9 +77,15 @@ Para encender una página:
 Fuera a propósito: las presentaciones (`PresentLayout`, `SlidesLayout`), que
 tienen su propio fondo por diapositiva, y las imágenes Open Graph.
 
-## Pendientes menores de la tanda 1
+## Pendientes menores
 
 - La barra del histograma del panel del pulso usa lima neón como relleno: sobre
   blanco se ve, pero con poco contraste.
 - Los fantasmas de octubre (`Fantasmas.astro`) no se revisaron en claro: no es
   temporada.
+- Las animaciones GSAP que tiñen texto leen el color al armarse
+  (`colorDeTema`): si se cambia de tema con la página abierta, ese tinte queda
+  con el color anterior hasta recargar.
+- `/capacitacion` y `/capacitacion/acceso` tienen 144 px de desborde horizontal
+  en escritorio en los dos temas: el halo no está recortado. Viene de antes y
+  no es de color; queda sin tocar.
