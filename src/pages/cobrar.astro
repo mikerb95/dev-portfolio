@@ -1,5 +1,4 @@
 ---
-import TemaScript from '../components/TemaScript.astro'
 import '../styles/global.css'
 import { listCobros } from '../lib/cobros-db'
 import { fmtCOP, timeLeft } from '../lib/cobros'
@@ -29,7 +28,6 @@ const badge: Record<string, string> = {
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="robots" content="noindex, nofollow" />
     <meta name="theme-color" content="#09090b" />
-    <TemaScript />
     <title>Cobrar - CodeByMike</title>
   </head>
   <body class="grain bg-ink-950 text-ink-50 min-h-screen">

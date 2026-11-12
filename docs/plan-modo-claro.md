@@ -85,8 +85,18 @@ Para encender una página:
   trazos en escuadra) corre tras cada pintado. En casos de uso, tres grises
   oscuros casi iguales (`#20202b`, `#8a8a99`, `#101018`) pasaron a la escala de
   tinta más cercana: en oscuro cambian un par de puntos de luminosidad.
-- ⬜ **5. Cobros y propuestas:** `/c/[code]`, `/mis-pagos`, `/propuesta`,
-  `/cotiza`.
+- ✅ **5. Cobros y propuestas** (12 nov 2026): `/c/<código>`, `/mis-pagos`,
+  `/propuesta/<token>`, `/acuerdo/<token>`, `/cotiza/entrar`, `/pay` y
+  `/pay/gracias`. Las que tienen su propio `<html>` (sin la barra del sitio)
+  llevan `TemaScript` en el `<head>` y no tienen botón: siguen al dispositivo o
+  a la elección guardada. Verificadas con datos sembrados en una base
+  desechable local (propuesta enviada y tres cobros), nunca contra Turso.
+  Pasan a la tanda de `/admin` por ser privadas: `/cobrar` y las vistas de
+  Cotiza (`CotizaLayout`, que abre con sesión o con PIN).
+  - La paleta semántica de Tailwind (`red-300`, `amber-400`, `emerald-950`...)
+    se cruza en claro: cada tono apunta a su espejo de luminosidad (bloque en
+    `global.css`). Afecta a todo el sitio encendido; los colores salen de
+    `tailwindcss/theme.css` y hay que regenerarlos si Tailwind cambia su paleta.
 - ⬜ **6. Portal de clientes** (`PortalLayout`, `PortalAuthLayout`).
 - ⬜ **7. Panel `/admin`** (`AdminLayout`).
 - ⬜ **8. Cierre:** quitar el interruptor `temaClaro` y dejar el tema en todos
