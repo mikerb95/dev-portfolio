@@ -1,4 +1,5 @@
 ---
+import TemaScript from '../../components/TemaScript.astro'
 import '../../styles/global.css'
 import { db } from '../../db'
 import { payments } from '../../db/schema'
@@ -76,6 +77,7 @@ const datos = v && p ? { token: p.token, vista: v, estado, anticipoPagado, moned
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="robots" content="noindex, nofollow" />
     <meta name="theme-color" content="var(--color-ink-900)" />
+    <TemaScript />
     <title>{v ? `Propuesta · ${v.titulo}` : 'Propuesta'} · CodeByMike</title>
     <!-- Vista previa genérica a propósito: WhatsApp cachea la preview y la
          muestra en el chat; con el precio dentro quedaría a la vista y
@@ -543,7 +545,7 @@ const datos = v && p ? { token: p.token, vista: v, estado, anticipoPagado, moned
   .pv-firmar h2, .pv-aceptada h2 { margin-top: -0.2rem; }
   .pv-form { display: grid; gap: 0.9rem; max-width: 520px; margin: 1.4rem 0 1rem; }
   .pv-form label:not(.pv-acepto) { display: flex; flex-direction: column; gap: 0.35rem; font-size: 13px; color: var(--color-ink-100); }
-  .pv-form input:not([type='checkbox']) { border-radius: 0.75rem; padding: 0.75rem 0.9rem; font-size: 15px; color: var(--color-ink-50); background: rgba(0, 0, 0, 0.3); border: 1px solid rgb(var(--rgb-luz) / 0.1); }
+  .pv-form input:not([type='checkbox']) { border-radius: 0.75rem; padding: 0.75rem 0.9rem; font-size: 15px; color: var(--color-ink-50); background: rgb(var(--rgb-hondo) / 0.3); border: 1px solid rgb(var(--rgb-luz) / 0.1); }
   .pv-form input:focus { outline: none; border-color: rgb(var(--rgb-cian-linea) / 0.5); }
   .pv-acepto { display: flex; gap: 0.6rem; align-items: flex-start; font-size: 14px; color: var(--color-ink-100); line-height: 1.5; }
   .pv-acepto input { margin-top: 0.25rem; accent-color: var(--color-cyan); width: 1rem; height: 1rem; }

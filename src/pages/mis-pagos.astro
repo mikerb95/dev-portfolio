@@ -1,4 +1,5 @@
 ---
+import TemaScript from '../components/TemaScript.astro'
 import '../styles/global.css'
 import { resolvePhoneFromLink } from '../lib/mis-pagos'
 import { historyForPhone } from '../lib/cobros-db'
@@ -54,6 +55,7 @@ const WHATSAPP = 'https://wa.me/573104641228'
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="robots" content="noindex, nofollow" />
     <meta name="theme-color" content="#09090b" />
+    <TemaScript />
     <title>Mis pagos - CodeByMike</title>
   </head>
   <body class="grain bg-ink-950 text-ink-50 min-h-screen">

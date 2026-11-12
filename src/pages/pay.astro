@@ -11,7 +11,7 @@ const METHODS = ['Tarjeta crédito o débito', 'PSE', 'Nequi', 'Daviplata', 'Ban
 const PRESETS = [10_000, 25_000, 50_000]
 ---
 
-<BaseLayout
+<BaseLayout temaClaro
   title="Pagos - CodeByMike"
   description="Paga un servicio de desarrollo o apoya mi trabajo con tarjeta, PSE, Nequi o Daviplata."
   noindex
@@ -170,7 +170,7 @@ const PRESETS = [10_000, 25_000, 50_000]
     transition: border-color .2s ease;
   }
   .field:focus { outline: none; border-color: rgb(var(--rgb-cian-linea) / .5); }
-  .field[aria-invalid='true'] { border-color: rgba(248, 113, 113, .6); }
+  .field[aria-invalid='true'] { border-color: color-mix(in srgb, var(--color-red-400) 60%, transparent); }
   .field::placeholder { color: var(--color-ink-300); }
 
   .kind-tab { color: var(--color-ink-200); }
