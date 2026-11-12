@@ -109,7 +109,7 @@ const textos = JSON.stringify({
   </div>
 
   <div id="asesor-menu" class="asesor-menu fixed right-4 sm:right-5 z-[60] w-[min(20rem,calc(100vw-2rem))]" hidden>
-    <div class="rounded-2xl border border-ink-500/70 bg-ink-800/95 backdrop-blur-md p-1.5 shadow-[0_18px_50px_-12px_rgba(0,0,0,.7)]">
+    <div class="rounded-2xl border border-ink-500/70 bg-ink-800/95 backdrop-blur-md p-1.5 shadow-[0_18px_50px_-12px_var(--sombra-profunda)]">
       <a
         href={href}
         target="_blank"
@@ -144,7 +144,7 @@ const textos = JSON.stringify({
 
   <section
     id="asesor-chat"
-    class="asesor-chat fixed right-4 sm:right-5 z-[60] flex flex-col w-[min(23.5rem,calc(100vw-2rem))] rounded-2xl border border-ink-500/70 bg-ink-850/97 backdrop-blur-md shadow-[0_24px_70px_-16px_rgba(0,0,0,.8)] overflow-hidden"
+    class="asesor-chat fixed right-4 sm:right-5 z-[60] flex flex-col w-[min(23.5rem,calc(100vw-2rem))] rounded-2xl border border-ink-500/70 bg-ink-850/97 backdrop-blur-md shadow-[0_24px_70px_-16px_var(--sombra-profunda)] overflow-hidden"
     role="dialog"
     aria-labelledby="asesor-titulo"
     data-lenis-prevent
@@ -218,7 +218,7 @@ const textos = JSON.stringify({
       </div>
       <div class="mt-2 flex items-center justify-between gap-3 text-[11.5px] whitespace-nowrap">
         <button type="button" id="asesor-contacto-abrir" class="text-ink-100 hover:text-ink-50 hover:underline underline-offset-2 cursor-pointer disabled:opacity-50 disabled:no-underline disabled:cursor-default" data-analytics="asesor-contacto-abrir">{a.contactoAbrir}</button>
-        <a href={href} target="_blank" rel="noopener" class="text-[#5ee08f] hover:underline underline-offset-2" data-analytics="asesor-hablar-mike">{a.hablarMike}</a>
+        <a href={href} target="_blank" rel="noopener" class="text-(--wa-texto) hover:underline underline-offset-2" data-analytics="asesor-hablar-mike">{a.hablarMike}</a>
       </div>
     </form>
   </section>
@@ -407,7 +407,7 @@ const textos = JSON.stringify({
     height: 6px;
     border-radius: 999px;
     background: var(--color-cyan);
-    box-shadow: 0 0 0 3px rgba(0, 242, 255, 0.14);
+    box-shadow: 0 0 0 3px rgb(var(--rgb-cian) / 0.14);
   }
 
   .asesor-log :global(.asesor-burbuja) {
@@ -428,8 +428,8 @@ const textos = JSON.stringify({
   }
   .asesor-log :global(.asesor-burbuja--yo) {
     margin-left: auto;
-    background: rgba(0, 242, 255, 0.1);
-    border: 1px solid rgba(0, 242, 255, 0.28);
+    background: rgb(var(--rgb-cian) / 0.1);
+    border: 1px solid rgb(var(--rgb-cian-linea) / 0.28);
     color: var(--color-ink-50);
     border-bottom-right-radius: 0.35rem;
   }
@@ -446,7 +446,7 @@ const textos = JSON.stringify({
     margin-bottom: 0.1rem;
     font-size: 11.5px;
     font-weight: 600;
-    color: #5ee08f;
+    color: var(--wa-texto);
   }
   .asesor-log :global(.asesor-sistema) {
     font-size: 12px;
@@ -528,15 +528,15 @@ const textos = JSON.stringify({
   }
 
   .asesor-pulso {
-    box-shadow: 0 0 0 0 rgba(0, 242, 255, 0.5);
+    box-shadow: 0 0 0 0 rgb(var(--rgb-cian) / 0.5);
     animation: asesor-pulso 2.4s ease-out infinite;
   }
   @keyframes asesor-pulso {
     70% {
-      box-shadow: 0 0 0 7px rgba(0, 242, 255, 0);
+      box-shadow: 0 0 0 7px rgb(var(--rgb-cian) / 0);
     }
     100% {
-      box-shadow: 0 0 0 0 rgba(0, 242, 255, 0);
+      box-shadow: 0 0 0 0 rgb(var(--rgb-cian) / 0);
     }
   }
 
@@ -547,7 +547,7 @@ const textos = JSON.stringify({
     gap: 0.55rem;
     padding: 0.85rem;
     border-radius: 1rem;
-    border: 1px solid rgba(0, 242, 255, 0.22);
+    border: 1px solid rgb(var(--rgb-cian-linea) / 0.22);
     background: var(--color-ink-750);
     animation: asesor-opcion 0.45s cubic-bezier(0.16, 1, 0.3, 1);
   }
@@ -582,7 +582,7 @@ const textos = JSON.stringify({
   }
   .asesor-campo input:focus {
     outline: none;
-    border-color: rgba(0, 242, 255, 0.7);
+    border-color: rgb(var(--rgb-cian-linea) / 0.7);
   }
   .asesor-contacto-ayuda {
     font-size: 11.5px;
@@ -623,8 +623,8 @@ const textos = JSON.stringify({
     color: var(--color-ink-50);
     padding: 0.6rem 0.8rem;
     border-radius: 1rem;
-    border: 1px solid rgba(0, 242, 255, 0.22);
-    background: rgba(0, 242, 255, 0.06);
+    border: 1px solid rgb(var(--rgb-cian-linea) / 0.22);
+    background: rgb(var(--rgb-cian) / 0.06);
   }
 
   /* Burbuja doble: el verde y el logo siguen diciendo WhatsApp, y el círculo
@@ -645,7 +645,7 @@ const textos = JSON.stringify({
     border-radius: 999px;
     background: var(--color-ink-900);
     color: var(--color-cyan);
-    box-shadow: inset 0 0 0 1px rgba(0, 242, 255, 0.35);
+    box-shadow: inset 0 0 0 1px rgb(var(--rgb-cian-linea) / 0.35);
     transition: box-shadow 0.3s ease;
   }
   .wa-chispa-grande {
@@ -687,8 +687,8 @@ const textos = JSON.stringify({
   /* Con el globo afuera, el círculo de IA se enciende: es de donde habla. */
   .wa-fab[data-globo] .wa-fab-ia {
     box-shadow:
-      inset 0 0 0 1px rgba(0, 242, 255, 0.6),
-      0 0 0 3px rgba(0, 242, 255, 0.22);
+      inset 0 0 0 1px rgb(var(--rgb-cian-linea) / 0.6),
+      0 0 0 3px rgb(var(--rgb-cian) / 0.22);
   }
 
   /* Globo que sale de la burbuja invitando al asistente. Nace de la esquina
@@ -730,17 +730,17 @@ const textos = JSON.stringify({
     padding: 0.65rem 2.1rem 0.7rem 0.9rem;
     border-radius: 1rem;
     border-bottom-right-radius: 0.4rem;
-    border: 1px solid rgba(0, 242, 255, 0.32);
+    border: 1px solid rgb(var(--rgb-cian-linea) / 0.32);
     background: var(--color-ink-800);
     color: var(--color-ink-50);
     font-size: 13.5px;
     line-height: 1.4;
     text-align: left;
-    box-shadow: 0 14px 40px -12px rgba(0, 0, 0, 0.75);
+    box-shadow: 0 14px 40px -12px var(--sombra-profunda);
     transition: border-color 0.2s ease;
   }
   .asesor-globo-texto:hover {
-    border-color: rgba(0, 242, 255, 0.6);
+    border-color: rgb(var(--rgb-cian-linea) / 0.6);
   }
   .asesor-globo-texto:focus-visible {
     outline: 2px solid var(--color-cyan);

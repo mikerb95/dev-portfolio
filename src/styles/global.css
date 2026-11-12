@@ -81,7 +81,7 @@
   --sobre-acento: #121216;       /* texto encima de un relleno de acento */
   --scroll-pulgar: #24242f;
   --scroll-pulgar-hover: #3a3a48;
-  --halo-fuerza: 1;
+  --wa-texto: #5ee08f;           /* enlaces en verde WhatsApp */
 }
 
 /* ── Tema claro (RF-043): "neón sobre blanco" ──
@@ -132,7 +132,7 @@
   --sobre-acento: #0a0a0d;
   --scroll-pulgar: #cdcdd7;
   --scroll-pulgar-hover: #a9a9b5;
-  --halo-fuerza: 1.1;
+  --wa-texto: #0f7a3d;
 }
 
 /* Base */
