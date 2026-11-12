@@ -164,20 +164,20 @@ const PRESETS = [10_000, 25_000, 50_000]
     height: 2.75rem;
     padding: 0 1rem;
     border-radius: .75rem;
-    background: rgba(255, 255, 255, .05);
-    border: 1px solid rgba(255, 255, 255, .1);
+    background: rgb(var(--rgb-luz) / .05);
+    border: 1px solid rgb(var(--rgb-luz) / .1);
     font-size: 14px;
     transition: border-color .2s ease;
   }
-  .field:focus { outline: none; border-color: rgba(0, 242, 255, .5); }
+  .field:focus { outline: none; border-color: rgb(var(--rgb-cian-linea) / .5); }
   .field[aria-invalid='true'] { border-color: rgba(248, 113, 113, .6); }
   .field::placeholder { color: var(--color-ink-300); }
 
   .kind-tab { color: var(--color-ink-200); }
   .kind-tab:hover { color: var(--color-ink-50); }
-  .kind-tab[aria-selected='true'] { background: rgba(0, 242, 255, .12); color: var(--color-cyan); }
+  .kind-tab[aria-selected='true'] { background: rgb(var(--rgb-cian) / .12); color: var(--color-cyan); }
 
-  .preset[aria-pressed='true'] { border-color: rgba(0, 242, 255, .5); background: rgba(0, 242, 255, .08); color: var(--color-cyan); }
+  .preset[aria-pressed='true'] { border-color: rgb(var(--rgb-cian-linea) / .5); background: rgb(var(--rgb-cian) / .08); color: var(--color-cyan); }
 
   .info-title {
     margin-bottom: .75rem;
@@ -203,10 +203,10 @@ const PRESETS = [10_000, 25_000, 50_000]
     border-radius: .75rem;
     font-size: 13px;
     color: var(--color-ink-100);
-    background: rgba(255, 255, 255, .03);
+    background: rgb(var(--rgb-luz) / .03);
     transition: background .2s ease, color .2s ease;
   }
-  .help-link:hover { background: rgba(0, 242, 255, .08); color: var(--color-cyan); }
+  .help-link:hover { background: rgb(var(--rgb-cian) / .08); color: var(--color-cyan); }
 </style>
 
 <script>
