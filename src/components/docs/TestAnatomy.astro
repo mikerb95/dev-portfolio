@@ -40,8 +40,8 @@ import { ANATOMIA_CODIGO, ANATOMIA_CAPAS, ANATOMIA_META } from '../../data/testi
 
 <style>
   .anatomy {
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgb(var(--rgb-luz) / 0.12);
+    background: rgb(var(--rgb-luz) / 0.02);
     border-radius: 0.9rem;
     overflow: hidden;
   }
@@ -52,7 +52,7 @@ import { ANATOMIA_CODIGO, ANATOMIA_CAPAS, ANATOMIA_META } from '../../data/testi
     align-items: flex-start;
     justify-content: space-between;
     padding: 0.85rem 1rem;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    border-bottom: 1px solid rgb(var(--rgb-luz) / 0.08);
   }
   .file { font-size: 11.5px; color: var(--color-ink-300); }
   .mono { font-family: var(--font-mono); }
@@ -62,17 +62,17 @@ import { ANATOMIA_CODIGO, ANATOMIA_CAPAS, ANATOMIA_META } from '../../data/testi
     font-size: 12.5px;
     padding: 0.3rem 0.7rem;
     border-radius: 99px;
-    border: 1px solid rgba(255, 255, 255, 0.12);
+    border: 1px solid rgb(var(--rgb-luz) / 0.12);
     color: var(--color-ink-200);
     cursor: pointer;
     transition: background 0.16s, color 0.16s, border-color 0.16s;
   }
-  .capa-btn:hover { background: rgba(255, 255, 255, 0.05); color: var(--color-ink-50); }
+  .capa-btn:hover { background: rgb(var(--rgb-luz) / 0.05); color: var(--color-ink-50); }
   .capa-btn:focus-visible { outline: 2px solid var(--color-cyan); outline-offset: 2px; }
   .capa-btn[aria-pressed='true'] {
-    background: rgba(167, 139, 255, 0.12);
+    background: rgb(var(--rgb-violeta) / 0.12);
     color: var(--color-violet);
-    border-color: rgba(167, 139, 255, 0.35);
+    border-color: rgb(var(--rgb-violeta-linea) / 0.35);
   }
 
   .anatomy-body { display: grid; grid-template-columns: 1.35fr 1fr; }
@@ -94,7 +94,7 @@ import { ANATOMIA_CODIGO, ANATOMIA_CAPAS, ANATOMIA_META } from '../../data/testi
   .anatomy[data-activa='act'] .line[data-linea='act'],
   .anatomy[data-activa='assert'] .line[data-linea='assert'] {
     opacity: 1;
-    background: rgba(0, 242, 255, 0.07);
+    background: rgb(var(--rgb-cian) / 0.07);
   }
   /* La capa "por qué importa" no señala líneas: las devuelve todas a foco. */
   .anatomy[data-activa='porque'] .line { opacity: 1; }
@@ -112,7 +112,7 @@ import { ANATOMIA_CODIGO, ANATOMIA_CAPAS, ANATOMIA_META } from '../../data/testi
 
   @media (max-width: 860px) {
     .anatomy-body { grid-template-columns: 1fr; }
-    .notas { border-top: 1px solid rgba(255, 255, 255, 0.08); }
+    .notas { border-top: 1px solid rgb(var(--rgb-luz) / 0.08); }
   }
 </style>
 

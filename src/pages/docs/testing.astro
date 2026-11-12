@@ -500,17 +500,17 @@ const secciones = [
     font-size: 13px;
     padding: 0.3rem 0.75rem;
     border-radius: 99px;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid rgb(var(--rgb-luz) / 0.1);
     color: var(--color-ink-200);
     cursor: pointer;
     transition: background 0.16s, color 0.16s, border-color 0.16s;
   }
-  .filtro:hover { background: rgba(255, 255, 255, 0.05); color: var(--color-ink-50); }
+  .filtro:hover { background: rgb(var(--rgb-luz) / 0.05); color: var(--color-ink-50); }
   .filtro:focus-visible { outline: 2px solid var(--color-cyan); outline-offset: 2px; }
   .filtro[aria-pressed='true'] {
-    background: rgba(0, 242, 255, 0.1);
+    background: rgb(var(--rgb-cian) / 0.1);
     color: var(--color-cyan);
-    border-color: rgba(0, 242, 255, 0.3);
+    border-color: rgb(var(--rgb-cian-linea) / 0.3);
   }
   .nivel[hidden] { display: none; }
 </style>

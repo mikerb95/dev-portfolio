@@ -110,7 +110,7 @@ import { PIPELINE, ESCENARIOS } from '../../data/testing'
     top: 1.6rem;
     width: 1rem;
     height: 1px;
-    background: rgba(255, 255, 255, 0.14);
+    background: rgb(var(--rgb-luz) / 0.14);
   }
   .stage {
     flex: 1;
@@ -118,17 +118,17 @@ import { PIPELINE, ESCENARIOS } from '../../data/testing'
     padding: 0.85rem 0.75rem 1.4rem;
     margin: 0 0.25rem;
     border-radius: 0.75rem;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    background: rgba(255, 255, 255, 0.025);
+    border: 1px solid rgb(var(--rgb-luz) / 0.1);
+    background: rgb(var(--rgb-luz) / 0.025);
     cursor: pointer;
     position: relative;
     transition: background 0.18s, border-color 0.18s, transform 0.18s;
   }
-  .stage:hover { background: rgba(0, 242, 255, 0.06); border-color: rgba(0, 242, 255, 0.28); }
+  .stage:hover { background: rgb(var(--rgb-cian) / 0.06); border-color: rgb(var(--rgb-cian-linea) / 0.28); }
   .stage:focus-visible { outline: 2px solid var(--color-cyan); outline-offset: 2px; }
   .stage[aria-expanded='true'] {
-    background: rgba(0, 242, 255, 0.08);
-    border-color: rgba(0, 242, 255, 0.42);
+    background: rgb(var(--rgb-cian) / 0.08);
+    border-color: rgb(var(--rgb-cian-linea) / 0.42);
   }
   .stage-n {
     display: block;
@@ -148,20 +148,20 @@ import { PIPELINE, ESCENARIOS } from '../../data/testing'
     width: 7px;
     height: 7px;
     border-radius: 99px;
-    background: rgba(255, 255, 255, 0.12);
+    background: rgb(var(--rgb-luz) / 0.12);
     transition: background 0.25s, box-shadow 0.25s;
   }
-  .stage[data-run='ok'] .stage-mark { background: var(--color-lime); box-shadow: 0 0 10px rgba(201, 255, 91, 0.55); }
-  .stage[data-run='fail'] .stage-mark { background: var(--color-ember); box-shadow: 0 0 10px rgba(255, 107, 61, 0.6); }
+  .stage[data-run='ok'] .stage-mark { background: var(--color-lime); box-shadow: 0 0 10px rgb(var(--rgb-lima) / 0.55); }
+  .stage[data-run='fail'] .stage-mark { background: var(--color-ember); box-shadow: 0 0 10px rgb(var(--rgb-ember) / 0.6); }
   .stage[data-run='warn'] .stage-mark { background: #ffcc4d; box-shadow: 0 0 10px rgba(255, 204, 77, 0.5); }
   .stage[data-run='skip'] .stage-mark { background: var(--color-ink-400); }
-  .stage[data-run] { border-color: rgba(255, 255, 255, 0.2); }
-  .stage[data-run='fail'] { border-color: rgba(255, 107, 61, 0.5); background: rgba(255, 107, 61, 0.07); }
+  .stage[data-run] { border-color: rgb(var(--rgb-luz) / 0.2); }
+  .stage[data-run='fail'] { border-color: rgb(var(--rgb-ember-linea) / 0.5); background: rgb(var(--rgb-ember) / 0.07); }
 
   /* ── Paneles ────────────────────────────────────────────── */
   .panel {
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgb(var(--rgb-luz) / 0.12);
+    background: rgb(var(--rgb-luz) / 0.03);
     border-radius: 0.9rem;
     padding: 1.1rem 1.2rem;
     margin-bottom: 1.25rem;
@@ -177,16 +177,16 @@ import { PIPELINE, ESCENARIOS } from '../../data/testing'
     border-radius: 99px;
     border: 1px solid;
   }
-  .chip-block { color: var(--color-ember); border-color: rgba(255, 107, 61, 0.35); background: rgba(255, 107, 61, 0.08); }
-  .chip-soft { color: var(--color-ink-200); border-color: rgba(255, 255, 255, 0.14); }
+  .chip-block { color: var(--color-ember); border-color: rgb(var(--rgb-ember-linea) / 0.35); background: rgb(var(--rgb-ember) / 0.08); }
+  .chip-soft { color: var(--color-ink-200); border-color: rgb(var(--rgb-luz) / 0.14); }
   .panel-meta {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 0.75rem;
     margin: 0.9rem 0;
     padding: 0.75rem 0;
-    border-top: 1px solid rgba(255, 255, 255, 0.08);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    border-top: 1px solid rgb(var(--rgb-luz) / 0.08);
+    border-bottom: 1px solid rgb(var(--rgb-luz) / 0.08);
   }
   .panel-meta .k {
     display: block;
@@ -222,8 +222,8 @@ import { PIPELINE, ESCENARIOS } from '../../data/testing'
 
   /* ── Simulación ─────────────────────────────────────────── */
   .sim {
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgb(var(--rgb-luz) / 0.12);
+    background: rgb(var(--rgb-luz) / 0.02);
     border-radius: 0.9rem;
     padding: 1.1rem 1.2rem;
   }
@@ -235,17 +235,17 @@ import { PIPELINE, ESCENARIOS } from '../../data/testing'
     font-size: 13px;
     padding: 0.35rem 0.75rem;
     border-radius: 99px;
-    border: 1px solid rgba(255, 255, 255, 0.12);
+    border: 1px solid rgb(var(--rgb-luz) / 0.12);
     color: var(--color-ink-200);
     cursor: pointer;
     transition: background 0.16s, color 0.16s, border-color 0.16s;
   }
-  .sim-btn:hover { background: rgba(255, 255, 255, 0.05); color: var(--color-ink-50); }
+  .sim-btn:hover { background: rgb(var(--rgb-luz) / 0.05); color: var(--color-ink-50); }
   .sim-btn:focus-visible { outline: 2px solid var(--color-cyan); outline-offset: 2px; }
   .sim-btn[aria-pressed='true'] {
-    background: rgba(0, 242, 255, 0.1);
+    background: rgb(var(--rgb-cian) / 0.1);
     color: var(--color-cyan);
-    border-color: rgba(0, 242, 255, 0.32);
+    border-color: rgb(var(--rgb-cian-linea) / 0.32);
   }
   .sim-resumen { font-size: 13.5px; color: var(--color-ink-100); margin-bottom: 0.75rem; }
   .sim-log { display: grid; gap: 0.3rem; margin-bottom: 0.85rem; }
@@ -258,7 +258,7 @@ import { PIPELINE, ESCENARIOS } from '../../data/testing'
     line-height: 1.55;
     padding: 0.35rem 0.5rem;
     border-radius: 0.4rem;
-    background: rgba(255, 255, 255, 0.02);
+    background: rgb(var(--rgb-luz) / 0.02);
     transition: opacity 0.3s, transform 0.3s;
   }
   .log-icon { width: 9px; height: 9px; border-radius: 99px; justify-self: center; }
@@ -286,12 +286,12 @@ import { PIPELINE, ESCENARIOS } from '../../data/testing'
     font-weight: 500;
     padding: 0.45rem 0.9rem;
     border-radius: 0.6rem;
-    border: 1px solid rgba(0, 242, 255, 0.3);
-    background: rgba(0, 242, 255, 0.08);
+    border: 1px solid rgb(var(--rgb-cian-linea) / 0.3);
+    background: rgb(var(--rgb-cian) / 0.08);
     color: var(--color-cyan);
     cursor: pointer;
   }
-  .sim-play:hover { background: rgba(0, 242, 255, 0.14); }
+  .sim-play:hover { background: rgb(var(--rgb-cian) / 0.14); }
   .sim-play:focus-visible { outline: 2px solid var(--color-cyan); outline-offset: 2px; }
   .play-icon {
     width: 0;

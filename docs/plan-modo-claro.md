@@ -76,8 +76,26 @@ Para encender una página:
   `/security`) y las animaciones GSAP leen el color con `paleta()` de
   `src/lib/tema.ts`. `--color-black` pasa a ser blanco en claro: en el sitio
   `black` se usa como fondo más hondo que la página, no como tinta.
-- ⬜ **4. `/docs`:** diagramas BPMN y UML (ya existe la variante sobre papel
-  `bpmn-claro` como referencia) y Mermaid.
+- 🚧 **4. `/docs`** (empezada el 11 nov 2026, sin encender): los colores a
+  mano del CSS de las páginas y componentes de `/docs` ya pasaron a variables
+  (en oscuro valen lo mismo), pero **ninguna página de `/docs` tiene
+  `temaClaro`** y no hay capturas. Falta:
+  - Variante clara de `.bpmn-scope` y `.uml-scope` en `global.css` (referencia:
+    `.bpmn-claro`).
+  - Mermaid (`diagrama-secuencia`, `-objetos`, `-paquetes`, `-clases`): hoy
+    `theme: 'dark'` con hex fijos. Hace falta un ayudante que resuelva las
+    variables con `colorDeTema`, use `theme: 'base'` en claro y vuelva a
+    pintar al cambiar de tema (guardando la fuente de cada `<pre>`); en
+    `-clases` el retoque posterior (`TINTES`, `ortogonalizar`) debe correr
+    después de cada pintado.
+  - `casos-de-uso.astro`: el SVG se arma en el frontmatter con hex en
+    atributos; pasarlos a `var()` (comprobado: Chromium acepta `var()` en
+    atributos SVG).
+  - `IteracionesBoard.astro`: tarjetas `rgba(30,30,40,.65)`, velo del modal y
+    los colores del gráfico de barras en su `<script>`.
+  - `PipelineMap.astro` y `pipeline-en-vivo.astro`: el amarillo de aviso
+    `#ffcc4d` como texto.
+  - Capturas en los dos temas y encender cada página.
 - ⬜ **5. Cobros y propuestas:** `/c/[code]`, `/mis-pagos`, `/propuesta`,
   `/cotiza`.
 - ⬜ **6. Portal de clientes** (`PortalLayout`, `PortalAuthLayout`).
