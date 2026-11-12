@@ -69,6 +69,7 @@
   --rgb-luz: 255 255 255;        /* velo y borde translúcidos sobre el fondo */
   --rgb-fondo: 18 18 22;         /* el fondo de la página, para velos y halos de texto */
   --rgb-pozo: 8 8 12;            /* superficies opacas flotantes (glass-strong) */
+  --rgb-hondo: 0 0 0;            /* velo de un pozo: más hondo que la página */
   --rgb-cian: 0 242 255;         /* cian como luz: rellenos y resplandores */
   --rgb-cian-linea: 0 242 255;   /* cian como trazo: bordes y líneas finas */
   --rgb-violeta: 167 139 255;
@@ -143,6 +144,7 @@
   --rgb-luz: 10 10 13;
   --rgb-fondo: 255 255 255;
   --rgb-pozo: 255 255 255;
+  --rgb-hondo: 214 214 226;
   --rgb-cian-linea: 0 122 130;
   --rgb-tinta: 10 10 13;
   --rgb-ambar-linea: 161 98 7;
