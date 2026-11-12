@@ -97,7 +97,7 @@ const inactivePadding = size === 'sm' ? 'px-2.5' : 'px-3'
             height="14"
             rx="2.2"
             fill="none"
-            stroke="rgba(255,255,255,.18)"
+            stroke="rgb(var(--rgb-luz) / .18)"
             stroke-width="1"
           />
         </svg>
@@ -105,7 +105,7 @@ const inactivePadding = size === 'sm' ? 'px-2.5' : 'px-3'
 
       return isActive ? (
         <span
-          class={`${optionBase} ${activePadding} bg-white/10 text-ink-50 shadow-[0_1px_2px_rgba(0,0,0,.35)]`}
+          class={`${optionBase} ${activePadding} bg-white/10 text-ink-50 shadow-[0_1px_2px_var(--sombra-suave)]`}
           aria-current="true"
         >
           {flag}

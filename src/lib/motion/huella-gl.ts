@@ -14,6 +14,7 @@
 
 import { HUELLA_NEUTRA, type ParametrosHuella } from './huella'
 import { programa, RUIDO, trianguloCompleto, VERTEX_COMPLETO } from './glsl'
+import { alCambiarTema, temaActual } from '../tema'
 
 const FRAGMENT = /* glsl */ `#version 300 es
 precision highp float;
@@ -27,6 +28,7 @@ uniform float uMezcla;
 uniform vec3 uCursor;     // x, y (en coordenadas del lienzo), intensidad
 uniform float uEscaneo;   // y de la línea de escaneo
 uniform float uRevelado;  // por encima de esta y la huella ya está revelada
+uniform float uClaro;     // 0 en tema oscuro, 1 en claro
 out vec4 color;
 
 ${RUIDO}
@@ -84,10 +86,12 @@ void main() {
   float barrido = exp(-pow((p.y - uEscaneo) / 0.013, 2.0));
   float estela = p.y > uEscaneo ? exp(-(p.y - uEscaneo) / 0.07) : 0.0;
 
-  vec3 cian = vec3(0.0, 0.949, 1.0);
-  vec3 violeta = vec3(0.655, 0.545, 1.0);
+  // Mismo criterio que el terreno del hero: en claro las crestas son tinta y
+  // el realce las oscurece en vez de aclararlas.
+  vec3 cian = mix(vec3(0.0, 0.949, 1.0), vec3(0.0, 0.6, 0.66), uClaro);
+  vec3 violeta = mix(vec3(0.655, 0.545, 1.0), vec3(0.42, 0.29, 0.88), uClaro);
   vec3 c0 = mix(violeta, cian, smoothstep(-0.4, 0.32, p.y));
-  c0 = mix(c0, vec3(0.86, 1.0, 1.0), clamp(barrido * 0.85 + presion * 0.5 + estela * 0.25, 0.0, 1.0));
+  c0 = mix(c0, mix(vec3(0.86, 1.0, 1.0), vec3(0.0, 0.38, 0.43), uClaro), clamp(barrido * 0.85 + presion * 0.5 + estela * 0.25, 0.0, 1.0));
 
   float a = cresta * mascara * revelado * (0.5 + 1.1 * barrido + 0.55 * estela + 0.7 * presion);
   // La propia línea del lector, tenue, a todo el ancho del dedo.
@@ -143,6 +147,7 @@ export function montarHuella(lienzo: HTMLCanvasElement, opciones: { reducido: bo
     cursor: u('uCursor'),
     escaneo: u('uEscaneo'),
     revelado: u('uRevelado'),
+    claro: u('uClaro'),
   }
 
   let desde = HUELLA_NEUTRA
@@ -178,6 +183,7 @@ export function montarHuella(lienzo: HTMLCanvasElement, opciones: { reducido: bo
     gl!.uniform3f(U.cursor, cursor.x, cursor.y, cursor.intensidad)
     gl!.uniform1f(U.escaneo, escaneo)
     gl!.uniform1f(U.revelado, revelado)
+    gl!.uniform1f(U.claro, temaActual() === 'claro' ? 1 : 0)
     gl!.drawArrays(gl!.TRIANGLES, 0, 3)
   }
 
@@ -227,6 +233,10 @@ export function montarHuella(lienzo: HTMLCanvasElement, opciones: { reducido: bo
     if (opciones.reducido) dibujar(0, ABAJO - 0.2, -5)
   })
   ro.observe(lienzo)
+  // Con el bucle parado (movimiento reducido) nadie volvería a pintar.
+  const sinTema = alCambiarTema(() => {
+    if (opciones.reducido) dibujar(0, ABAJO - 0.2, -5)
+  })
 
   return {
     fijar(p) {
@@ -252,6 +262,7 @@ export function montarHuella(lienzo: HTMLCanvasElement, opciones: { reducido: bo
     destruir() {
       if (raf) cancelAnimationFrame(raf)
       ro.disconnect()
+      sinTema()
       lienzo.removeEventListener('pointermove', alMover)
       lienzo.removeEventListener('pointerleave', alSalir)
       gl?.getExtension('WEBGL_lose_context')?.loseContext()

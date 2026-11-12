@@ -1,6 +1,7 @@
 ---
 import { delocalizePath, getDictionary, getLocaleFromUrl, hasTranslation, localizedHref } from '../i18n'
 import LangSwitch from './LangSwitch.astro'
+import TemaBoton from './TemaBoton.astro'
 
 interface Props {
   /**
@@ -9,9 +10,15 @@ interface Props {
    * Sin ella se deduce del pathname.
    */
   languageHref?: string
+  /**
+   * La página ya se revisó en modo claro (RF-043): solo entonces se ofrece el
+   * botón de tema. Sin esto el botón aparecería en páginas que siguen siendo
+   * solo oscuras y no haría nada.
+   */
+  temaClaro?: boolean
 }
 
-const { languageHref: languageHrefOverride } = Astro.props;
+const { languageHref: languageHrefOverride, temaClaro = false } = Astro.props;
 const rawPath = Astro.url.pathname;
 // Comparar la sección activa contra la ruta SIN prefijo de idioma: con /en/
 // delante, `currentPath.startsWith(link.href)` nunca matchea nada y todo el
@@ -85,7 +92,7 @@ const grupoActivo = (e: Extract<NavEntry, { items: NavItem[] }>) => e.items.some
   transition:name="site-navbar"
 >
   <div
-    class="glass-strong rounded-full pl-3 pr-1.5 sm:pl-5 sm:pr-2 py-2 flex items-center justify-between gap-2 shadow-[0_8px_32px_rgba(0,0,0,.55)]"
+    class="glass-strong rounded-full pl-3 pr-1.5 sm:pl-5 sm:pr-2 py-2 flex items-center justify-between gap-2 shadow-[0_8px_32px_var(--sombra-fuerte)]"
   >
     <!-- Brand -->
     <a href={localizedHref('/', locale)} class="flex items-center gap-2 sm:gap-3 select-none min-w-0">
@@ -98,7 +105,7 @@ const grupoActivo = (e: Extract<NavEntry, { items: NavItem[] }>) => e.items.some
         height="28"
         loading="eager"
         decoding="async"
-        class="w-7 h-7 shrink-0 rounded-full object-cover shadow-[0_0_18px_rgba(0,242,255,.5)]"
+        class="w-7 h-7 shrink-0 rounded-full object-cover shadow-[0_0_18px_rgb(var(--rgb-cian)/.5)]"
       />
       <span class="font-mono text-[11px] tracking-[.12em] sm:text-[12px] sm:tracking-[.2em] uppercase text-ink-50 truncate">
         Code<span class="text-cyan">By</span>Mike
@@ -160,7 +167,7 @@ const grupoActivo = (e: Extract<NavEntry, { items: NavItem[] }>) => e.items.some
                 class="hidden absolute left-1/2 -translate-x-1/2 top-full pt-2 min-w-[190px]"
                 data-nav-group-panel
               >
-                <div class="glass-strong rounded-2xl p-1.5 shadow-[0_8px_32px_rgba(0,0,0,.55)] flex flex-col gap-0.5">
+                <div class="glass-strong rounded-2xl p-1.5 shadow-[0_8px_32px_var(--sombra-fuerte)] flex flex-col gap-0.5">
                   {entry.items.map((sub) => (
                     <a
                       href={sub.href}
@@ -191,6 +198,11 @@ const grupoActivo = (e: Extract<NavEntry, { items: NavItem[] }>) => e.items.some
       <div class="hidden sm:block">
         <LangSwitch locale={locale} languageHref={languageHref} />
       </div>
+      {temaClaro && (
+        <div class="hidden sm:block">
+          <TemaBoton aClaro={t.nav.temaAClaro} aOscuro={t.nav.temaAOscuro} />
+        </div>
+      )}
       <a
         href="/login"
         aria-label={t.nav.loginAria}
@@ -328,6 +340,12 @@ const grupoActivo = (e: Extract<NavEntry, { items: NavItem[] }>) => e.items.some
       <span class="text-[13px] font-mono text-ink-200">{t.nav.languageSwitch}</span>
       <LangSwitch locale={locale} languageHref={languageHref} size="md" />
     </div>
+    {temaClaro && (
+      <div class="flex items-center justify-between px-4 py-2">
+        <span class="text-[13px] font-mono text-ink-200">{t.nav.tema}</span>
+        <TemaBoton aClaro={t.nav.temaAClaro} aOscuro={t.nav.temaAOscuro} />
+      </div>
+    )}
   </div>
 </header>
 

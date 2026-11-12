@@ -88,7 +88,7 @@ const resuelvo = serviciosPortada(locale, L, visibleProjects.length > 0)
 const senales = construirSenales(await leerPulso(), t.pulso, locale, L)
 ---
 
-<BaseLayout title={t.title} description={t.description}>
+<BaseLayout title={t.title} description={t.description} temaClaro>
   <!-- La fuente del titular solo se descubría al terminar de leer el CSS; es
        lo más grande del primer pantallazo, así que se pide de una vez. -->
   <link rel="preload" slot="head" href="/fonts/archivo-titular.woff2" as="font" type="font/woff2" crossorigin />
@@ -166,7 +166,7 @@ const senales = construirSenales(await leerPulso(), t.pulso, locale, L)
 
       <!-- Availability badge -->
       <div class="flex items-center gap-3 mb-7">
-        <span class="w-2 h-2 rounded-full bg-cyan pulse-dot shadow-[0_0_12px_#00f2ff]"></span>
+        <span class="w-2 h-2 rounded-full bg-cyan pulse-dot shadow-[0_0_12px_rgb(var(--rgb-cian))]"></span>
         <span class="text-[11px] font-mono uppercase tracking-[.28em] text-ink-100">{t.badge}</span>
       </div>
 

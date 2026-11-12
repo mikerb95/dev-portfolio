@@ -20,6 +20,7 @@
 
 import { mezclar, multiplicar, perspectiva, rayoAlSuelo, vista, type Camara } from './camara'
 import { LINEA, programa as enlazar, RUIDO } from './glsl'
+import { alCambiarTema, temaActual } from '../tema'
 
 // ── Shaders ────────────────────────────────────────────────────────────────
 
@@ -91,6 +92,7 @@ uniform float uBarrido;   // posición z del barrido
 uniform float uLejos;     // distancia a la que el terreno termina de fundirse
 uniform float uAncho;     // semiancho útil de la malla
 uniform float uBrillo;
+uniform float uClaro;     // 0 en tema oscuro, 1 en claro
 out vec4 color;
 ${CAMPO}
 
@@ -110,8 +112,10 @@ void main() {
   float separables = 1.0 - smoothstep(0.1, 0.32, fw);
 
   float cerca = exp(-vDist * 0.07);
-  vec3 cian = vec3(0.0, 0.949, 1.0);
-  vec3 violeta = vec3(0.655, 0.545, 1.0);
+  // En claro las curvas son tinta de color sobre papel, no luz sobre negro: el
+  // mismo cian y violeta, pero bajados hasta que se distingan del blanco.
+  vec3 cian = mix(vec3(0.0, 0.949, 1.0), vec3(0.0, 0.66, 0.72), uClaro);
+  vec3 violeta = mix(vec3(0.655, 0.545, 1.0), vec3(0.46, 0.33, 0.92), uClaro);
   vec3 c = mix(violeta, cian, smoothstep(0.05, 0.55, cerca));
 
   vec2 dp = vXZ - uPico.xy;
@@ -133,11 +137,14 @@ void main() {
   a *= 1.0 - smoothstep(uAncho * 0.6, uAncho, abs(vXZ.x));
   a *= 1.0 + barrido * 1.6 + brilloPico * 1.5 + brilloPulso * 2.2;
 
-  c = mix(c, vec3(0.85, 1.0, 1.0), clamp(barrido * 0.5 + brilloPico * 0.45 + brilloPulso * 0.6, 0.0, 1.0));
+  // El realce aclara sobre negro; sobre blanco aclarar sería borrar la línea,
+  // así que allí el realce la carga de tinta.
+  vec3 realce = mix(vec3(0.85, 1.0, 1.0), vec3(0.0, 0.42, 0.47), uClaro);
+  c = mix(c, realce, clamp(barrido * 0.5 + brilloPico * 0.45 + brilloPulso * 0.6, 0.0, 1.0));
   // Lima en la cresta del pulso: el sondeo que vuelve en verde.
-  c = mix(c, vec3(0.79, 1.0, 0.36), clamp(brilloPulso * 0.55, 0.0, 0.7));
+  c = mix(c, mix(vec3(0.79, 1.0, 0.36), vec3(0.29, 0.49, 0.06), uClaro), clamp(brilloPulso * 0.55, 0.0, 0.7));
 
-  a = clamp(a * uBrillo, 0.0, 1.0);
+  a = clamp(a * uBrillo * mix(1.0, 1.35, uClaro), 0.0, 1.0);
   color = vec4(c * a, a);
 }
 `
@@ -261,6 +268,7 @@ export function montarIsolineas(lienzo: HTMLCanvasElement, opciones: Opciones): 
     lejos: u('uLejos'),
     ancho: u('uAncho'),
     brillo: u('uBrillo'),
+    claro: u('uClaro'),
   }
 
   gl.useProgram(programa)
@@ -365,6 +373,9 @@ export function montarIsolineas(lienzo: HTMLCanvasElement, opciones: Opciones): 
     // está fuera del terreno (z negativa) y el suelo descansa.
     gl!.uniform1f(U.barrido, fase < 0.6 ? mezclar(2, LEJOS * 0.55, fase / 0.6) : -50)
     gl!.uniform1f(U.brillo, 1 - aplanado * 0.35)
+    // Leído en cada fotograma: es un atributo del <html>, no cuesta nada, y
+    // evita tener un estado de tema que pueda quedarse viejo.
+    gl!.uniform1f(U.claro, temaActual() === 'claro' ? 1 : 0)
 
     gl!.drawElements(gl!.TRIANGLES, indices.length, gl!.UNSIGNED_SHORT, 0)
   }
@@ -477,6 +488,10 @@ export function montarIsolineas(lienzo: HTMLCanvasElement, opciones: Opciones): 
     if (reducido) dibujar(14)
   })
   ro.observe(lienzo)
+  // Con el bucle parado (movimiento reducido) nadie volvería a pintar.
+  const sinTema = alCambiarTema(() => {
+    if (reducido) dibujar(14)
+  })
 
   return {
     aplanar(t) {
@@ -491,6 +506,7 @@ export function montarIsolineas(lienzo: HTMLCanvasElement, opciones: Opciones): 
       parar()
       io.disconnect()
       ro.disconnect()
+      sinTema()
       zona.removeEventListener('pointermove', alMover)
       zona.removeEventListener('pointerleave', alSalir)
       zona.removeEventListener('pointerdown', alPulsar)

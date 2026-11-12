@@ -98,6 +98,9 @@ const en = {
     languageSwitch: 'Español',
     openMenu: 'Open menu',
     closeMenu: 'Close menu',
+    tema: 'Theme',
+    temaAClaro: 'Switch to light mode',
+    temaAOscuro: 'Switch to dark mode',
   },
   footer: {
     tagline: 'Software Engineer. Scalable architecture, obsessive performance, and world-class user experiences.',

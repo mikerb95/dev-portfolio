@@ -189,7 +189,7 @@ const total = interpolate(t.total, { n: items.length })
     right: 0;
     top: 0;
     height: 1px;
-    background: rgba(255, 255, 255, 0.08);
+    background: rgb(var(--rgb-luz) / 0.08);
     transform-origin: left center;
   }
   .proj-raya-final {
@@ -205,7 +205,7 @@ const total = interpolate(t.total, { n: items.length })
     inset: 0 -1.25rem;
     z-index: -1;
     border-radius: 16px;
-    background: linear-gradient(90deg, rgba(0, 242, 255, 0.05), rgba(0, 242, 255, 0.012) 50%, rgba(0, 242, 255, 0));
+    background: linear-gradient(90deg, rgb(var(--rgb-cian) / 0.05), rgb(var(--rgb-cian) / 0.012) 50%, rgb(var(--rgb-cian) / 0));
     transform: scaleY(0);
     transform-origin: bottom;
     transition: transform 0.55s cubic-bezier(0.2, 0.8, 0.2, 1);
@@ -307,7 +307,7 @@ const total = interpolate(t.total, { n: items.length })
   .proj-fila:hover .proj-nombre-txt,
   .proj-fila:focus-visible .proj-nombre-txt {
     transform: translateX(0.35em);
-    color: #fff;
+    color: var(--color-white);
   }
   .proj-fila:hover .proj-desc {
     color: var(--color-ink-100);
@@ -338,8 +338,8 @@ const total = interpolate(t.total, { n: items.length })
     aspect-ratio: 16 / 10;
     border-radius: 10px;
     overflow: hidden;
-    background: #0c0c10;
-    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08);
+    background: var(--color-ink-900);
+    box-shadow: 0 0 0 1px rgb(var(--rgb-luz) / 0.08);
   }
   @media (min-width: 1024px) {
     :global(.modo-miniaturas) .proj-fila {
@@ -376,10 +376,10 @@ const total = interpolate(t.total, { n: items.length })
     aspect-ratio: 16 / 10;
     border-radius: 14px;
     overflow: hidden;
-    background: #0c0c10;
+    background: var(--color-ink-900);
     box-shadow:
-      0 40px 90px -30px rgba(0, 0, 0, 0.9),
-      0 0 0 1px rgba(255, 255, 255, 0.09);
+      0 40px 90px -30px var(--sombra-profunda),
+      0 0 0 1px rgb(var(--rgb-luz) / 0.09);
   }
   .proj-visor-lienzo {
     position: absolute;
@@ -411,7 +411,7 @@ const total = interpolate(t.total, { n: items.length })
     letter-spacing: 0.18em;
     text-transform: uppercase;
     color: var(--color-ink-100);
-    background: linear-gradient(180deg, rgba(8, 8, 12, 0), rgba(8, 8, 12, 0.88));
+    background: linear-gradient(180deg, rgb(var(--rgb-pozo) / 0), rgb(var(--rgb-pozo) / 0.88));
   }
   .proj-visor-meta {
     color: var(--color-ink-200);
@@ -436,7 +436,7 @@ const total = interpolate(t.total, { n: items.length })
     font-weight: 600;
     letter-spacing: 0.12em;
     text-transform: uppercase;
-    box-shadow: 0 10px 30px -10px rgba(0, 242, 255, 0.7);
+    box-shadow: 0 10px 30px -10px rgb(var(--rgb-cian) / 0.7);
   }
 </style>
 
@@ -444,6 +444,7 @@ const total = interpolate(t.total, { n: items.length })
   import gsap from 'gsap'
   import { ScrollTrigger } from 'gsap/ScrollTrigger'
   import { montarPortadas, type Portada } from '../../lib/motion/portadas-gl'
+  import { alCambiarTema } from '../../lib/tema'
 
   gsap.registerPlugin(ScrollTrigger)
 
@@ -662,24 +663,31 @@ const total = interpolate(t.total, { n: items.length })
       if (!lienzos.length) return
       // Se pintan al acercarse la lista y se suelta el contexto WebGL al
       // terminar: las miniaturas son imágenes fijas, no hace falta tenerlo vivo.
+      const pintar = () => {
+        const auxiliar = document.createElement('canvas')
+        const portadas = montarPortadas(auxiliar)
+        if (!portadas) return
+        const dpr = Math.min(window.devicePixelRatio || 1, 2)
+        for (const c of lienzos) {
+          c.width = Math.round(c.clientWidth * dpr) || 240
+          c.height = Math.round(c.clientHeight * dpr) || 150
+          portadas.pintarEn(datos[Number(c.dataset.i)], c)
+        }
+        portadas.destruir()
+      }
+      let pintadas = false
       const io = new IntersectionObserver(
         (entradas) => {
           if (!entradas.some((e) => e.isIntersecting)) return
           io.disconnect()
-          const auxiliar = document.createElement('canvas')
-          const portadas = montarPortadas(auxiliar)
-          if (!portadas) return
-          const dpr = Math.min(window.devicePixelRatio || 1, 2)
-          for (const c of lienzos) {
-            c.width = Math.round(c.clientWidth * dpr) || 240
-            c.height = Math.round(c.clientHeight * dpr) || 150
-            portadas.pintarEn(datos[Number(c.dataset.i)], c)
-          }
-          portadas.destruir()
+          pintadas = true
+          pintar()
         },
         { rootMargin: '300px' },
       )
       io.observe(lista!)
+      // Son imágenes fijas: si cambia el tema hay que volver a pintarlas.
+      alCambiarTema(() => pintadas && pintar())
     }
   }
 </script>

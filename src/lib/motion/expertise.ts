@@ -32,7 +32,13 @@ const crear = <K extends keyof SVGElementTagNameMap>(tag: K, attrs: Record<strin
 
 type Nodo = { id: string; x: number; y: number; o: number; el: SVGGElement | null }
 
-const COLOR_DESTINO: Record<string, string> = { auth: '#a78bff', db: '#00f2ff', cola: '#c9ff5b' }
+// Variables y no hex: el punto es un relleno, así que toma el color de relleno
+// del tema (en claro, el trazo de acento, que sí se ve sobre blanco).
+const COLOR_DESTINO: Record<string, string> = {
+  auth: 'var(--color-violet)',
+  db: 'var(--color-cyan)',
+  cola: 'var(--color-lime)',
+}
 
 export function montarGrafo(svg: SVGSVGElement, estatico: boolean): Pantalla {
   const capaAristas = svg.querySelector<SVGGElement>('.g-aristas')!
@@ -85,7 +91,7 @@ export function montarGrafo(svg: SVGSVGElement, estatico: boolean): Pantalla {
     const r = activas[Math.floor(Math.random() * activas.length)]
     const u = Math.random()
     const d = u < 0.2 ? 'auth' : u < 0.75 ? 'db' : 'cola'
-    const el = capaPaquetes.appendChild(crear('circle', { r: 2.4, fill: COLOR_DESTINO[d], class: 'g-paquete' }))
+    const el = capaPaquetes.appendChild(crear('circle', { r: 2.4, style: `fill:${COLOR_DESTINO[d]}`, class: 'g-paquete' }))
     paquetes.push({ el, ruta: ['edge', r, d], tramo: 0, t: 0, vel: 1.1 + Math.random() * 0.5 })
   }
 

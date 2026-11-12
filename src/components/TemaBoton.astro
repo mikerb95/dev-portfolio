@@ -1,0 +1,89 @@
+---
+// Botón de tema (RF-043). Se pinta dos veces (barra y panel móvil), así que
+// nada aquí usa ids. Los dos iconos van siempre en el HTML y el atributo del
+// <html> decide cuál se ve: el icono correcto sale desde el primer pintado,
+// sin esperar al script.
+interface Props {
+  /** Texto del botón cuando el sitio está en oscuro / en claro. */
+  aClaro: string
+  aOscuro: string
+  class?: string
+}
+const { aClaro, aOscuro, class: className = '' } = Astro.props
+---
+
+<button
+  type="button"
+  data-tema-boton
+  data-a-claro={aClaro}
+  data-a-oscuro={aOscuro}
+  aria-label={aClaro}
+  title={aClaro}
+  class={`tema-boton inline-flex shrink-0 items-center justify-center w-8 h-8 rounded-full bg-white/5 text-ink-100 hover:bg-white/10 transition-colors ${className}`}
+>
+  <svg class="tema-sol" xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <circle cx="12" cy="12" r="4"></circle>
+    <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"></path>
+  </svg>
+  <svg class="tema-luna" xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <path d="M20.99 12.79A9 9 0 1 1 11.21 3a7 7 0 0 0 9.78 9.79z"></path>
+  </svg>
+</button>
+
+<style is:global>
+  /* En oscuro se ofrece el sol (pasar a claro); en claro, la luna. */
+  .tema-boton .tema-luna { display: none; }
+  :root[data-tema='claro'] .tema-boton .tema-sol { display: none; }
+  :root[data-tema='claro'] .tema-boton .tema-luna { display: block; }
+</style>
+
+<script>
+  import { CLAVE_TEMA, COLOR_BARRA, EVENTO_TEMA, resolverTema, temaActual, temaContrario, type Tema } from '../lib/tema'
+
+  const botones = Array.from(document.querySelectorAll<HTMLButtonElement>('[data-tema-boton]'))
+  const sistema = matchMedia('(prefers-color-scheme: light)')
+
+  function rotular() {
+    const claro = temaActual() === 'claro'
+    for (const b of botones) {
+      const texto = (claro ? b.dataset.aOscuro : b.dataset.aClaro) ?? ''
+      b.setAttribute('aria-label', texto)
+      b.title = texto
+    }
+  }
+
+  function aplicar(tema: Tema) {
+    if (tema === temaActual()) return
+    if (tema === 'claro') document.documentElement.dataset.tema = 'claro'
+    else delete document.documentElement.dataset.tema
+    document.querySelector<HTMLMetaElement>('meta[name="theme-color"]')?.setAttribute('content', COLOR_BARRA[tema])
+    rotular()
+    window.dispatchEvent(new CustomEvent<Tema>(EVENTO_TEMA, { detail: tema }))
+  }
+
+  const guardado = () => {
+    try {
+      return localStorage.getItem(CLAVE_TEMA)
+    } catch {
+      return null
+    }
+  }
+
+  for (const b of botones) {
+    b.addEventListener('click', () => {
+      const nuevo = temaContrario(temaActual())
+      // Guardar puede fallar (modo privado, almacenamiento bloqueado): el
+      // cambio se aplica igual, solo que no sobrevive a la navegación.
+      try {
+        localStorage.setItem(CLAVE_TEMA, nuevo)
+      } catch {}
+      aplicar(nuevo)
+    })
+  }
+
+  // Sin elección guardada, el sitio sigue al dispositivo también en caliente
+  // (el paso automático a oscuro al anochecer, por ejemplo).
+  sistema.addEventListener('change', () => aplicar(resolverTema(guardado(), sistema.matches)))
+
+  rotular()
+</script>

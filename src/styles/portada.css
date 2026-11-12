@@ -27,8 +27,8 @@
   z-index: 0;
   pointer-events: none;
   background:
-    radial-gradient(52% 44% at 22% 64%, rgba(18,18,22,.82), rgba(18,18,22,0) 72%),
-    radial-gradient(40% 30% at 18% 40%, rgba(18,18,22,.45), rgba(18,18,22,0) 70%);
+    radial-gradient(52% 44% at 22% 64%, rgb(var(--rgb-fondo) / .82), rgb(var(--rgb-fondo) / 0) 72%),
+    radial-gradient(40% 30% at 18% 40%, rgb(var(--rgb-fondo) / .45), rgb(var(--rgb-fondo) / 0) 70%);
 }
 
 /* ── Hero: titular y líneas de venta (RF-037) ──
@@ -54,7 +54,7 @@
 .hero-titular {
   font-family: 'Archivo Titular', var(--font-display);
   font-stretch: 78%;
-  color: #fff;
+  color: var(--color-white);
   text-wrap: balance;
 }
 .hero-titular .hero-acento { color: var(--color-cyan); }
@@ -65,8 +65,8 @@
   height: 8px;
   margin-top: 0.42rem;
   border-radius: 999px;
-  background: var(--color-cyan);
-  box-shadow: 0 0 0 3px rgba(0, 242, 255, 0.14);
+  background: var(--background-color-cyan);
+  box-shadow: 0 0 0 3px rgb(var(--rgb-cian-linea) / 0.16);
 }
 
 /* ── Hero: titular rotativo por servicios (RF-038) ──
@@ -120,8 +120,8 @@
   letter-spacing: 0.16em;
   text-transform: uppercase;
   color: var(--color-ink-50);
-  background: rgba(18, 18, 22, 0.8);
-  border: 1px solid rgba(0, 242, 255, 0.35);
+  background: rgb(var(--rgb-fondo) / 0.8);
+  border: 1px solid rgb(var(--rgb-cian-linea) / 0.35);
   outline: 2px solid var(--color-cyan);
   outline-offset: 3px;
 }
@@ -139,33 +139,33 @@
    misma luz cian del pulso de la cinta) y vuelve a apagarse al llegar la
    respuesta: la tarjeta "trabaja" en vez de quedarse muda. */
 .cotizador {
-  --borde: rgba(255, 255, 255, 0.07);
+  --borde: rgb(var(--rgb-luz) / 0.07);
   border-color: var(--borde);
   transition: border-color 0.5s ease, box-shadow 0.5s ease;
 }
 .cotizador[data-estado='pensando'] {
-  --borde: rgba(0, 242, 255, 0.45);
-  box-shadow: 0 0 0 1px rgba(0, 242, 255, 0.18), 0 0 48px -12px rgba(0, 242, 255, 0.55), 0 4px 32px rgba(0, 0, 0, 0.55);
+  --borde: rgb(var(--rgb-cian-linea) / 0.45);
+  box-shadow: 0 0 0 1px rgb(var(--rgb-cian-linea) / 0.18), 0 0 48px -12px rgb(var(--rgb-cian) / 0.55), 0 4px 32px var(--sombra-fuerte);
 }
 .cotizador-chispa {
   width: 8px;
   height: 8px;
   border-radius: 999px;
-  background: var(--color-cyan);
-  box-shadow: 0 0 12px var(--color-cyan);
+  background: var(--background-color-cyan);
+  box-shadow: 0 0 12px rgb(var(--rgb-cian) / 1);
 }
 .cotizador[data-estado='pensando'] .cotizador-chispa { animation: pulseDot 1.1s ease-in-out infinite; }
 
 .cotizador-caja {
   position: relative;
   border-radius: 0.9rem;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgb(var(--rgb-luz) / 0.04);
+  border: 1px solid rgb(var(--rgb-luz) / 0.08);
   transition: border-color 0.25s ease, background-color 0.25s ease;
 }
 .cotizador-caja:focus-within {
-  border-color: rgba(0, 242, 255, 0.5);
-  background: rgba(255, 255, 255, 0.05);
+  border-color: rgb(var(--rgb-cian-linea) / 0.5);
+  background: rgb(var(--rgb-luz) / 0.05);
 }
 .cotizador-input {
   display: block;
@@ -176,7 +176,7 @@
   border: 0;
   outline: 0;
   resize: none;
-  color: #fff;
+  color: var(--color-white);
   font-size: 16px; /* 16 px o más: iOS hace zoom al enfocar campos más pequeños */
   line-height: 1.5;
   position: relative;
@@ -201,7 +201,7 @@
   height: 1.05em;
   margin-left: 2px;
   vertical-align: -0.18em;
-  background: var(--color-cyan);
+  background: var(--background-color-cyan);
   animation: cotizadorCursor 1s steps(2, start) infinite;
 }
 .cotizador-caja[data-con-texto] .cotizador-ejemplo,
@@ -218,7 +218,7 @@
   width: 6px;
   height: 6px;
   border-radius: 999px;
-  background: var(--color-cyan);
+  background: var(--background-color-cyan);
   animation: cotizadorPunto 1.1s ease-in-out infinite;
 }
 .cotizador-pensando-puntos i:nth-child(2) { animation-delay: 0.15s; }
@@ -256,8 +256,8 @@
   width: 6px;
   height: 6px;
   border-radius: 999px;
-  background: var(--color-cyan);
-  box-shadow: 0 0 0 3px rgba(0, 242, 255, 0.14);
+  background: var(--background-color-cyan);
+  box-shadow: 0 0 0 3px rgb(var(--rgb-cian-linea) / 0.16);
 }
 
 /* El HUD fijo tapaba el final del texto del hero en 1440x900: dentro del hero

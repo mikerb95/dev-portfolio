@@ -96,6 +96,9 @@ const es = {
     languageSwitch: 'English',
     openMenu: 'Abrir menú',
     closeMenu: 'Cerrar menú',
+    tema: 'Tema',
+    temaAClaro: 'Cambiar a modo claro',
+    temaAOscuro: 'Cambiar a modo oscuro',
   },
   footer: {
     tagline: 'Software Engineer. Arquitectura escalable, rendimiento obsesivo y experiencias de usuario de clase mundial.',

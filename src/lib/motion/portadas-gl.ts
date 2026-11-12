@@ -16,6 +16,7 @@
 
 import type { Paleta, RGB, Semilla } from './portadas'
 import { LINEA, programa, RUIDO, trianguloCompleto, VERTEX_COMPLETO } from './glsl'
+import { temaActual } from '../tema'
 
 const FRAGMENT = /* glsl */ `#version 300 es
 precision highp float;
@@ -29,6 +30,7 @@ uniform vec3 uLineaA;
 uniform vec3 uLineaB;
 uniform vec3 uHaloA;
 uniform vec3 uHaloB;
+uniform float uClaro;  // 0 en tema oscuro, 1 en claro
 out vec4 color;
 
 ${RUIDO}
@@ -80,6 +82,13 @@ void main() {
   // Viñeta: el mapa se apaga hacia los bordes y el ojo va al centro.
   vec2 q = gl_FragCoord.xy / uRes;
   c *= 0.55 + 0.45 * pow(16.0 * q.x * q.y * (1.0 - q.x) * (1.0 - q.y), 0.25);
+  // Tema claro: se invierte la luminosidad y se conserva el tono (sumar
+  // 1 - max - min es voltear la L de HSL). El mapa pasa de luz sobre negro a
+  // tinta sobre papel sin que el cian de un proyecto se vuelva rojo, que es
+  // lo que haría un negativo.
+  float mx = max(c.r, max(c.g, c.b));
+  float mn = min(c.r, min(c.g, c.b));
+  c = mix(c, c + (1.0 - mx - mn), uClaro);
   color = vec4(c, 1.0);
 }
 `
@@ -118,7 +127,7 @@ export function montarPortadas(lienzo: HTMLCanvasElement): Portadas | null {
   gl.useProgram(prog)
 
   const U = Object.fromEntries(
-    ['uRes', 'uTiempo', 'uSemA', 'uSemB', 'uMezcla', 'uLineaA', 'uLineaB', 'uHaloA', 'uHaloB'].map((n) => [
+    ['uRes', 'uTiempo', 'uSemA', 'uSemB', 'uMezcla', 'uLineaA', 'uLineaB', 'uHaloA', 'uHaloB', 'uClaro'].map((n) => [
       n,
       gl!.getUniformLocation(prog, n),
     ]),
@@ -152,6 +161,7 @@ export function montarPortadas(lienzo: HTMLCanvasElement): Portadas | null {
     gl!.uniform3fv(U.uLineaB, norm(b.paleta.linea))
     gl!.uniform3fv(U.uHaloA, norm(a.paleta.halo))
     gl!.uniform3fv(U.uHaloB, norm(b.paleta.halo))
+    gl!.uniform1f(U.uClaro, temaActual() === 'claro' ? 1 : 0)
     gl!.drawArrays(gl!.TRIANGLES, 0, 3)
   }
 

@@ -34,6 +34,19 @@
   --color-lime: #c9ff5b;
   --color-violet: #a78bff;
 
+  /* Relleno y texto separados (modo claro, RF-043). En oscuro valen lo mismo
+     que el color base; en claro el relleno conserva el neón y todo lo demás
+     (texto, bordes, trazos) baja a un tono que se lee sobre blanco. Tailwind
+     busca primero `--background-color-*` para `bg-*`, así que ninguna clase
+     cambia. */
+  --background-color-cyan: #00f2ff;
+  --background-color-ember: #ff6b3d;
+  --background-color-lime: #c9ff5b;
+  --background-color-violet: #a78bff;
+  /* `text-ink-950` solo se usa como texto sobre un relleno de acento
+     (`bg-cyan text-ink-950`): no se invierte con el resto de la escala. */
+  --text-color-ink-950: #121216;
+
   /* Fonts */
   --font-sans: "Inter Variable", system-ui, ui-sans-serif, sans-serif;
   --font-mono: "JetBrains Mono Variable", ui-monospace, monospace;
@@ -47,8 +60,83 @@
   --shadow-inset: inset 0 1px 0 rgba(255,255,255,.06);
 }
 
+/* ── Variables de color que no son clases de Tailwind ──
+   Los estilos escritos a mano pintaban `rgba(255,255,255,.06)` o
+   `rgba(0,242,255,.4)` directamente. Van en canales (`rgb(var(--rgb-luz) / .06)`)
+   para conservar la opacidad de cada regla y cambiar solo el color según el
+   tema. */
+:root {
+  --rgb-luz: 255 255 255;        /* velo y borde translúcidos sobre el fondo */
+  --rgb-fondo: 18 18 22;         /* el fondo de la página, para velos y halos de texto */
+  --rgb-pozo: 8 8 12;            /* superficies opacas flotantes (glass-strong) */
+  --rgb-cian: 0 242 255;         /* cian como luz: rellenos y resplandores */
+  --rgb-cian-linea: 0 242 255;   /* cian como trazo: bordes y líneas finas */
+  --rgb-violeta: 167 139 255;
+  --rgb-lima: 201 255 91;
+  --rgb-ember: 255 107 61;
+  --sombra-fuerte: rgba(0, 0, 0, .55);
+  --sombra-profunda: rgba(0, 0, 0, .9);
+  --sombra-suave: rgba(0, 0, 0, .35);
+  --luz-interior: rgba(255, 255, 255, .04);
+  --sobre-acento: #121216;       /* texto encima de un relleno de acento */
+  --scroll-pulgar: #24242f;
+  --scroll-pulgar-hover: #3a3a48;
+  --halo-fuerza: 1;
+}
+
+/* ── Tema claro (RF-043): "neón sobre blanco" ──
+   Solo cambia color. La escala de tinta se invierte, "blanco" pasa a ser
+   tinta (así `border-white/10` o `bg-white/5` siguen siendo un velo sobre el
+   fondo) y los acentos se parten en dos: como relleno conservan el neón, como
+   texto o trazo bajan hasta leerse sobre blanco.
+
+   El atributo lo pone un script en el <head> (ver TemaScript.astro) y solo en
+   las páginas que ya pasaron revisión en claro: una página con colores
+   escritos a mano sin migrar quedaría con texto claro sobre fondo claro. */
+:root[data-tema="claro"] {
+  color-scheme: light;
+
+  --color-ink-950: #ffffff;
+  --color-ink-900: #f4f4f7;
+  --color-ink-850: #f6f6f9;
+  --color-ink-800: #f1f1f5;
+  --color-ink-750: #ececf1;
+  --color-ink-700: #e6e6ec;
+  --color-ink-600: #dcdce4;
+  --color-ink-500: #cdcdd7;
+  --color-ink-400: #a9a9b5;
+  --color-ink-300: #74747f;
+  --color-ink-200: #5a5a66;
+  --color-ink-100: #2e2e3a;
+  --color-ink-50: #0a0a0d;
+  --color-white: #0a0a0d;
+
+  --color-cyan: #007a82;
+  --color-cyan-dim: #006a72;
+  --color-cyan-glow: #005a61;
+  --color-ember: #c23c10;
+  --color-lime: #4a7d10;
+  --color-violet: #6541d9;
+
+  --shadow-glow: 0 0 0 1px rgba(0, 122, 130, .35), 0 10px 30px -10px rgba(0, 214, 226, .75);
+  --shadow-inset: inset 0 1px 0 rgba(255, 255, 255, .6);
+
+  --rgb-luz: 10 10 13;
+  --rgb-fondo: 255 255 255;
+  --rgb-pozo: 255 255 255;
+  --rgb-cian-linea: 0 122 130;
+  --sombra-fuerte: rgba(28, 28, 38, .13);
+  --sombra-profunda: rgba(28, 28, 38, .22);
+  --sombra-suave: rgba(28, 28, 38, .1);
+  --luz-interior: rgba(255, 255, 255, .7);
+  --sobre-acento: #0a0a0d;
+  --scroll-pulgar: #cdcdd7;
+  --scroll-pulgar-hover: #a9a9b5;
+  --halo-fuerza: 1.1;
+}
+
 /* Base */
-html, body { background: var(--color-ink-950); color: #e7e7ec; }
+html, body { background: var(--color-ink-950); color: var(--color-ink-50); }
 body {
   font-family: "Inter Variable", system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
@@ -60,13 +148,13 @@ body {
   position: relative;
   isolation: isolate;
 }
-::selection { background: #00f2ff; color: #07070a; }
+::selection { background: var(--background-color-cyan); color: var(--sobre-acento); }
 
 /* Scrollbars */
 *::-webkit-scrollbar { width: 10px; height: 10px; }
 *::-webkit-scrollbar-track { background: transparent; }
-*::-webkit-scrollbar-thumb { background: #24242f; border-radius: 8px; }
-*::-webkit-scrollbar-thumb:hover { background: #3a3a48; }
+*::-webkit-scrollbar-thumb { background: var(--scroll-pulgar); border-radius: 8px; }
+*::-webkit-scrollbar-thumb:hover { background: var(--scroll-pulgar-hover); }
 
 /* Diagramas BPMN (/docs/diagrama-bpmn). Vive aquí y no en el componente porque
    BpmnDiagram y la leyenda de notación montan la misma figura (BpmnShape) en
@@ -254,34 +342,34 @@ body {
    como ruido visual encima de los campos y, cuando el navegador no soporta
    `mask-composite`, la máscara falla y el gradiente se desborda de la card. */
 .border-accent {
-  border-color: rgba(0,242,255,.14);
-  box-shadow: 0 0 0 1px rgba(0,242,255,.05), 0 24px 60px -40px rgba(0,242,255,.35);
+  border-color: rgb(var(--rgb-cian-linea) / .14);
+  box-shadow: 0 0 0 1px rgb(var(--rgb-cian) / .05), 0 24px 60px -40px rgb(var(--rgb-cian) / .35);
   transition: border-color .25s ease, box-shadow .25s ease;
 }
 .border-accent:hover {
-  border-color: rgba(0,242,255,.26);
-  box-shadow: 0 0 0 1px rgba(0,242,255,.08), 0 24px 60px -36px rgba(0,242,255,.45);
+  border-color: rgb(var(--rgb-cian-linea) / .26);
+  box-shadow: 0 0 0 1px rgb(var(--rgb-cian) / .08), 0 24px 60px -36px rgb(var(--rgb-cian) / .45);
 }
 @property --a { syntax: "<angle>"; inherits: false; initial-value: 0deg; }
 @keyframes spin { to { --a: 360deg; } }
 
 /* Tinte sutil para alternar el fondo entre secciones (una sí, una no) sobre
    el #07070a base. Mantiene el ritmo visual sin competir con las cards glass. */
-.section-tint { background-color: rgba(255,255,255,.018); }
+.section-tint { background-color: rgb(var(--rgb-luz) / .018); }
 
 /* Glass */
 .glass {
-  background: linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.015));
+  background: linear-gradient(180deg, rgb(var(--rgb-luz) / .04), rgb(var(--rgb-luz) / .015));
   backdrop-filter: blur(18px) saturate(140%);
   -webkit-backdrop-filter: blur(18px) saturate(140%);
-  border: 1px solid rgba(255,255,255,.06);
+  border: 1px solid rgb(var(--rgb-luz) / .06);
 }
 .glass-strong {
-  background: rgba(8,8,12,.88);
+  background: rgb(var(--rgb-pozo) / .88);
   backdrop-filter: blur(28px) saturate(160%);
   -webkit-backdrop-filter: blur(28px) saturate(160%);
-  border: 1px solid rgba(255,255,255,.07);
-  box-shadow: 0 4px 32px rgba(0,0,0,.55), 0 1px 0 rgba(255,255,255,.04) inset;
+  border: 1px solid rgb(var(--rgb-luz) / .07);
+  box-shadow: 0 4px 32px var(--sombra-fuerte), 0 1px 0 var(--luz-interior) inset;
 }
 
 /* Gradient text mask */
@@ -306,10 +394,10 @@ body {
   clip-path: inset(-0.35em -0.25em -0.14em -0.25em);
 }
 .text-mask {
-  background-image: linear-gradient(180deg, #fff 0%, #fff 50%, #6b6b78 100%);
+  background-image: linear-gradient(180deg, var(--color-white) 0%, var(--color-white) 50%, var(--color-ink-300) 100%);
 }
 .text-mask-cyan {
-  background-image: linear-gradient(180deg, #9bfaff 0%, #00f2ff 60%, #007a82 100%);
+  background-image: linear-gradient(180deg, var(--color-cyan-glow) 0%, var(--color-cyan) 60%, var(--color-cyan-deep) 100%);
 }
 
 /* Halo radial behind hero */
@@ -320,14 +408,14 @@ body {
   z-index: 0;
   pointer-events: none;
   background:
-    radial-gradient(60% 50% at 50% 30%, rgba(0,242,255,.18), rgba(0,242,255,0) 70%),
-    radial-gradient(40% 30% at 80% 50%, rgba(167,139,255,.12), rgba(167,139,255,0) 70%);
+    radial-gradient(60% 50% at 50% 30%, rgb(var(--rgb-cian) / .18), rgb(var(--rgb-cian) / 0) 70%),
+    radial-gradient(40% 30% at 80% 50%, rgb(var(--rgb-violeta) / .12), rgb(var(--rgb-violeta) / 0) 70%);
   filter: blur(20px);
 }
 
 /* Dotted grid */
 .grid-bg {
-  background-image: radial-gradient(rgba(255,255,255,.045) 1px, transparent 1px);
+  background-image: radial-gradient(rgb(var(--rgb-luz) / .045) 1px, transparent 1px);
   background-size: 22px 22px;
   background-position: -1px -1px;
 }
@@ -362,7 +450,7 @@ body {
   right: calc(2.5rem + 1ch);
   bottom: -.5rem;
   height: 1px;
-  background: linear-gradient(90deg, #00f2ff, rgba(0,242,255,0));
+  background: linear-gradient(90deg, var(--color-cyan), rgb(var(--rgb-cian-linea) / 0));
   transform: scaleX(0);
   transform-origin: left;
   transition: transform .28s cubic-bezier(.2,.8,.2,1);
@@ -391,7 +479,7 @@ body {
 /* El panel cae sobre la sección siguiente, así que su fondo tiene que tapar de
    verdad: con el cristal a .88 se leían los titulares del bento a través de la
    descripción, y una descripción que se lee sobre otro texto no se lee. */
-.pulso-card { background: rgba(10,11,14,.97); }
+.pulso-card { background: rgb(var(--rgb-pozo) / .97); }
 
 /* Hilo vertical del borde de la cinta a la muesca del panel, y la muesca en
    sí: ambos nacen en el centro de la señal apuntada (`--muesca`, en píxeles
@@ -402,7 +490,7 @@ body {
   left: var(--muesca, 50%);
   width: 1px;
   height: 1rem;
-  background: linear-gradient(180deg, rgba(0,242,255,0), rgba(0,242,255,.55));
+  background: linear-gradient(180deg, rgb(var(--rgb-cian-linea) / 0), rgb(var(--rgb-cian-linea) / .55));
   transform-origin: top;
 }
 .pulso-muesca {
@@ -413,9 +501,9 @@ body {
   height: 7px;
   margin-left: -3.5px;
   border-radius: 1px;
-  background: rgba(0,242,255,.7);
+  background: rgb(var(--rgb-cian-linea) / .7);
   transform: rotate(45deg);
-  box-shadow: 0 0 12px rgba(0,242,255,.35);
+  box-shadow: 0 0 12px rgb(var(--rgb-cian) / .35);
 }
 
 /* Barrido del gráfico: una línea que cruza una vez al abrir. La mueve GSAP;
@@ -428,8 +516,8 @@ body {
   width: 2px;
   opacity: 0;
   pointer-events: none;
-  background: linear-gradient(180deg, rgba(0,242,255,0), rgba(0,242,255,.9), rgba(0,242,255,0));
-  box-shadow: 0 0 14px rgba(0,242,255,.6);
+  background: linear-gradient(180deg, rgb(var(--rgb-cian-linea) / 0), rgb(var(--rgb-cian-linea) / .9), rgb(var(--rgb-cian-linea) / 0));
+  box-shadow: 0 0 14px rgb(var(--rgb-cian) / .6);
 }
 
 /* Estado de reposo de las barras: GSAP las levanta escalonadas al abrir. El
@@ -477,13 +565,13 @@ body {
 }
 .foco::before {
   padding: 1px;
-  background: radial-gradient(300px circle at var(--fx, -600px) var(--fy, -600px), rgba(0,242,255,.9), rgba(0,242,255,0) 70%);
+  background: radial-gradient(300px circle at var(--fx, -600px) var(--fy, -600px), rgb(var(--rgb-cian-linea) / .9), rgb(var(--rgb-cian-linea) / 0) 70%);
   -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
   -webkit-mask-composite: xor;
   mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
 }
 .foco::after {
-  background: radial-gradient(440px circle at var(--fx, -600px) var(--fy, -600px), rgba(0,242,255,.075), rgba(0,242,255,0) 65%);
+  background: radial-gradient(440px circle at var(--fx, -600px) var(--fy, -600px), rgb(var(--rgb-cian) / .075), rgb(var(--rgb-cian) / 0) 65%);
 }
 .foco-activo:hover .foco::before,
 .foco-activo:hover .foco::after { opacity: 1; }
@@ -519,17 +607,17 @@ body {
    `.glass` sin usar esa clase, para que el selector de reveal por scroll
    (`section .glass`) no intente animar un elemento fixed fuera del flujo. */
 .hud-panel {
-  background: linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.015));
+  background: linear-gradient(180deg, rgb(var(--rgb-luz) / .04), rgb(var(--rgb-luz) / .015));
   backdrop-filter: blur(18px) saturate(140%);
   -webkit-backdrop-filter: blur(18px) saturate(140%);
-  border: 1px solid rgba(255,255,255,.06);
+  border: 1px solid rgb(var(--rgb-luz) / .06);
   min-width: 148px;
 }
-.hud-line .hud-status { color: rgba(255,255,255,.25); }
-.hud-line[data-state="active"] { color: #00f2ff; }
-.hud-line[data-state="active"] .hud-status { color: #00f2ff; animation: pulseDot 1.2s ease-in-out infinite; }
-.hud-line[data-state="ok"] { color: rgba(255,255,255,.4); }
-.hud-line[data-state="ok"] .hud-status { color: #c9ff5b; }
+.hud-line .hud-status { color: rgb(var(--rgb-luz) / .25); }
+.hud-line[data-state="active"] { color: var(--color-cyan); }
+.hud-line[data-state="active"] .hud-status { color: var(--color-cyan); animation: pulseDot 1.2s ease-in-out infinite; }
+.hud-line[data-state="ok"] { color: rgb(var(--rgb-luz) / .4); }
+.hud-line[data-state="ok"] .hud-status { color: var(--color-lime); }
 
 /* View transitions */
 @view-transition { navigation: auto; }
@@ -551,23 +639,23 @@ body {
 
 /* Inputs */
 .input-base {
-  background: rgba(255,255,255,.02);
-  border: 1px solid rgba(255,255,255,.07);
+  background: rgb(var(--rgb-luz) / .02);
+  border: 1px solid rgb(var(--rgb-luz) / .07);
   transition: all .2s ease;
-  color: #e7e7ec;
+  color: var(--color-ink-50);
 }
 .input-base:focus {
   outline: none;
-  border-color: #00f2ff;
-  box-shadow: 0 0 0 4px rgba(0,242,255,.08);
-  background: rgba(0,242,255,.03);
+  border-color: var(--color-cyan);
+  box-shadow: 0 0 0 4px rgb(var(--rgb-cian) / .08);
+  background: rgb(var(--rgb-cian) / .03);
 }
-.input-ok  { border-color: rgba(0,242,255,.55) !important; box-shadow: 0 0 0 3px rgba(0,242,255,.08); }
-.input-bad { border-color: rgba(255,107,61,.55) !important; box-shadow: 0 0 0 3px rgba(255,107,61,.10); }
+.input-ok  { border-color: rgb(var(--rgb-cian-linea) / .55) !important; box-shadow: 0 0 0 3px rgb(var(--rgb-cian) / .08); }
+.input-bad { border-color: rgb(var(--rgb-ember) / .55) !important; box-shadow: 0 0 0 3px rgb(var(--rgb-ember) / .10); }
 
 /* Range */
-input[type=range] { -webkit-appearance: none; height: 2px; background: #3a3a48; border-radius: 99px; }
-input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 14px; height: 14px; border-radius: 99px; background: #00f2ff; box-shadow: 0 0 12px #00f2ff; cursor: pointer; }
+input[type=range] { -webkit-appearance: none; height: 2px; background: var(--color-ink-400); border-radius: 99px; }
+input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 14px; height: 14px; border-radius: 99px; background: var(--background-color-cyan); box-shadow: 0 0 12px rgb(var(--rgb-cian) / .9); cursor: pointer; }
 
 /* Card lift */
 .lift { transition: transform .35s cubic-bezier(.2,.7,.2,1), box-shadow .35s; }
@@ -578,11 +666,11 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 14px;
 .no-scrollbar { scrollbar-width: none; }
 
 /* Barra de scroll mínima (sidebar) */
-.sidebar-scrollbar { scrollbar-width: thin; scrollbar-color: #2a2a36 transparent; }
+.sidebar-scrollbar { scrollbar-width: thin; scrollbar-color: var(--scroll-pulgar) transparent; }
 .sidebar-scrollbar::-webkit-scrollbar { width: 5px; }
 .sidebar-scrollbar::-webkit-scrollbar-track { background: transparent; }
-.sidebar-scrollbar::-webkit-scrollbar-thumb { background: #2a2a36; border-radius: 8px; }
-.sidebar-scrollbar::-webkit-scrollbar-thumb:hover { background: #3a3a48; }
+.sidebar-scrollbar::-webkit-scrollbar-thumb { background: var(--scroll-pulgar); border-radius: 8px; }
+.sidebar-scrollbar::-webkit-scrollbar-thumb:hover { background: var(--scroll-pulgar-hover); }
 
 /* Tailwind v4 resetea margin:0 en todo elemento, lo que anula el centrado
    nativo de <dialog> (margin:auto del UA) y lo deja pegado arriba-izquierda. */
@@ -590,8 +678,8 @@ dialog { margin: auto; }
 
 /* Select in dark theme */
 select {
-  background: #13131a;
-  color: #c4c4cc;
+  background: var(--color-ink-800);
+  color: var(--color-ink-100);
 }
 
 /* Cuerpo de un recurso del banco de capacitación (markdown renderizado en el

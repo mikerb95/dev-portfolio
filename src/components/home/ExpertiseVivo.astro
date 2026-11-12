@@ -131,8 +131,8 @@ const X = (s: number) => 78 + (s / 3) * (344 - 78)
       box-shadow 0.4s ease;
   }
   .exp-tarjeta:hover {
-    border-color: rgba(0, 242, 255, 0.18);
-    box-shadow: 0 30px 70px -40px rgba(0, 242, 255, 0.35);
+    border-color: rgb(var(--rgb-cian-linea) / 0.18);
+    box-shadow: 0 30px 70px -40px rgb(var(--rgb-cian) / 0.35);
   }
 
   /* Pantalla: un recuadro más oscuro con retícula de puntos, separado del
@@ -141,9 +141,9 @@ const X = (s: number) => 78 + (s / 3) * (344 - 78)
     position: relative;
     height: 190px;
     background:
-      radial-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px) 0 0 / 16px 16px,
-      linear-gradient(180deg, rgba(8, 8, 12, 0.7), rgba(8, 8, 12, 0.35));
-    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      radial-gradient(rgb(var(--rgb-luz) / 0.05) 1px, transparent 1px) 0 0 / 16px 16px,
+      linear-gradient(180deg, rgb(var(--rgb-pozo) / 0.7), rgb(var(--rgb-pozo) / 0.35));
+    border-bottom: 1px solid rgb(var(--rgb-luz) / 0.06);
     overflow: hidden;
   }
   .exp-svg {
@@ -182,12 +182,12 @@ const X = (s: number) => 78 + (s / 3) * (344 - 78)
 
   /* ── Grafo ── */
   .exp-svg :global(.g-arista) {
-    stroke: rgba(255, 255, 255, 0.12);
+    stroke: rgb(var(--rgb-luz) / 0.12);
     stroke-width: 1;
   }
   .g-nodo rect {
-    fill: #121218;
-    stroke: rgba(255, 255, 255, 0.16);
+    fill: var(--color-ink-950);
+    stroke: rgb(var(--rgb-luz) / 0.16);
     stroke-width: 1;
     transition: stroke 0.25s ease;
   }
@@ -211,7 +211,7 @@ const X = (s: number) => 78 + (s / 3) * (344 - 78)
 
   /* ── Cascada ── */
   .c-rejilla {
-    stroke: rgba(255, 255, 255, 0.05);
+    stroke: rgb(var(--rgb-luz) / 0.05);
   }
   .c-eje,
   .c-nombre {
@@ -239,7 +239,7 @@ const X = (s: number) => 78 + (s / 3) * (344 - 78)
   }
   .c-barra-0,
   .c-barra-5 {
-    fill: #00b8c4;
+    fill: var(--color-cyan-dim);
   }
   .c-barra-1,
   .c-barra-2 {

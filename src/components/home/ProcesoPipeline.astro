@@ -36,9 +36,9 @@ const t = getDictionary(getLocaleFromUrl(Astro.url.pathname)).home.proceso
         <svg class="proceso-svg" aria-hidden="true">
           <defs>
             <radialGradient id="proceso-halo">
-              <stop offset="0%" stop-color="#9bfaff" stop-opacity="0.95"></stop>
-              <stop offset="35%" stop-color="#00f2ff" stop-opacity="0.45"></stop>
-              <stop offset="100%" stop-color="#00f2ff" stop-opacity="0"></stop>
+              <stop offset="0%" style="stop-color:var(--color-cyan-glow)" stop-opacity="0.95"></stop>
+              <stop offset="35%" style="stop-color:var(--color-cyan)" stop-opacity="0.45"></stop>
+              <stop offset="100%" style="stop-color:var(--color-cyan)" stop-opacity="0"></stop>
             </radialGradient>
           </defs>
           <path class="proceso-base"></path>
@@ -46,7 +46,7 @@ const t = getDictionary(getLocaleFromUrl(Astro.url.pathname)).home.proceso
           <path class="proceso-avance"></path>
           <g class="proceso-paquete">
             <circle r="16" fill="url(#proceso-halo)"></circle>
-            <circle r="3.5" fill="#fff"></circle>
+            <circle r="3.5" style="fill:var(--color-white)"></circle>
           </g>
         </svg>
 
@@ -108,7 +108,7 @@ const t = getDictionary(getLocaleFromUrl(Astro.url.pathname)).home.proceso
   }
   .proceso-base {
     fill: none;
-    stroke: rgba(255, 255, 255, 0.12);
+    stroke: rgb(var(--rgb-luz) / 0.12);
     stroke-width: 1.5;
     stroke-dasharray: 2 6;
     stroke-linecap: round;
@@ -162,7 +162,7 @@ const t = getDictionary(getLocaleFromUrl(Astro.url.pathname)).home.proceso
     margin-left: 0;
     border-radius: 999px;
     background: var(--color-ink-950);
-    border: 1.5px solid rgba(255, 255, 255, 0.22);
+    border: 1.5px solid rgb(var(--rgb-luz) / 0.22);
     color: transparent;
     transition:
       border-color 0.4s ease,
@@ -227,12 +227,12 @@ const t = getDictionary(getLocaleFromUrl(Astro.url.pathname)).home.proceso
   }
   .proceso-etapa[data-estado='corriendo'] .proceso-nodo {
     border-color: var(--color-cyan);
-    background: rgba(0, 242, 255, 0.12);
-    box-shadow: 0 0 0 6px rgba(0, 242, 255, 0.08), 0 0 22px rgba(0, 242, 255, 0.45);
+    background: rgb(var(--rgb-cian) / 0.12);
+    box-shadow: 0 0 0 6px rgb(var(--rgb-cian) / 0.08), 0 0 22px rgb(var(--rgb-cian) / 0.45);
     animation: procesoLatido 1.4s ease-in-out infinite;
   }
   .proceso-etapa[data-estado='corriendo'] .proceso-titulo {
-    color: #fff;
+    color: var(--color-white);
   }
   .proceso-etapa[data-estado='corriendo'] .proceso-desc {
     color: var(--color-ink-100);
@@ -259,10 +259,10 @@ const t = getDictionary(getLocaleFromUrl(Astro.url.pathname)).home.proceso
   @keyframes procesoLatido {
     0%,
     100% {
-      box-shadow: 0 0 0 5px rgba(0, 242, 255, 0.1), 0 0 18px rgba(0, 242, 255, 0.4);
+      box-shadow: 0 0 0 5px rgb(var(--rgb-cian) / 0.1), 0 0 18px rgb(var(--rgb-cian) / 0.4);
     }
     50% {
-      box-shadow: 0 0 0 10px rgba(0, 242, 255, 0.03), 0 0 30px rgba(0, 242, 255, 0.6);
+      box-shadow: 0 0 0 10px rgb(var(--rgb-cian) / 0.03), 0 0 30px rgb(var(--rgb-cian) / 0.6);
     }
   }
 

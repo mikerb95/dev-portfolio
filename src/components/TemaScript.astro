@@ -1,0 +1,12 @@
+---
+// Pone el tema antes del primer pintado (RF-043). En línea y bloqueante a
+// propósito: como módulo se ejecutaría después de pintar y un visitante con el
+// dispositivo en claro vería un fogonazo oscuro en cada navegación. La CSP ya
+// admite scripts en línea.
+//
+// Solo se monta en las páginas revisadas en claro: en las demás no hay
+// atributo y la página queda en oscuro, que es su único diseño probado.
+import { codigoTema } from '../lib/tema'
+---
+
+<script is:inline set:html={codigoTema()} />
