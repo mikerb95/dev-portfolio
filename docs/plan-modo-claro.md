@@ -97,6 +97,13 @@ Para encender una página:
     se cruza en claro: cada tono apunta a su espejo de luminosidad (bloque en
     `global.css`). Afecta a todo el sitio encendido; los colores salen de
     `tailwindcss/theme.css` y hay que regenerarlos si Tailwind cambia su paleta.
+- ✅ **5b. Sueltas públicas** (12 nov 2026): `/404`, `/hola`, `/feedback`,
+  `/cv/descargar` y las salas de `/lab/fingerprint` (`/<sala>` y su tablero).
+  El QR del tablero trae su propio fondo blanco (margen de dos módulos) y ya no
+  depende de `bg-white`, que en claro es tinta: un lector necesita módulos
+  oscuros sobre claro en los dos temas. Verificadas con una sala sembrada en
+  una base desechable local. Siguen sin encender `/novedades`, `/demo`,
+  `/platziconf`, `/presentacion-end` y las de `/sustentacion`.
 - ⬜ **6. Portal de clientes** (`PortalLayout`, `PortalAuthLayout`).
 - ⬜ **7. Panel `/admin`** (`AdminLayout`).
 - ⬜ **8. Cierre:** quitar el interruptor `temaClaro` y dejar el tema en todos
