@@ -9,7 +9,7 @@ const locale = getLocaleFromUrl(Astro.url.pathname)
 const t = getDictionary(locale)
 ---
 
-<BaseLayout title={t.notFound.title} description={t.notFound.description} noindex>
+<BaseLayout title={t.notFound.title} description={t.notFound.description} noindex temaClaro>
   <div class="max-w-[1280px] mx-auto px-6 md:px-12 lg:px-20 pt-40 pb-32 text-center">
     <div class="text-[11px] font-mono uppercase tracking-[.28em] text-ink-300 mb-6">{t.notFound.eyebrow}</div>
     <h1 class="text-6xl md:text-8xl font-medium tracking-[-.035em] text-mask leading-[.95] mb-8">

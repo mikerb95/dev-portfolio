@@ -22,7 +22,9 @@ if (!room) {
 const site = import.meta.env.AUTH_URL ?? 'https://codebymike.net'
 // El QR lleva al visitante a la sala en el mismo idioma del tablero.
 const joinUrl = `${site}${localizedHref('/lab/fingerprint', locale)}/${roomId}`
-const qrSvg = await QRCode.toString(joinUrl, { type: 'svg', margin: 1, width: 260 })
+// El QR trae su propio fondo blanco (con margen de dos módulos): un lector
+// necesita módulos oscuros sobre claro, así que no puede seguir al tema.
+const qrSvg = await QRCode.toString(joinUrl, { type: 'svg', margin: 2, width: 260 })
 
 const defensas = [
   { id: 'sin', rotulo: d.sin },
@@ -32,14 +34,14 @@ const defensas = [
 ] as const
 ---
 
-<BaseLayout title={`${b.title} · ${roomId}`} description="Tablero en vivo del laboratorio de fingerprinting." noindex>
+<BaseLayout title={`${b.title} · ${roomId}`} description="Tablero en vivo del laboratorio de fingerprinting." noindex temaClaro>
   <div id="fp-board" data-room={roomId} class="max-w-[1400px] mx-auto px-6 md:px-12 pt-28 md:pt-32 pb-24">
     <div class="grid lg:grid-cols-[300px_minmax(0,1fr)] gap-8">
       <!-- QR + info -->
       <div class="lg:sticky lg:top-28 lg:self-start" data-hero-sigue>
         <div class="rounded-2xl glass p-6 text-center mb-4">
           <div class="text-[11px] font-mono uppercase tracking-[.18em] text-ink-300 mb-4">{b.scanToEnter}</div>
-          <div class="bg-white rounded-xl p-3 [&_svg]:w-full [&_svg]:h-auto" set:html={qrSvg} />
+          <div class="rounded-xl overflow-hidden [&_svg]:block [&_svg]:w-full [&_svg]:h-auto" set:html={qrSvg} />
           <p class="text-[11px] font-mono text-ink-400 mt-4 break-all">{joinUrl}</p>
         </div>
         <div class="rounded-2xl glass p-5">
@@ -143,7 +145,7 @@ const defensas = [
 <style>
   .fp-tablero { display: grid; gap: 16px; grid-template-columns: minmax(0, 1fr); }
   @media (min-width: 768px) { .fp-tablero { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-  .fp-vacio { grid-column: 1 / -1; display: flex; align-items: center; gap: 22px; padding: 22px; border: 1px dashed rgba(255, 255, 255, 0.1); border-radius: 16px; }
+  .fp-vacio { grid-column: 1 / -1; display: flex; align-items: center; gap: 22px; padding: 22px; border: 1px dashed rgb(var(--rgb-luz) / 0.1); border-radius: 16px; }
   .fp-vacio.hidden { display: none; }
   .fp-fantasma { width: 84px; flex: none; }
 
@@ -152,9 +154,9 @@ const defensas = [
   .fd-banco { margin-top: 4px; }
   .fd-etiqueta { margin: 0 0 16px; font-family: var(--font-mono); font-size: 10.5px; letter-spacing: 0.06em; color: var(--color-ink-300); line-height: 1.6; }
   .fd-tabs { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 26px; }
-  .fd-tab { height: 36px; padding: 0 16px; border-radius: 999px; border: 1px solid rgba(255, 255, 255, 0.12); background: transparent; color: var(--color-ink-100); font-size: 12.5px; cursor: pointer; transition: background-color 0.25s ease, border-color 0.25s ease, color 0.25s ease; }
-  .fd-tab:hover { border-color: rgba(0, 242, 255, 0.4); }
-  .fd-tab[aria-selected='true'] { background: rgba(0, 242, 255, 0.1); border-color: rgba(0, 242, 255, 0.55); color: var(--color-ink-50); }
+  .fd-tab { height: 36px; padding: 0 16px; border-radius: 999px; border: 1px solid rgb(var(--rgb-luz) / 0.12); background: transparent; color: var(--color-ink-100); font-size: 12.5px; cursor: pointer; transition: background-color 0.25s ease, border-color 0.25s ease, color 0.25s ease; }
+  .fd-tab:hover { border-color: rgb(var(--rgb-cian-linea) / 0.4); }
+  .fd-tab[aria-selected='true'] { background: rgb(var(--rgb-cian) / 0.1); border-color: rgb(var(--rgb-cian-linea) / 0.55); color: var(--color-ink-50); }
   .fd-tab:focus-visible { outline: 2px solid var(--color-cyan); outline-offset: 2px; }
   .fd-cuerpo { display: grid; gap: 28px 56px; grid-template-columns: minmax(0, 1fr); align-items: center; }
   @media (min-width: 1024px) { .fd-cuerpo { grid-template-columns: minmax(0, 640px) minmax(0, 1fr); } }
@@ -163,8 +165,8 @@ const defensas = [
   .fd-huella { margin: 0; display: grid; gap: 10px; }
   .fd-huella :global(svg) { max-width: 120px; margin: 0 auto; }
   .fd-huella figcaption { display: grid; gap: 4px; justify-items: center; font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--color-ink-300); }
-  .fd-cookie { padding: 2px 8px; border-radius: 99px; border: 1px solid rgba(255, 255, 255, 0.12); letter-spacing: 0.04em; text-transform: none; color: var(--color-ink-200); transition: color 0.3s ease, border-color 0.3s ease; }
-  .fd-cookie[data-borrada] { color: var(--color-ember); border-color: rgba(255, 107, 61, 0.45); text-decoration: line-through; }
+  .fd-cookie { padding: 2px 8px; border-radius: 99px; border: 1px solid rgb(var(--rgb-luz) / 0.12); letter-spacing: 0.04em; text-transform: none; color: var(--color-ink-200); transition: color 0.3s ease, border-color 0.3s ease; }
+  .fd-cookie[data-borrada] { color: var(--color-ember); border-color: rgb(var(--rgb-ember-linea) / 0.45); text-decoration: line-through; }
   .fd-cuenta { margin: 0 0 12px; font-family: var(--font-mono); font-size: clamp(20px, 2.4vw, 30px); letter-spacing: -0.01em; color: var(--color-cyan); font-variant-numeric: tabular-nums; }
   .fd-texto { margin: 0; max-width: 62ch; font-size: 13px; line-height: 1.7; color: var(--color-ink-100); min-height: 4.5em; }
 

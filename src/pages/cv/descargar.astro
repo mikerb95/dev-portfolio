@@ -10,7 +10,7 @@ const locale = getLocaleFromUrl(Astro.url.pathname)
 const cv = getDictionary(locale).cvDownload
 ---
 
-<BaseLayout title={cv.title} description={cv.description} noindex={true}>
+<BaseLayout title={cv.title} description={cv.description} noindex={true} temaClaro>
   <div class="min-h-[70vh] flex items-center justify-center px-6">
     <div class="max-w-sm w-full text-center">
       <div class="mx-auto mb-6 w-10 h-10 rounded-full border-2 border-cyan/30 border-t-cyan animate-spin"></div>

@@ -15,7 +15,7 @@ if (!room) {
 }
 ---
 
-<BaseLayout title={r.title} description={r.description} noindex>
+<BaseLayout title={r.title} description={r.description} noindex temaClaro>
   <div id="fp-root" data-room={roomId} class="max-w-[640px] mx-auto px-6 pt-28 pb-24">
     <div class="flex items-center gap-3 text-[11px] font-mono uppercase tracking-[.18em] text-ink-200 mb-8">
       <span class="w-1.5 h-1.5 rounded-full bg-cyan pulse-dot"></span>
@@ -27,7 +27,7 @@ if (!room) {
       <p class="text-[14px] text-ink-100 leading-relaxed mb-6">
         {r.gateBody}
       </p>
-      <button id="accept" class="w-full h-14 rounded-2xl bg-white text-zinc-900 text-[14px] font-medium hover:bg-zinc-100 transition-colors">
+      <button id="accept" class="w-full h-14 rounded-2xl bg-ink-50 text-ink-950 text-[14px] font-medium hover:bg-ink-100 transition-colors">
         {r.accept}
       </button>
     </div>
