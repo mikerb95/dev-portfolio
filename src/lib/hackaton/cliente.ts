@@ -611,7 +611,7 @@ function construirGrupo(e: Estado, g: Grupo, tareas: Tarea[], horas: number, nom
 function construirTarea(e: Estado, g: Grupo, t: Tarea): HTMLElement {
   const resaltada = t.huerfana && !t.dueno
   const li = el('li', {
-    class: `flex flex-wrap items-center gap-2 rounded-xl px-2.5 py-2 ${resaltada ? 'bg-ember/10' : 'hover:bg-white/[.03]'}`,
+    class: `flex items-start sm:items-center gap-2.5 rounded-xl px-2.5 py-2 ${resaltada ? 'bg-ember/10' : 'hover:bg-white/[.03]'}`,
     'data-tarea': t.id,
     'data-estado': t.estado,
   })
@@ -621,7 +621,7 @@ function construirTarea(e: Estado, g: Grupo, t: Tarea): HTMLElement {
     'button',
     {
       type: 'button',
-      class: `w-5 h-5 shrink-0 rounded-md border text-[12px] leading-none grid place-items-center ${ESTADO_CLASE[t.estado]}`,
+      class: `w-5 h-5 mt-0.5 sm:mt-0 shrink-0 rounded-md border text-[12px] leading-none grid place-items-center ${ESTADO_CLASE[t.estado]}`,
       'aria-label': `${t.titulo}: ${ESTADO_TEXTO[t.estado]}. Cambiar a ${ESTADO_TEXTO[sig[t.estado]]}`,
       title: ESTADO_TEXTO[t.estado],
       'data-cambiar-estado': '',
@@ -657,18 +657,21 @@ function construirTarea(e: Estado, g: Grupo, t: Tarea): HTMLElement {
     return li
   }
 
+  // Dos niveles: el título arriba y los datos debajo en móvil; en una sola
+  // línea desde sm. Así las filas no se descuadran con títulos largos.
+  const cuerpo = el('div', { class: 'flex-1 min-w-0 grid gap-1.5 sm:flex sm:items-center sm:gap-2' })
   const texto = el(
     'span',
-    { class: `flex-1 min-w-[160px] text-[13.5px] leading-snug ${t.estado === 'hecha' ? 'line-through text-ink-300' : 'text-ink-50'}` },
+    { class: `sm:flex-1 min-w-0 text-[13.5px] leading-snug ${t.estado === 'hecha' ? 'line-through text-ink-300' : 'text-ink-50'}` },
     t.numero !== undefined ? el('span', { class: 'font-mono text-ink-300 mr-1.5' }, `${t.numero}.`) : null,
     t.titulo
   )
-  li.append(texto)
-  if (t.porConfirmar) li.append(el('span', { class: 'rounded-full bg-amber-400/10 text-amber-300 text-[10.5px] px-2 py-0.5' }, 'Por confirmar'))
-  if (resaltada) li.append(el('span', { class: 'rounded-full bg-ember/15 text-ember text-[10.5px] px-2 py-0.5' }, 'Sin asignar'))
-  li.append(
+  const meta = el('div', { class: 'flex flex-wrap items-center gap-2 sm:shrink-0' })
+  if (t.porConfirmar) meta.append(el('span', { class: 'rounded-full bg-amber-400/10 text-amber-300 text-[10.5px] px-2 py-0.5' }, 'Por confirmar'))
+  if (resaltada) meta.append(el('span', { class: 'rounded-full bg-ember/15 text-ember text-[10.5px] px-2 py-0.5' }, 'Sin asignar'))
+  meta.append(
     el('span', { class: `rounded-full text-[10.5px] px-2 py-0.5 ${PRIORIDAD_CLASE[t.prioridad]}` }, t.prioridad),
-    el('span', { class: 'font-mono text-[12px] text-ink-300 w-12 text-right' }, horasTxt(t.horas))
+    el('span', { class: 'font-mono text-[12px] text-ink-300 sm:w-12 sm:text-right' }, horasTxt(t.horas))
   )
 
   const herencia = g.dueno ? `Del frente (${e.personas.find((p) => p.id === g.dueno)?.nombre ?? '?'})` : 'Del frente (nadie)'
@@ -683,7 +686,7 @@ function construirTarea(e: Estado, g: Grupo, t: Tarea): HTMLElement {
     `Responsable de ${t.titulo}`,
     (v) => ejecutar({ tipo: 'tarea.asignar', tarea: t.id, persona: v === 'grupo' ? 'grupo' : v === '__sin' ? null : v })
   )
-  li.append(sel)
+  meta.append(sel)
 
   if (puedeEditar) {
     const editar = el('button', { type: 'button', class: 'text-[12px] text-ink-300 hover:text-cyan', 'aria-label': `Editar ${t.titulo}` }, 'Editar')
@@ -696,8 +699,10 @@ function construirTarea(e: Estado, g: Grupo, t: Tarea): HTMLElement {
       const ok = await preguntar('Borrar tarea', `"${t.titulo}" desaparece del tablero para todo el equipo.`, [{ texto: 'Borrar', valor: 'si', principal: true }])
       if (ok) await ejecutar({ tipo: 'tarea.borrar', tarea: t.id })
     })
-    li.append(editar, borrar)
+    meta.append(editar, borrar)
   }
+  cuerpo.append(texto, meta)
+  li.append(cuerpo)
   return li
 }
 
