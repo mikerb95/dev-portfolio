@@ -91,10 +91,13 @@ export interface Track {
   nota?: string
 }
 
+// El proyecto (inventario, normalización a CPE, cruce con fuentes de
+// vulnerabilidades, alertas con evidencia y remediación) es ciberdefensa
+// automatizada; la seguridad del agente que lo opera es el ángulo secundario.
 export const TRACKS: Track[] = [
-  { numero: 1, nombre: 'Seguridad de agentes', delEquipo: true, nota: 'Inyección de instrucciones, control de herramientas y agentes que leen contenido no confiable.' },
+  { numero: 1, nombre: 'Seguridad de agentes', nota: 'Ángulo secundario del proyecto: el analista encerrado en lectura y la suite de inyección.' },
   { numero: 2, nombre: 'Control de IA' },
-  { numero: 3, nombre: 'Ciberdefensa automatizada' },
+  { numero: 3, nombre: 'Ciberdefensa automatizada', delEquipo: true, nota: 'Del inventario a la alerta con evidencia y la remediación, para organizaciones sin equipo de seguridad.' },
   { numero: 4, nombre: 'Defensa epistémica' },
   { numero: 5, nombre: 'Infraestructura y gobernanza', nota: 'Sin código.' },
   { numero: 6, nombre: 'Riesgos multiagente' },
@@ -165,43 +168,72 @@ export const BLOQUES_EQUIPO: Bloque[] = [
 
 // ── Jurado y mentores ───────────────────────────────────────────────────────
 
+export interface Fuente {
+  texto: string
+  url: string
+}
+
 export interface Perfil {
   nombre: string
   rol: 'Jurado' | 'Mentor'
   org: string
   resumen: string
+  /** Trabajo público concreto (charlas, proyectos, libros), verificado en sus fuentes. */
+  destacados?: string[]
   /** Inferencia a partir de su trabajo público, nunca una preferencia declarada. */
   valoraria?: string[]
   /** Solo mentores: para qué buscarlo durante el sprint. */
   util?: string
+  fuentes?: Fuente[]
 }
 
 export const ETIQUETA_INFERENCIA = 'Inferencia a partir de su trabajo público, no una preferencia declarada'
 
-// La guía oficial no publica los jurados: estos perfiles salen de la
-// investigación del equipo sobre su trabajo público. Falta un tercer juez cuyo
-// nombre no llegó completo; se agrega aquí cuando se confirme.
+// La guía oficial no publica los jurados: estos perfiles salen de su trabajo
+// público, revisado el 14 nov 2026 en las fuentes que lista cada uno (solo
+// páginas profesionales: perfiles de charlas, repositorios, publicaciones).
+// Falta un tercer juez cuyo nombre no llegó completo; se agrega cuando se confirme.
 export const PERFILES: Perfil[] = [
   {
     nombre: 'Christian Urcuqui',
     rol: 'Jurado',
     org: 'TryHackMe y Universidad Icesi',
-    resumen: 'Investigador de ciberseguridad e IA, docente y coautor de tres libros. Ha dado charlas sobre los riesgos de los agentes con MCP y tool calling, y un taller donde los ataques se convierten en pruebas repetibles dentro del pipeline. Trabaja con MITRE ATLAS y OWASP.',
-    valoraria: [
-      'Que el equipo ataque su propio sistema.',
-      'Defensas concretas: control de ejecución de herramientas, aislamiento de contexto y validación de salida.',
-      'Un modelo de amenazas apoyado en un marco reconocido.',
+    resumen: 'Investigador en la intersección de IA y ciberseguridad (CyberAI) y científico de datos de seguridad. Lleva más de diez años construyendo sistemas de machine learning para detección de amenazas y analítica de seguridad, entre industria, investigación y academia; es docente investigador del grupo i2t de la Universidad Icesi. Trabaja en seguridad de IA, machine learning adversarial y modelado de amenazas para sistemas con LLM y agentes, y ha presentado en DEF CON, Ekoparty, DragonJARCON, BSides y PyCon.',
+    destacados: [
+      'Coautor y coordinador de tres libros de ciberseguridad y ciencia de datos con la Universidad Icesi: "Ciberseguridad: un enfoque desde la ciencia de datos", "Ciberseguridad: los datos tienen la respuesta" (2022) y "Ciberseguridad: los datos, las semillas del caos" (2023).',
+      '"Hackeando agentes": la superficie de ataque de los agentes con MCP, tool calling y RAG (secuestro de herramientas, envenenamiento de contexto, inyección persistente) y sus defensas: validación de salidas, control de ejecución de herramientas y aislamiento de contexto.',
+      '"Hack, Test, Ship: DevSecOps for AI Security": un taller donde las pruebas de inyección, abuso de herramientas y fuga de información corren en el pipeline y bloquean un cambio cuando hay una regresión de seguridad.',
+      'Orion, un framework que conecta el lado ofensivo y el defensivo sobre modelos de IA con MITRE ATLAS y agentes LLM, para convertir los ataques encontrados en defensas.',
+      'Modelado de amenazas usado de forma ofensiva contra agentes, RAG y arquitecturas con tool calling, con MITRE ATLAS y el OWASP Top 10 para LLM como marcos.',
     ],
+    valoraria: [
+      'Que el equipo ataque su propio sistema y muestre qué encontró.',
+      'Defensas concretas y nombradas: control de ejecución de herramientas, aislamiento de contexto y validación de salida.',
+      'La suite de inyección como prueba repetible que se puede correr en CI, no como una demo de una sola vez.',
+      'Un modelo de amenazas mapeado a un marco reconocido (MITRE ATLAS u OWASP Top 10 para LLM).',
+    ],
+    fuentes: [{ texto: 'Perfil y charlas en Sessionize', url: 'https://sessionize.com/christian-urcuqui' }],
   },
   {
     nombre: 'Antonio Badilla-Olivas',
     rol: 'Jurado',
     org: 'SPAR y CRSS',
-    resumen: 'Construye entornos de red-teaming donde los ataques y los monitores evolucionan juntos.',
+    resumen: 'Ingeniero de IA y ML en CRSS y estudiante de maestría en Ciencias de la Computación en la Universidad de Costa Rica, donde fue profesor. Investiga seguridad, control e interpretabilidad de IA. El 8 de octubre de 2026 dio en AI Safety Colombia la charla "Control de IA cuando los agentes se encuentran".',
+    destacados: [
+      'Mentee del proyecto "In-the-Wild AI Control" de SPAR (otoño de 2026), que construye LOC-Arena: un laboratorio de IA ficticio donde los agentes pueden intentar un despliegue no autorizado, con subagentes, siete repositorios, monitores síncronos y asíncronos, y un verificador sellado que mide la brecha entre lo que se detecta y lo que de verdad ocurrió.',
+      'En su charla: un modelo no confiable vigilado por un monitor de confianza y un auditor humano; un ataque es una cadena de pasos y basta atrapar un eslabón para frenarlo; los monitores pensados para un solo agente fallan ante muchos (demasiadas trayectorias, acciones fragmentadas bajo el umbral, permisos que se acumulan).',
+      'Secret Hitler Sandbox, un entorno para estudiar capacidades de engaño en sistemas multiagente con LLM.',
+      'The Refusal Axis, trabajo de interpretabilidad sobre la dirección de rechazo en Gemma 3 12B.',
+    ],
     valoraria: [
-      'Un monitor separado del sistema que vigila.',
-      'Medición contra un atacante que se adapta.',
-      'Rigor: línea base y una definición clara de qué cuenta como éxito.',
+      'Un monitor separado del sistema que vigila, en lugar de confiar en que el agente se porte bien.',
+      'Medir contra una verdad conocida: cuánto detecta el sistema frente a lo que realmente pasó (el inventario de prueba con respuesta conocida va en esa línea).',
+      'Medición frente a un atacante que se adapta, no solo frente a ataques fijos.',
+      'Rigor: línea base, una definición clara de qué cuenta como éxito y en qué eslabón de la cadena se atrapa el ataque.',
+    ],
+    fuentes: [
+      { texto: 'Charla para AI Safety Colombia (repositorio)', url: 'https://github.com/Antonio-Tresol/ai-control-and-mas-intro-talk' },
+      { texto: 'Publicaciones en alphaXiv', url: 'https://www.alphaxiv.org/@antonio-badilla-olivas' },
     ],
   },
   {

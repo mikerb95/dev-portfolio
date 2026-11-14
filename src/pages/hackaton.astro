@@ -232,7 +232,7 @@ const descripcion = 'Datos del evento, cronograma con la hora de Bogotá, jurado
     <section aria-labelledby="t-jurado" class="mb-20">
       <h2 id="t-jurado" class="text-2xl md:text-3xl font-medium tracking-tight mb-2">Jurado y mentores</h2>
       <p class="text-[13px] text-ink-200 max-w-2xl mb-6 leading-relaxed">
-        La guía oficial no publica los jurados; estos perfiles salen de su trabajo público. {NOTA_MENTORES}
+        La guía oficial no publica los jurados; estos perfiles salen de su trabajo público, con las fuentes al pie de cada uno. {NOTA_MENTORES}
       </p>
 
       <h3 class="text-[13px] font-mono uppercase tracking-[.16em] text-ink-300 mb-3">Jurado</h3>
@@ -244,6 +244,14 @@ const descripcion = 'Datos del evento, cronograma con la hora de Bogotá, jurado
               <span class="text-[12px] text-ink-300">{p.rol} · {p.org}</span>
             </div>
             <p class="text-[13px] text-ink-100 leading-relaxed mb-4">{p.resumen}</p>
+            {p.destacados && (
+              <div class="mb-4">
+                <div class="text-[12px] font-medium mb-1.5">Trabajo público destacado</div>
+                <ul class="grid gap-1.5 text-[13px] text-ink-200 leading-relaxed">
+                  {p.destacados.map((d) => <li class="flex gap-2"><span class="text-cyan" aria-hidden="true">·</span><span>{d}</span></li>)}
+                </ul>
+              </div>
+            )}
             {p.valoraria && (
               <div class="rounded-xl bg-white/[.03] p-4">
                 <div class="text-[12px] font-medium mb-1">Qué podría valorar</div>
@@ -254,6 +262,11 @@ const descripcion = 'Datos del evento, cronograma con la hora de Bogotá, jurado
                   {p.valoraria.map((v) => <li class="flex gap-2"><span class="text-ink-300" aria-hidden="true">·</span><span>{v}</span></li>)}
                 </ul>
               </div>
+            )}
+            {p.fuentes && (
+              <p class="text-[11.5px] text-ink-300 mt-3">
+                Fuentes: {p.fuentes.map((f, i) => (<>{i > 0 && ' · '}<a class="hover:text-cyan underline decoration-white/20" href={f.url} target="_blank" rel="noopener">{f.texto}</a></>))}
+              </p>
             )}
           </article>
         ))}

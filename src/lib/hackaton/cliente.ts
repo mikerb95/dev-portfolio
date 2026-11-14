@@ -332,11 +332,11 @@ function barra(avance: number, clase: string, etiqueta: string, detalle: string)
   const pct = Math.round(avance * 100)
   return el(
     'div',
-    { class: 'grid gap-1' },
+    { class: 'grid gap-1 min-w-0' },
     el(
       'div',
-      { class: 'flex items-baseline gap-2 text-[12.5px]' },
-      el('span', { class: 'text-ink-100 truncate' }, etiqueta),
+      { class: 'flex flex-wrap items-baseline gap-x-2 text-[12.5px]' },
+      el('span', { class: 'text-ink-100 min-w-0' }, etiqueta),
       el('span', { class: 'ml-auto font-mono text-ink-300 whitespace-nowrap' }, detalle)
     ),
     el(
