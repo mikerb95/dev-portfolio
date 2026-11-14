@@ -1,0 +1,312 @@
+---
+// Página de apoyo del equipo para la Defensive Acceleration Hackathon (def/acc)
+// de AI Safety Colombia, 14 nov 2026 (RF-044 a RF-047). Todo lo que se pinta
+// sale de src/data/hackaton.ts; el reloj y el tablero los anima
+// src/lib/hackaton/cliente.ts.
+//
+// Prerenderizada: el HTML es igual para todos (ni la sesión ni el token pasan
+// por aquí), y lo que cambia (la hora, el tablero, si se puede editar) lo pide
+// el navegador a /api/hackaton/tablero. Solo en español: es una herramienta
+// del equipo para un día, no una página de vitrina.
+export const prerender = true
+
+import BaseLayout from '../layouts/BaseLayout.astro'
+import {
+  BLOQUES_EQUIPO,
+  CONTACTOS,
+  CRITERIOS,
+  DATOS_CLAVE,
+  ENTREGA,
+  ENTREGA_URL,
+  ETIQUETA_INFERENCIA,
+  GUIA_URL,
+  HITOS,
+  HORARIO_OFICIAL,
+  LOGISTICA,
+  NOTA_MENTORES,
+  PERFILES,
+  REGLAS,
+  TRACKS,
+  type Bloque,
+} from '../data/hackaton'
+import { formatoHora } from '../lib/hackaton/reloj'
+
+const jurado = PERFILES.filter((p) => p.rol === 'Jurado')
+const mentores = PERFILES.filter((p) => p.rol === 'Mentor')
+
+const rango = (b: Bloque) =>
+  b.fin > b.inicio ? `${formatoHora(b.inicio)} a ${formatoHora(b.fin)}` : `${b.aproximado ? '~' : ''}${formatoHora(b.inicio)}`
+
+// Marcas del riel del día, cada dos horas entre la apertura y el cierre.
+const marcas: number[] = []
+for (let m = HITOS.inicioDia; m <= HITOS.finDia; m += 120) marcas.push(m)
+const pos = (m: number) => ((m - HITOS.inicioDia) / (HITOS.finDia - HITOS.inicioDia)) * 100
+
+const titulo = 'def/acc Hackathon: apoyo del equipo'
+const descripcion = 'Datos del evento, cronograma con la hora de Bogotá, jurado y mentores, y la checklist compartida del equipo para la Defensive Acceleration Hackathon de AI Safety Colombia.'
+---
+
+<BaseLayout temaClaro title={titulo} description={descripcion} noindex>
+  <div class="max-w-[1180px] mx-auto px-4 sm:px-6 md:px-12 pt-28 md:pt-32 pb-24">
+
+    <header class="mb-14">
+      <div class="flex items-center gap-3 text-[11px] font-mono uppercase tracking-[.18em] text-ink-200 mb-6">
+        <span class="text-cyan">/hackaton</span>
+        <span class="h-px flex-1 bg-gradient-to-r from-white/15 to-transparent max-w-[80px]"></span>
+        <span>AI Safety Colombia · 14 nov 2026</span>
+      </div>
+      <h1 class="text-4xl sm:text-5xl md:text-6xl font-medium tracking-[-.035em] text-mask leading-[.98] mb-6">
+        Defensive Acceleration<br/>Hackathon (def/acc)
+      </h1>
+      <p class="text-[16px] text-ink-100 max-w-2xl leading-relaxed mb-6">
+        Lo que el equipo necesita a mano durante el día: los datos del reglamento, el cronograma con la hora de Bogotá,
+        quién está en el jurado y la checklist compartida con el reparto de tareas.
+      </p>
+      <div class="flex flex-wrap gap-3 text-[13px]">
+        <a href={GUIA_URL} target="_blank" rel="noopener" class="inline-flex items-center gap-2 rounded-full border border-white/15 px-4 py-2 hover:border-cyan/50 hover:text-cyan transition-colors">Guía oficial</a>
+        <a href={ENTREGA_URL} target="_blank" rel="noopener" class="inline-flex items-center gap-2 rounded-full bg-cyan text-ink-950 px-4 py-2 font-medium hover:opacity-90 transition-opacity">Formulario de entrega</a>
+        <a href="#tablero" class="inline-flex items-center gap-2 rounded-full border border-white/15 px-4 py-2 hover:border-cyan/50 hover:text-cyan transition-colors">Ir a la checklist</a>
+      </div>
+    </header>
+
+    <!-- ── 1. El evento ─────────────────────────────────────────────────── -->
+    <section aria-labelledby="t-evento" class="mb-20">
+      <h2 id="t-evento" class="text-2xl md:text-3xl font-medium tracking-tight mb-6">El evento</h2>
+
+      <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 mb-3">
+        {DATOS_CLAVE.map((d) => (
+          <div class="rounded-2xl glass p-5">
+            <div class="text-[10px] font-mono uppercase tracking-[.16em] text-ink-300 mb-2">{d.etiqueta}</div>
+            <div class="text-[15px] font-medium leading-snug mb-2">{d.valor}</div>
+            <p class="text-[13px] text-ink-200 leading-relaxed">{d.detalle}</p>
+          </div>
+        ))}
+      </div>
+
+      <div class="grid gap-3 lg:grid-cols-3 mb-3">
+        <div class="rounded-2xl glass p-5 lg:col-span-2">
+          <div class="flex items-center gap-2 mb-3">
+            <span class="w-2 h-2 rounded-full bg-cyan" aria-hidden="true"></span>
+            <h3 class="text-[15px] font-medium">Entrega única</h3>
+          </div>
+          <p class="text-[13px] text-ink-200 leading-relaxed mb-3">
+            En <a class="text-cyan hover:underline" href={ENTREGA_URL} target="_blank" rel="noopener">aisafetycolombia.org/defacchackathon/entregar</a>. {ENTREGA.ventana}
+          </p>
+          <ul class="grid gap-1.5 text-[13px] text-ink-100">
+            {ENTREGA.campos.map((c) => (
+              <li class="flex gap-2"><span class="text-cyan" aria-hidden="true">·</span><span>{c}</span></li>
+            ))}
+          </ul>
+        </div>
+        <div class="rounded-2xl glass p-5">
+          <div class="flex items-center gap-2 mb-3">
+            <span class="w-2 h-2 rounded-full bg-lime" aria-hidden="true"></span>
+            <h3 class="text-[15px] font-medium">Criterios de evaluación</h3>
+          </div>
+          <ol class="grid gap-1.5 text-[13px] text-ink-100 mb-3">
+            {CRITERIOS.items.map((c) => (
+              <li class="flex gap-2"><span class="text-lime" aria-hidden="true">·</span><span>{c}</span></li>
+            ))}
+          </ol>
+          <p class="text-[12.5px] text-ink-200 leading-relaxed mb-2">{CRITERIOS.escala}</p>
+          <p class="text-[12.5px] text-ink-200 leading-relaxed">{CRITERIOS.desempate}</p>
+        </div>
+      </div>
+
+      <div class="grid gap-3 lg:grid-cols-2 mb-3">
+        <div class="rounded-2xl glass p-5">
+          <div class="flex items-center gap-2 mb-3">
+            <span class="w-2 h-2 rounded-full bg-ember" aria-hidden="true"></span>
+            <h3 class="text-[15px] font-medium">Reglas de uso responsable</h3>
+          </div>
+          <ul class="grid gap-2 text-[13px] text-ink-100">
+            {REGLAS.map((r) => (
+              <li class="flex gap-2 leading-relaxed"><span class="text-ember" aria-hidden="true">·</span><span>{r}</span></li>
+            ))}
+          </ul>
+        </div>
+        <div class="rounded-2xl glass p-5">
+          <div class="flex items-center gap-2 mb-3">
+            <span class="w-2 h-2 rounded-full bg-violet" aria-hidden="true"></span>
+            <h3 class="text-[15px] font-medium">Logística y contactos</h3>
+          </div>
+          <ul class="grid gap-2 text-[13px] text-ink-100 mb-3">
+            {LOGISTICA.map((l) => (
+              <li class="flex gap-2 leading-relaxed"><span class="text-violet" aria-hidden="true">·</span><span>{l}</span></li>
+            ))}
+          </ul>
+          <p class="text-[13px] text-ink-200 leading-relaxed">
+            Contactos del día: {CONTACTOS.personas.map((c) => `${c.nombre} (${c.org})`).join(' y ')}, {CONTACTOS.donde.toLowerCase()}.
+            Correo: <a class="text-cyan hover:underline" href={`mailto:${CONTACTOS.correo}`}>{CONTACTOS.correo}</a>
+          </p>
+        </div>
+      </div>
+
+      <h3 class="text-[13px] font-mono uppercase tracking-[.16em] text-ink-300 mt-8 mb-3">Los seis tracks</h3>
+      <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        {TRACKS.map((t) => (
+          <div class={`rounded-2xl p-4 ${t.delEquipo ? 'border border-cyan/40 bg-cyan/[.07]' : 'glass'}`}>
+            <div class="flex items-center gap-2 mb-1">
+              <span class="font-mono text-[12px] text-ink-300">Track {t.numero}</span>
+              {t.delEquipo && <span class="ml-auto rounded-full bg-cyan text-ink-950 text-[10.5px] font-medium px-2 py-0.5">Nuestro track</span>}
+            </div>
+            <div class="text-[15px] font-medium">{t.nombre}</div>
+            {t.nota && <p class="text-[12.5px] text-ink-200 mt-1 leading-relaxed">{t.nota}</p>}
+          </div>
+        ))}
+      </div>
+    </section>
+
+    <!-- ── 2. Cronograma ────────────────────────────────────────────────── -->
+    <section aria-labelledby="t-crono" class="mb-20" id="cronograma">
+      <div class="flex flex-wrap items-end gap-3 mb-6">
+        <h2 id="t-crono" class="text-2xl md:text-3xl font-medium tracking-tight">Cronograma</h2>
+        <span class="text-[12px] font-mono text-ink-300" data-reloj-ahora>Hora de Bogotá</span>
+      </div>
+
+      <div class="grid gap-3 sm:grid-cols-2 mb-6">
+        <div class="rounded-2xl glass p-5" data-cuenta="entrega">
+          <div class="flex items-center gap-2 text-[10px] font-mono uppercase tracking-[.16em] text-ink-300 mb-2">
+            <span class="w-2 h-2 rounded-full bg-cyan" aria-hidden="true"></span>Entrega recomendada · 4:00 p.m.
+          </div>
+          <div class="font-mono text-3xl tracking-tight" data-cuenta-valor>-</div>
+        </div>
+        <div class="rounded-2xl glass p-5" data-cuenta="cierre">
+          <div class="flex items-center gap-2 text-[10px] font-mono uppercase tracking-[.16em] text-ink-300 mb-2">
+            <span class="w-2 h-2 rounded-full bg-ember" aria-hidden="true"></span>Cierre duro · 5:00 p.m.
+          </div>
+          <div class="font-mono text-3xl tracking-tight" data-cuenta-valor>-</div>
+        </div>
+      </div>
+
+      <!-- Riel del día: 8:00 a.m. a 8:00 p.m. con la hora actual -->
+      <div class="rounded-2xl glass px-5 pt-5 pb-8 mb-6">
+        <div class="relative h-2 rounded-full bg-white/[.06]" data-riel>
+          <div class="absolute inset-y-0 left-0 rounded-full bg-cyan/30" style="width:0%" data-riel-avance></div>
+          <span class="absolute top-1/2 -translate-y-1/2 w-1 h-4 rounded-full bg-amber-400" style={`left:${pos(HITOS.congelamiento)}%`} title="Congelar funciones, 2:15 p.m."></span>
+          <span class="absolute top-1/2 -translate-y-1/2 w-1 h-4 rounded-full bg-cyan" style={`left:${pos(HITOS.entregaRecomendada)}%`} title="Entrega recomendada, 4:00 p.m."></span>
+          <span class="absolute top-1/2 -translate-y-1/2 w-1 h-4 rounded-full bg-ember" style={`left:${pos(HITOS.cierreEntregas)}%`} title="Cierre de entregas, 5:00 p.m."></span>
+          <span class="absolute top-1/2 -translate-x-1/2 -translate-y-1/2 w-3.5 h-3.5 rounded-full bg-cyan ring-4 ring-cyan/20 hidden" data-riel-ahora aria-hidden="true"></span>
+          {marcas.map((m) => (
+            <span class="absolute top-4 -translate-x-1/2 text-[10px] font-mono text-ink-300 whitespace-nowrap" style={`left:${pos(m)}%`}>{formatoHora(m).replace(':00', '')}</span>
+          ))}
+        </div>
+      </div>
+
+      <div class="grid gap-3 lg:grid-cols-2">
+        {[
+          { id: 'oficial', titulo: 'Horario oficial', bloques: HORARIO_OFICIAL, punto: 'bg-cyan' },
+          { id: 'equipo', titulo: 'Bloques del equipo', bloques: BLOQUES_EQUIPO, punto: 'bg-violet' },
+        ].map((col) => (
+          <div class="rounded-2xl glass p-5">
+            <div class="flex items-center gap-2 mb-4">
+              <span class={`w-2 h-2 rounded-full ${col.punto}`} aria-hidden="true"></span>
+              <h3 class="text-[15px] font-medium">{col.titulo}</h3>
+            </div>
+            <ol class="grid gap-1" data-linea={col.id}>
+              {col.bloques.map((b, i) => (
+                <li
+                  class="bloque flex gap-3 rounded-xl px-3 py-2 transition-colors"
+                  data-bloque={i}
+                  data-inicio={b.inicio}
+                  data-fin={b.fin}
+                >
+                  <span class="font-mono text-[12px] text-ink-300 w-[150px] shrink-0">{rango(b)}</span>
+                  <span class="text-[13.5px] text-ink-100 leading-snug flex-1">
+                    {b.texto}
+                    {b.duro && <span class="ml-1.5 align-middle rounded-full bg-ember/15 text-ember text-[10.5px] px-2 py-0.5">Hora dura</span>}
+                  </span>
+                  <span class="bloque-ahora hidden shrink-0 self-center rounded-full bg-cyan text-ink-950 text-[10.5px] font-medium px-2 py-0.5">Ahora</span>
+                </li>
+              ))}
+            </ol>
+          </div>
+        ))}
+      </div>
+      <p class="text-[12px] text-ink-300 mt-3">
+        La entrega a las 4:00 p.m. es la sugerida por la organización y la meta del equipo; el cierre de las 5:00 p.m. no se extiende.
+      </p>
+    </section>
+
+    <!-- ── 3. Jurado y mentores ─────────────────────────────────────────── -->
+    <section aria-labelledby="t-jurado" class="mb-20">
+      <h2 id="t-jurado" class="text-2xl md:text-3xl font-medium tracking-tight mb-2">Jurado y mentores</h2>
+      <p class="text-[13px] text-ink-200 max-w-2xl mb-6 leading-relaxed">
+        La guía oficial no publica los jurados; estos perfiles salen de su trabajo público. {NOTA_MENTORES}
+      </p>
+
+      <h3 class="text-[13px] font-mono uppercase tracking-[.16em] text-ink-300 mb-3">Jurado</h3>
+      <div class="grid gap-3 md:grid-cols-2 mb-8">
+        {jurado.map((p) => (
+          <article class="rounded-2xl glass p-5">
+            <div class="flex flex-wrap items-baseline gap-x-2 mb-1">
+              <h4 class="text-[16px] font-medium">{p.nombre}</h4>
+              <span class="text-[12px] text-ink-300">{p.rol} · {p.org}</span>
+            </div>
+            <p class="text-[13px] text-ink-100 leading-relaxed mb-4">{p.resumen}</p>
+            {p.valoraria && (
+              <div class="rounded-xl bg-white/[.03] p-4">
+                <div class="text-[12px] font-medium mb-1">Qué podría valorar</div>
+                <div class="inline-flex items-center gap-1.5 rounded-full bg-amber-400/10 text-amber-300 text-[10.5px] px-2 py-0.5 mb-2">
+                  <span class="w-1.5 h-1.5 rounded-full bg-amber-400" aria-hidden="true"></span>{ETIQUETA_INFERENCIA}
+                </div>
+                <ul class="grid gap-1 text-[13px] text-ink-100">
+                  {p.valoraria.map((v) => <li class="flex gap-2"><span class="text-ink-300" aria-hidden="true">·</span><span>{v}</span></li>)}
+                </ul>
+              </div>
+            )}
+          </article>
+        ))}
+      </div>
+
+      <h3 class="text-[13px] font-mono uppercase tracking-[.16em] text-ink-300 mb-3">Mentores</h3>
+      <div class="grid gap-3 md:grid-cols-3">
+        {mentores.map((p) => (
+          <article class="rounded-2xl glass p-5">
+            <h4 class="text-[16px] font-medium">{p.nombre}</h4>
+            <div class="text-[12px] text-ink-300 mb-2">{p.rol} · {p.org}</div>
+            <p class="text-[13px] text-ink-100 leading-relaxed">{p.resumen}</p>
+            {p.util && (
+              <p class="text-[13px] text-ink-200 leading-relaxed mt-3"><span class="text-cyan font-medium">Para qué buscarlo: </span>{p.util}</p>
+            )}
+          </article>
+        ))}
+      </div>
+    </section>
+
+    <!-- ── 4. Checklist del equipo ──────────────────────────────────────── -->
+    <section aria-labelledby="t-tablero" id="tablero" class="scroll-mt-28">
+      <div class="flex flex-wrap items-end gap-3 mb-2">
+        <h2 id="t-tablero" class="text-2xl md:text-3xl font-medium tracking-tight">Checklist del equipo</h2>
+        <span class="text-[12px] font-mono text-ink-300" data-sync>Conectando…</span>
+      </div>
+      <div data-modo class="mb-6"></div>
+      <div data-tablero aria-live="polite">
+        <noscript><p class="text-[13px] text-ink-200">La checklist necesita JavaScript.</p></noscript>
+      </div>
+    </section>
+  </div>
+
+  <dialog data-dialogo class="dialogo rounded-2xl glass-strong p-6 max-w-md w-[calc(100%-32px)] text-ink-50">
+    <h3 class="text-[17px] font-medium mb-2" data-dialogo-titulo></h3>
+    <p class="text-[13.5px] text-ink-200 leading-relaxed mb-5" data-dialogo-texto></p>
+    <div class="flex flex-wrap gap-2 justify-end" data-dialogo-botones></div>
+  </dialog>
+
+  <div data-aviso-flotante class="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 hidden rounded-full glass-strong px-4 py-2 text-[13px] shadow-lg" role="status"></div>
+</BaseLayout>
+
+<style>
+  .bloque.en-curso { background: rgb(var(--rgb-cian) / .1); }
+  .bloque.pasado { opacity: .5; }
+  .dialogo::backdrop { background: rgb(var(--rgb-hondo) / .55); }
+  .dialogo { margin: auto; }
+  @media (max-width: 480px) {
+    .bloque > span:first-child { width: 112px; }
+  }
+</style>
+
+<script>
+  import { iniciarHackaton } from '../lib/hackaton/cliente'
+  iniciarHackaton()
+</script>
