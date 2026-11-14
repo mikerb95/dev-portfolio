@@ -45,6 +45,8 @@ export const RESERVED_ROOT_SEGMENTS: readonly string[] = [
   // con el espacio de los PIN igual que cualquier otra página.
   'ep',
   'feedback',
+  // Página de apoyo de la hackatón def/acc (RF-044).
+  'hackaton',
   'hola',
   'index',
   'lab',

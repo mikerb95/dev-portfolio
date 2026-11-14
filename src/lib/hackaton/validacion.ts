@@ -19,7 +19,7 @@ const texto = (max: number) =>
     .max(max)
     .refine((s) => !/[\u0000-\u001f\u007f]/.test(s), 'caracteres no permitidos')
 const prioridad = z.enum(PRIORIDADES as [string, ...string[]])
-const horas = z.number().finite().min(0).max(24)
+const horas = z.number().min(0).max(24)
 
 const esquema = z.discriminatedUnion('tipo', [
   z.object({ tipo: z.literal('persona.agregar'), nombre: texto(40) }),
