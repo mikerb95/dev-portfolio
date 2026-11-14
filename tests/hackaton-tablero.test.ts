@@ -40,7 +40,8 @@ describe('operaciones del tablero', () => {
 
   it('agrega, edita y borra tareas; editar confirma un dato "por confirmar"', () => {
     let e = estadoInicial()
-    const pc = e.tareas.find((t) => t.porConfirmar)!
+    e.tareas[0].porConfirmar = true
+    const pc = e.tareas[0]
     e = aplicar(e, { tipo: 'tarea.editar', tarea: pc.id, titulo: 'Cruce de fuentes', horas: 2 })
     const editada = e.tareas.find((t) => t.id === pc.id)!
     expect(editada.titulo).toBe('Cruce de fuentes')
@@ -80,12 +81,12 @@ describe('operaciones del tablero', () => {
 describe('progreso y filtros', () => {
   it('pondera por horas y cuenta tareas', () => {
     let e = estadoInicial()
-    const pesada = e.tareas.find((t) => t.horas === 2.5)!
+    const pesada = e.tareas.find((t) => t.grupo === 'nucleo' && t.horas === 4)!
     e = aplicar(e, { tipo: 'tarea.estado', tarea: pesada.id, estado: 'hecha' })
     const p = progreso(e.tareas.filter((t) => t.grupo === 'nucleo'))
     expect(p.hechas).toBe(1)
     expect(p.total).toBe(3)
-    expect(p.avance).toBeCloseTo(2.5 / 4.55, 5)
+    expect(p.avance).toBeCloseTo(4 / 4.55, 5)
   })
 
   it('sin horas, el avance cae al conteo', () => {

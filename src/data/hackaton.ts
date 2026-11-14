@@ -96,11 +96,11 @@ export interface Track {
 // automatizada; la seguridad del agente que lo opera es el ángulo secundario.
 export const TRACKS: Track[] = [
   { numero: 1, nombre: 'Seguridad de agentes', nota: 'Ángulo secundario del proyecto: el analista encerrado en lectura y la suite de inyección.' },
-  { numero: 2, nombre: 'Control de IA' },
+  { numero: 2, nombre: 'Control de IA', nota: 'Monitoreo y detección de sabotaje (ControlArena, Inspect).' },
   { numero: 3, nombre: 'Ciberdefensa automatizada', delEquipo: true, nota: 'Del inventario a la alerta con evidencia y la remediación, para organizaciones sin equipo de seguridad.' },
-  { numero: 4, nombre: 'Defensa epistémica' },
-  { numero: 5, nombre: 'Infraestructura y gobernanza', nota: 'Sin código.' },
-  { numero: 6, nombre: 'Riesgos multiagente' },
+  { numero: 4, nombre: 'Defensa epistémica', nota: 'Procedencia C2PA y detección de suplantación (AASIST).' },
+  { numero: 5, nombre: 'Infraestructura y gobernanza', nota: 'Seguridad de infraestructura de IA y gobernanza defensiva (SL1 a SL5). Sin código.' },
+  { numero: 6, nombre: 'Riesgos multiagente', nota: 'Colusión, explotación y resiliencia cooperativa (Concordia, Melting Pot).' },
 ]
 
 export const LOGISTICA: string[] = [
@@ -108,6 +108,16 @@ export const LOGISTICA: string[] = [
   'Los datos de registro en portería llegan por correo antes del evento.',
   'Snacks de desayuno limitados; el almuerzo está incluido.',
   'Los parqueaderos de la universidad cierran a las 6:00 p.m. y los pitches van hasta las 8:00 p.m.: mejor TransMilenio, estación Las Aguas.',
+]
+
+export const RESPALDOS: { riesgo: string; respaldo: string }[] = [
+  { riesgo: 'La red del evento se satura', respaldo: 'Teléfono compartiendo datos; la descarga de fuentes se hace una sola vez en la primera hora.' },
+  { riesgo: 'NVD limita o falla', respaldo: 'Clave de NVD, pedir solo los productos sembrados y reintentos con espera.' },
+  { riesgo: 'El núcleo se atrasa', respaldo: 'Los demás frentes trabajan con datos de ejemplo desde el minuto 30.' },
+  { riesgo: 'El Agent SDK no arranca en un portátil', respaldo: 'El worker corre en un solo portátil, probado antes.' },
+  { riesgo: 'Vercel o Turso fallan en la demo', respaldo: 'El mismo proyecto corriendo en local y el clip grabado.' },
+  { riesgo: 'El agente tarda o falla', respaldo: 'Texto de respaldo armado por código, con topes de turnos y de gasto.' },
+  { riesgo: 'Se gastan los créditos', respaldo: 'Clave con límite de gasto y max_budget_usd.' },
 ]
 
 export const CONTACTOS = {
@@ -192,7 +202,7 @@ export const ETIQUETA_INFERENCIA = 'Inferencia a partir de su trabajo público, 
 // La guía oficial no publica los jurados: estos perfiles salen de su trabajo
 // público, revisado el 14 nov 2026 en las fuentes que lista cada uno (solo
 // páginas profesionales: perfiles de charlas, repositorios, publicaciones).
-// Falta un tercer juez cuyo nombre no llegó completo; se agrega cuando se confirme.
+// Lo que no se encontró publicado fuera del folleto del evento cita el folleto.
 export const PERFILES: Perfil[] = [
   {
     nombre: 'Christian Urcuqui',
@@ -237,28 +247,60 @@ export const PERFILES: Perfil[] = [
     ],
   },
   {
+    nombre: 'Carlos Gorostiza Ibáñez',
+    rol: 'Jurado',
+    org: 'SPAR y UANL',
+    resumen: 'Investigador en SPAR y estudiante de economía en la Universidad Autónoma de Nuevo León. Según el folleto del evento, construye un banco de pruebas para medir cómo negocian los agentes de IA, cuándo fracasan los acuerdos y cómo escala una crisis.',
+    valoraria: [
+      'Que las decisiones del sistema tengan en cuenta incentivos y costos: qué cuesta un falso positivo y qué cuesta uno negativo.',
+      'Una regla explícita de cuándo y cómo se escala a una persona.',
+      'Un banco de pruebas reproducible, con semilla fija y resultados que otro equipo pueda repetir.',
+    ],
+    fuentes: [{ texto: 'Folleto del evento', url: GUIA_URL }],
+  },
+  {
+    nombre: 'Jose Felipe Duarte',
+    rol: 'Jurado',
+    org: 'LRC y UTP',
+    resumen: 'Investigador en la Universidad Tecnológica de Pereira e ingeniero de IA en LRC. Es primer autor de PsychoAlign, presentado en LatinX in AI (ICML 2026): reparte la alineación en tres agentes con roles asimétricos (uno que maximiza utilidad, un evaluador con marcos morales intercambiables y un mediador), mide la tensión entre ellos como señal de dificultad, publica código, prompts y trazas, y declara sus límites.',
+    valoraria: [
+      'Que cada decisión del sistema se pueda explicar.',
+      'Roles separados que no se mezclan.',
+      'Una señal medible de incertidumbre, mostrada en lugar de escondida.',
+      'Trazas, prompts y casos abiertos.',
+    ],
+    fuentes: [{ texto: 'Folleto del evento', url: GUIA_URL }],
+  },
+  {
+    nombre: 'Jairo Torregrosa',
+    rol: 'Jurado',
+    org: 'Mercado Libre',
+    resumen: 'Sr AI Research Engineer en GenAI Engineering Research de Mercado Libre y Claude Community Ambassador en Bogotá, donde da talleres de agentes con Agent SDK y Managed Agents. Publica herramientas de agentes y evals abiertas. Además de jurado, es mentor durante el sprint.',
+    valoraria: [
+      'Evals como parte del producto, no como un anexo.',
+      'Buena ingeniería del agente: qué hace, qué no puede hacer y por qué.',
+      'Trabajo abierto y reutilizable.',
+    ],
+    util: 'También es mentor: buscarlo temprano para pedirle opinión sobre el diseño de los evals y del agente.',
+    fuentes: [{ texto: 'Folleto del evento', url: GUIA_URL }],
+  },
+  {
     nombre: 'Pablo Pastrana',
     rol: 'Mentor',
     org: 'Dapper',
-    resumen: 'Dapper es una regtech que monitorea cambios regulatorios con IA; su conector MCP está en el directorio de Claude.',
-    util: 'Preguntarle por la fatiga de alertas y por cómo empaquetar un producto MCP.',
+    resumen: 'Product Lead en Dapper, una regtech colombiana que monitorea con IA cambios legislativos y regulatorios en América Latina. El conector MCP de Dapper está en el directorio oficial de Claude.',
+    util: 'Es el mismo patrón de producto (un radar de cambios cruzado con lo que le importa al cliente): preguntarle por la fatiga de alertas, cómo empaquetan el producto, qué exige publicar un conector MCP y qué normas obligan a gestionar vulnerabilidades en Colombia.',
   },
   {
     nombre: 'Robert Gómez',
     rol: 'Mentor',
     org: 'AIMEDIC',
-    resumen: 'AIMEDIC lleva IA generativa a clínicas.',
-    util: 'Validar al comprador: organizaciones con datos sensibles y sin equipo de seguridad.',
-  },
-  {
-    nombre: 'Jairo Torregrosa',
-    rol: 'Mentor',
-    org: 'Mercado Libre',
-    resumen: 'Mentor del evento. La guía oficial solo publica su nombre y su empresa.',
+    resumen: 'CTO de AIMEDIC, que lleva IA generativa a clínicas y hospitales. Coautor de un estudio sobre asistentes de salud para adolescentes en la Universidad Nacional.',
+    util: 'Validar al comprador: una clínica con decenas de equipos, datos sensibles y sin equipo de seguridad. Preguntarle qué tendría que cumplir la herramienta para que un hospital la adopte.',
   },
 ]
 
-export const NOTA_MENTORES = 'Los mentores pasan por el salón durante el sprint, sin horario fijo.'
+export const NOTA_MENTORES = 'Cinco jueces evalúan los entregables al cierre; Jairo Torregrosa es además mentor. Los mentores pasan por el salón durante el sprint, sin horario fijo.'
 
 // ── Tablero del equipo: frentes y tareas precargadas ────────────────────────
 
@@ -296,12 +338,10 @@ export const GRUPOS: GrupoSemilla[] = [
 
 const DOC_POR_FRENTE = 0.3
 
-// Núcleo suma 4.25 h en el plan, pero el detalle de sus tareas (la 1 y la 13)
-// llegó cortado: van con el título que se alcanzó a leer, repartiendo esas
-// horas, y marcadas "por confirmar" para corregirlas desde el tablero.
+// Las 16 piezas y sus horas salen del plan del proyecto (sección 18): 20.25 h.
 export const TAREAS: TareaSemilla[] = [
-  { grupo: 'nucleo', numero: 1, titulo: 'Descarga de fuentes a Turso y cruce', prioridad: 'Imprescindible', horas: 2.5, porConfirmar: true },
-  { grupo: 'nucleo', numero: 13, titulo: 'Tarea 13 del Núcleo (por definir)', prioridad: 'Alto', horas: 1.75, porConfirmar: true },
+  { grupo: 'nucleo', numero: 1, titulo: 'Núcleo mínimo: descarga de fuentes a Turso, cruce por versión y priorización', prioridad: 'Requisito', horas: 4 },
+  { grupo: 'nucleo', numero: 13, titulo: 'Escalera de escalamiento escrita (panel, ticket, teléfono)', prioridad: 'Si alcanza', horas: 0.25 },
   { grupo: 'normalizador', numero: 3, titulo: 'Generador de inventario de prueba con respuesta conocida', prioridad: 'Requisito', horas: 1 },
   { grupo: 'normalizador', numero: 4, titulo: 'Normalizador de nombre a CPE medido', prioridad: 'Imprescindible', horas: 2.5 },
   { grupo: 'ingesta', numero: 7, titulo: 'Analista con Claude Agent SDK encerrado en lectura', prioridad: 'Imprescindible', horas: 1.5 },
@@ -336,4 +376,9 @@ export const TAREAS: TareaSemilla[] = [
   { grupo: 'dia', titulo: 'Teléfono con datos', prioridad: 'Alto', horas: 0 },
   { grupo: 'dia', titulo: 'Grabador de pantalla probado', prioridad: 'Alto', horas: 0 },
   { grupo: 'dia', titulo: 'Botella de agua', prioridad: 'Si alcanza', horas: 0 },
+  { grupo: 'dia', titulo: 'Clave de API de Claude con límite de gasto, compartida por un canal seguro', prioridad: 'Requisito', horas: 0.1 },
+  { grupo: 'dia', titulo: 'Repositorio público con todo el equipo como colaborador', prioridad: 'Requisito', horas: 0.1 },
+  { grupo: 'dia', titulo: 'Python 3.12 y uv en todos los portátiles; claude-agent-sdk instalado donde corre el agente', prioridad: 'Imprescindible', horas: 0.25 },
+  { grupo: 'dia', titulo: 'Preguntar a la organización si se puede proyectar el clip de la demo con audio', prioridad: 'Alto', horas: 0 },
+  { grupo: 'dia', titulo: 'Llegar en transporte público (parqueaderos cierran a las 6:00 p.m.)', prioridad: 'Si alcanza', horas: 0 },
 ]

@@ -26,6 +26,7 @@ import {
   NOTA_MENTORES,
   PERFILES,
   REGLAS,
+  RESPALDOS,
   TRACKS,
   type Bloque,
 } from '../data/hackaton'
@@ -226,6 +227,21 @@ const descripcion = 'Datos del evento, cronograma con la hora de Bogotá, jurado
       <p class="text-[12px] text-ink-300 mt-3">
         La entrega a las 4:00 p.m. es la sugerida por la organización y la meta del equipo; el cierre de las 5:00 p.m. no se extiende.
       </p>
+
+      <div class="rounded-2xl glass p-5 mt-6">
+        <div class="flex items-center gap-2 mb-3">
+          <span class="w-2 h-2 rounded-full bg-amber-400" aria-hidden="true"></span>
+          <h3 class="text-[15px] font-medium">Si algo falla</h3>
+        </div>
+        <dl class="grid gap-x-6 gap-y-2 sm:grid-cols-2 text-[13px]">
+          {RESPALDOS.map((r) => (
+            <div>
+              <dt class="text-ink-50 font-medium">{r.riesgo}</dt>
+              <dd class="text-ink-200 leading-relaxed">{r.respaldo}</dd>
+            </div>
+          ))}
+        </dl>
+      </div>
     </section>
 
     <!-- ── 3. Jurado y mentores ─────────────────────────────────────────── -->
@@ -236,7 +252,7 @@ const descripcion = 'Datos del evento, cronograma con la hora de Bogotá, jurado
       </p>
 
       <h3 class="text-[13px] font-mono uppercase tracking-[.16em] text-ink-300 mb-3">Jurado</h3>
-      <div class="grid gap-3 md:grid-cols-2 mb-8">
+      <div class="grid gap-3 md:grid-cols-2 xl:grid-cols-3 mb-8">
         {jurado.map((p) => (
           <article class="rounded-2xl glass p-5">
             <div class="flex flex-wrap items-baseline gap-x-2 mb-1">
@@ -263,6 +279,9 @@ const descripcion = 'Datos del evento, cronograma con la hora de Bogotá, jurado
                 </ul>
               </div>
             )}
+            {p.util && (
+              <p class="text-[13px] text-ink-200 leading-relaxed mt-3"><span class="text-cyan font-medium">Para qué buscarlo: </span>{p.util}</p>
+            )}
             {p.fuentes && (
               <p class="text-[11.5px] text-ink-300 mt-3">
                 Fuentes: {p.fuentes.map((f, i) => (<>{i > 0 && ' · '}<a class="hover:text-cyan underline decoration-white/20" href={f.url} target="_blank" rel="noopener">{f.texto}</a></>))}
@@ -273,7 +292,7 @@ const descripcion = 'Datos del evento, cronograma con la hora de Bogotá, jurado
       </div>
 
       <h3 class="text-[13px] font-mono uppercase tracking-[.16em] text-ink-300 mb-3">Mentores</h3>
-      <div class="grid gap-3 md:grid-cols-3">
+      <div class="grid gap-3 md:grid-cols-2">
         {mentores.map((p) => (
           <article class="rounded-2xl glass p-5">
             <h4 class="text-[16px] font-medium">{p.nombre}</h4>
