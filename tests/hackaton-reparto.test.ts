@@ -25,7 +25,7 @@ describe('repartir (función pura)', () => {
 
   it('2 personas: voraz por horas, carga lo más pareja posible', () => {
     const r = repartir({ personas: ['a', 'b'], frentes: FRENTES })
-    // LPT: ingesta→a, núcleo→b, normalizador→b? no: b=4.55 < a=5.05 → b; ...
+    // LPT: ingesta→a (5.05), núcleo→b (4.55), normalizador→b, seguridad→a, panel→b.
     expect(Object.values(r.dueno).every((d) => d === 'a' || d === 'b')).toBe(true)
     expect(suma(r.carga)).toBeCloseTo(TOTAL, 5)
     expect(Math.abs(r.carga.a - r.carga.b)).toBeLessThanOrEqual(3.6)
