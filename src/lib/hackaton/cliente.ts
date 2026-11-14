@@ -750,7 +750,12 @@ function pintarAviso(): void {
           ? `Ya pasó el congelamiento y hay ${riesgo.length} tareas ${PRIORIDADES_CRITICAS.join(' o ')} sin hacer`
           : `Faltan ${faltan} min para congelar funciones y hay ${riesgo.length} tareas ${PRIORIDADES_CRITICAS.join(' o ')} sin hacer`
       ),
-      el('ul', { class: 'grid gap-0.5 text-[13px] text-ink-100' }, ...riesgo.slice(0, 12).map((t) => el('li', {}, `· ${t.titulo}`)))
+      el(
+        'ul',
+        { class: 'grid gap-0.5 text-[13px] text-ink-100' },
+        ...riesgo.slice(0, 12).map((t) => el('li', {}, `· ${t.titulo}`)),
+        riesgo.length > 12 ? el('li', { class: 'text-ink-300' }, `y ${riesgo.length - 12} más (filtra por estado y prioridad para verlas)`) : null
+      )
     )
   )
 }
