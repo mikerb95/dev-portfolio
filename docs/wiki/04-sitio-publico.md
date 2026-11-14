@@ -67,6 +67,7 @@ privado). Índice en `/docs`. Páginas:
 | `/mis-pagos?r=…&t=…` | Histórico de pagos del cliente (link HMAC) o consulta enmascarada por teléfono. |
 | `/propuesta/<token>` | Cliente que revisa y acepta una propuesta de Plano. |
 | `/acuerdo/<token>` | Cliente de Cotiza que acepta y aprueba adicionales. |
+| `/hackaton` (`?equipo=<token>` para editar) | Equipo de la hackatón def/acc (14 nov 2026): datos del evento, cronograma con la hora de Bogotá, jurado y checklist compartida. Lectura pública; el token abre la escritura y el navegador lo quita de la URL. |
 | `/<pin>` | Público de una presentación (PIN de 4 caracteres, vive 6 h). |
 | `/sustentacion/seguir/<pin>` | Público de la sustentación. |
 | `/presentacion`, `/remote` | Mazo `/final.html` y su mando público. |

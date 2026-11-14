@@ -8,7 +8,7 @@
 - **Local**: `compose.yaml` levanta dos `sqld` (puertos 8080 y 8081); e2e usa
   archivos libSQL desechables en `.e2e/`, y el dev puede usar `.dev-db/`.
 
-## Tablas por dominio (90)
+## Tablas por dominio (92)
 
 | Dominio | Tablas |
 |---|---|
@@ -29,6 +29,7 @@
 | **Plano** | `propuestas`, `propuesta_versiones`, `propuesta_horas` |
 | **Cotiza** | `cotiza_encargos`, `cotiza_solicitudes`, `cotiza_reuniones`, `cotiza_rondas`, `cotiza_adicionales` |
 | **Marketing** | `marketing_suscriptores`, `marketing_campanas`, `marketing_envios` |
+| **Hackatón def/acc** | `hackaton_tableros` (estado entero del tablero en JSON, con versión para compare-and-swap), `hackaton_tokens` (SHA-256 del enlace del equipo, revocable) |
 | **Sistema** | `app_settings` (clave/valor: ajustes, cachés tipo "foto" con TTL, contadores de gasto de IA, resumen semanal, reglas de Plano, PIN de Cotiza) |
 
 Las cuentas de cobro (`/admin/cuentas-cobro`) **no tienen tabla propia**: son

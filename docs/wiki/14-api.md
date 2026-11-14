@@ -31,6 +31,7 @@ profundidad). Formas de respuesta de los endpoints clave congeladas con Zod en
 | Monitores | `monitors/*`, `monitors/diagnose` |
 | Perfil | `certifications/*`, `education/*` (+ `lab-progress`), `skills/tracks`, `skills/sessions`, `skills/milestones`, `github/repos`, `github/toggle` |
 | Sistema | `settings/*` (+ `cotiza-pin`), `backup`, `upload`, `semana`, `sena-recordatorio`, `vigia/decision` |
+| Hackatón | `hackaton/enlace` (genera el enlace de escritura del tablero y revoca el anterior) |
 
 ## Portal (`/api/portal/...`)
 
@@ -80,6 +81,7 @@ profundidad). Formas de respuesta de los endpoints clave congeladas con Zod en
 | `/api/capacitacion/acceso` | Canje del código de grupo. |
 | `/api/aeo/referido` | Conteo de referidos desde asistentes. |
 | `/api/ep-agenda` | Bitácora pública del vigía de agenda, sin retraso, con el resumen de vigilancia de cada semana terminada. |
+| `/api/hackaton/tablero` | Tablero del equipo de la hackatón def/acc. `GET` público y sin caché; `POST` con una operación, exige sesión admin vigente o el token del enlace en `x-equipo-token`, con rate limit propio y compare-and-swap. |
 | `/api/certs/[name]` | Imágenes de certificaciones. |
 | `/api/security/csp-report` | Reportes de violación de CSP. |
 | `/api/present/[sessionId]/snapshot`, `/api/presentacion` | Presentaciones (sistemas A y B). |
