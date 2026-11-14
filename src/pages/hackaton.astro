@@ -137,7 +137,7 @@ const descripcion = 'Datos del evento, cronograma con la hora de Bogotá, jurado
             ))}
           </ul>
           <p class="text-[13px] text-ink-200 leading-relaxed">
-            Contactos del día: {CONTACTOS.personas.map((c) => `${c.nombre} (${c.org})`).join(' y ')}, {CONTACTOS.donde.toLowerCase()}.
+            Contactos del día: {CONTACTOS.personas.map((c) => `${c.nombre} (${c.org})`).join(' y ')}, {CONTACTOS.donde}.
             Correo: <a class="text-cyan hover:underline" href={`mailto:${CONTACTOS.correo}`}>{CONTACTOS.correo}</a>
           </p>
         </div>
@@ -212,7 +212,7 @@ const descripcion = 'Datos del evento, cronograma con la hora de Bogotá, jurado
                   data-inicio={b.inicio}
                   data-fin={b.fin}
                 >
-                  <span class="font-mono text-[12px] text-ink-300 w-[150px] shrink-0">{rango(b)}</span>
+                  <span class="font-mono text-[12px] text-ink-300 w-[170px] shrink-0">{rango(b)}</span>
                   <span class="text-[13.5px] text-ink-100 leading-snug flex-1">
                     {b.texto}
                     {b.duro && <span class="ml-1.5 align-middle rounded-full bg-ember/15 text-ember text-[10.5px] px-2 py-0.5">Hora dura</span>}
@@ -255,10 +255,8 @@ const descripcion = 'Datos del evento, cronograma con la hora de Bogotá, jurado
       <div class="grid gap-3 md:grid-cols-2 xl:grid-cols-3 mb-8">
         {jurado.map((p) => (
           <article class="rounded-2xl glass p-5">
-            <div class="flex flex-wrap items-baseline gap-x-2 mb-1">
-              <h4 class="text-[16px] font-medium">{p.nombre}</h4>
-              <span class="text-[12px] text-ink-300">{p.rol} · {p.org}</span>
-            </div>
+            <h4 class="text-[16px] font-medium">{p.nombre}</h4>
+            <div class="text-[12px] text-ink-300 mb-2">{p.rol} · {p.org}</div>
             <p class="text-[13px] text-ink-100 leading-relaxed mb-4">{p.resumen}</p>
             {p.destacados && (
               <div class="mb-4">

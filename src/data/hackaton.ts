@@ -125,7 +125,7 @@ export const CONTACTOS = {
     { nombre: 'Jose Gelves', org: 'AI Safety Colombia' },
     { nombre: 'Daniel Diab', org: 'IEEE Computer Society Uniandes' },
   ],
-  donde: 'En el salón ML 607',
+  donde: 'en el salón ML 607',
   correo: 'equipo@aisafetycolombia.org',
 }
 

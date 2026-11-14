@@ -470,7 +470,7 @@ function construir(e: Estado): DocumentFragment {
     barra(global.p.avance, 'bg-lime', 'Global, ponderado por horas', global.txt)
   )
   const columnas = el('div', { class: 'grid gap-6 md:grid-cols-2 mt-5' })
-  const porPersona = el('div', { class: 'grid gap-3' }, el('div', { class: 'text-[10px] font-mono uppercase tracking-[.16em] text-ink-300' }, 'Por persona'))
+  const porPersona = el('div', { class: 'grid gap-3 content-start' }, el('div', { class: 'text-[10px] font-mono uppercase tracking-[.16em] text-ink-300' }, 'Por persona'))
   for (const p of e.personas) {
     const d = detalleProgreso(e.tareas.filter((t) => t.dueno === p.id))
     porPersona.append(barra(d.p.avance, COLORES[p.color % COLORES.length].barra, p.nombre, d.txt))
@@ -481,7 +481,7 @@ function construir(e: Estado): DocumentFragment {
     porPersona.append(barra(d.p.avance, 'bg-ink-300', 'Frentes sin asignar', d.txt))
   }
   if (!e.personas.length) porPersona.append(el('p', { class: 'text-[12.5px] text-ink-300' }, 'Sin personas todavía.'))
-  const porFrente = el('div', { class: 'grid gap-3' }, el('div', { class: 'text-[10px] font-mono uppercase tracking-[.16em] text-ink-300' }, 'Por frente'))
+  const porFrente = el('div', { class: 'grid gap-3 content-start' }, el('div', { class: 'text-[10px] font-mono uppercase tracking-[.16em] text-ink-300' }, 'Por frente'))
   for (const g of e.grupos) {
     const d = detalleProgreso(e.tareas.filter((t) => t.grupo === g.id))
     porFrente.append(barra(d.p.avance, 'bg-cyan', g.nombre, d.txt))
