@@ -1994,3 +1994,27 @@ export const vigiaCorridas = sqliteTable('vigia_corridas', {
   // El panel pide las últimas N corridas.
   creadaIdx: index('vigia_corridas_creada_idx').on(t.creada),
 }))
+
+// Tablero del equipo para la hackatón def/acc (RF-045 a RF-047). Una fila por
+// tablero con el estado entero en JSON: lo que se edita es una checklist de un
+// solo día, y una fila con versión permite escribir con compare-and-swap sin
+// repartir el estado en cinco tablas que nadie volverá a consultar por separado.
+export const hackatonTableros = sqliteTable('hackaton_tableros', {
+  id: text('id').primaryKey(),
+  estado: text('estado').notNull(),
+  // Sube en cada escritura; el UPDATE exige la versión leída (compare-and-swap).
+  version: integer('version').notNull(),
+  actualizado: integer('actualizado', { mode: 'timestamp' }).notNull(),
+})
+
+// Enlaces de escritura del equipo. Se guarda el SHA-256 del token, nunca el
+// token: quien lea la base no puede reconstruir el enlace.
+export const hackatonTokens = sqliteTable('hackaton_tokens', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  tablero: text('tablero').notNull(),
+  hash: text('hash').notNull(),
+  creado: integer('creado', { mode: 'timestamp' }).notNull(),
+  revocado: integer('revocado', { mode: 'timestamp' }),
+}, (t) => ({
+  hashUq: uniqueIndex('hackaton_tokens_hash_uq').on(t.hash),
+}))
