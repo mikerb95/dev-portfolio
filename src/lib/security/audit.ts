@@ -11,7 +11,7 @@
 // Módulo puro: lo importan páginas públicas, crons y el panel.
 
 /** Categorías de rastro. Todo lo que no esté aquí se trata como amenaza. */
-export const AUDIT_CATEGORIES: string[] = ['admin_action', 'cobro', 'cuenta_cobro', 'computo', 'capacitacion', 'propuesta', 'marketing']
+export const AUDIT_CATEGORIES: string[] = ['admin_action', 'cobro', 'cuenta_cobro', 'computo', 'capacitacion', 'propuesta', 'marketing', 'hackaton']
 
 export const isAuditCategory = (category: string): boolean => AUDIT_CATEGORIES.includes(category)
 
@@ -51,6 +51,8 @@ export const AUDIT_RULE_LABELS: Record<string, string> = {
   'cotiza.pin_cambiado': 'PIN de Cotiza cambiado',
   'cotiza.pin_quitado': 'PIN de Cotiza quitado',
   'cotiza.puerta_reabierta': 'Acceso con PIN de Cotiza reabierto a mano',
+  'hackaton.enlace_generado': 'Enlace del tablero de la hackatón generado',
+  'hackaton.reiniciado': 'Tablero de la hackatón reiniciado',
   'marketing.campana_creada': 'Campaña de marketing creada',
   'marketing.campana_borrada': 'Borrador de campaña borrado',
   'marketing.campana_disparada': 'Campaña de marketing disparada',
